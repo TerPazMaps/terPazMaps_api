@@ -11,13 +11,25 @@ class Street extends Model
     
     protected $fillable = [
         'region_id',
-        'name',
+        'street_condition_id',
         'geometry',
-        'verified_in_google',
+        'properties',
+        'color',
+        'width',
+        'continuous',
+        'line_cap',
+        'line_dash_pattern',
+        'created_at',
+        'updated_at',
     ];
 
     public function region()
     {
         return $this->belongsTo(Region::class);
+    }
+
+    public function streetCondition()
+    {
+        return $this->belongsTo(StreetCondition::class);
     }
 }

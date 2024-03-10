@@ -7,6 +7,20 @@ Pré-requisitos:
 Após clonar ou baixar o .zip do projeto, execute os passos:
 
 -iniciar os serviços dos xamp e criar uma BASE DE DADOS com nome de sua preferência e codificação utf8mb4_general_ci.
+-Em caso de problemas para importar como:#2006 - MySQL server has gone away. Faça os seguintes passos: 
+    
+    -altere em php.ini(C:\xampp\php\php.ini)
+
+    max_execution_time = 600
+    max_input_time = 600
+    memory_limit = 1024M
+    post_max_size = 1024M
+
+
+    -altere em my.ini(C:\xampp\mysql\bin\my.ini)
+
+    max_allowed_packet = 1024M
+    
 
 -Dentro da pasta do projeto criar um arquivo chamado ".env" o seu conteúdo deve ser copiado inteiramente do arquivo .env-example, depois configure apenas as variáveis:
 

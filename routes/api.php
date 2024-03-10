@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\StreetConditionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +36,9 @@ Route::group(['prefix' => 'api/v5'], function () {
 
             // /{region_id}
             Route::get('/{id}',[RegionController::class, 'onlyRegion'] );
+
         });
+        Route::get('/street-conditions', [StreetConditionController::class, 'index']);
     });
 });
+
