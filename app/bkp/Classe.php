@@ -5,19 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Subclasse extends Model
+class Classe extends Model
 {
     use HasFactory;
 
-    
     protected $fillable = [
-        'class_id',
         'name',
         'related_color',
+        'related_secondary_color',
     ];
 
-    public function class()
+    public function subclasses()
     {
-        return $this->belongsTo(Classe::class);
+        return $this->hasMany(Subclasse::class);
     }
 }

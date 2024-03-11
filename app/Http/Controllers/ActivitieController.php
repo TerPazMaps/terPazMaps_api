@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Subclasse;
-use App\Http\Requests\StoreSubclasseRequest;
-use App\Http\Requests\UpdateSubclasseRequest;
+use App\Models\Activitie;
+use App\Http\Requests\StoreActivitieRequest;
+use App\Http\Requests\UpdateActivitieRequest;
 
-class SubclasseController extends Controller
+class ActivitieController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +27,7 @@ class SubclasseController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreSubclasseRequest $request)
+    public function store(StoreActivitieRequest $request)
     {
         //
     }
@@ -35,7 +35,7 @@ class SubclasseController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Subclasse $subclasse)
+    public function show(Activitie $activitie)
     {
         //
     }
@@ -43,7 +43,7 @@ class SubclasseController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Subclasse $subclasse)
+    public function edit(Activitie $activitie)
     {
         //
     }
@@ -51,7 +51,7 @@ class SubclasseController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateSubclasseRequest $request, Subclasse $subclasse)
+    public function update(UpdateActivitieRequest $request, Activitie $activitie)
     {
         //
     }
@@ -59,7 +59,7 @@ class SubclasseController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Subclasse $subclasse)
+    public function destroy(Activitie $activitie)
     {
         //
     }

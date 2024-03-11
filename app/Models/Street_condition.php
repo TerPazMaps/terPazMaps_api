@@ -5,19 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Subclasse extends Model
+class Street_condition extends Model
 {
     use HasFactory;
 
-    
     protected $fillable = [
-        'class_id',
-        'name',
-        'related_color',
+        'condition',
     ];
-
-    public function class()
-    {
-        return $this->belongsTo(Classe::class);
-    }
 }
