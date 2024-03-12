@@ -1,24 +1,24 @@
-# API de Dados Geoespaciais para Aplicativo de Mapas
+# API de Dados Geoespaciais para Aplicativo de Mapas Sociais.
 
-Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas! Esta API fornece acesso a diversos recursos relacionados a informações geográficas, permitindo que você desenvolva poderosos recursos de visualização de mapas em seu aplicativo. Abaixo estão os principais recursos disponíveis:
+Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! Esta API fornece acesso a diversos recursos relacionados a informações geográficas, permitindo que você desenvolva poderosos recursos de visualização de mapas em seu aplicativo. Abaixo estão os principais recursos disponíveis:
 
 ## Recursos Principais
 
 ### Classe
 - **Descrição**: Recurso para gerenciar informações sobre classes de objetos geográficos.
 - **Endpoints**:
-  - [GET /api/v5/geojson/classe](/docs/api/ClasseController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[GET /api/v5/geojson/classe](/docs/api/ClasseController.md)
   - `POST /api/v5/geojson/classe`
-  - `GET /api/v5/geojson/classe/{id}`
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/classe/{id}](/docs/api/ClasseController.md)
   - `PUT /api/v5/geojson/classe/{id}`
   - `DELETE /api/v5/geojson/classe/{id}`
 
 ### Região
 - **Descrição**: Recurso para gerenciar informações sobre regiões geográficas.
 - **Endpoints**:
-  - `GET /api/v5/geojson/region`
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/Region](/docs/api/RegionController.md)
   - `POST /api/v5/geojson/region`
-  - `GET /api/v5/geojson/region/{id}`
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/Region{id}](/docs/api/RegionController.md)
   - `PUT /api/v5/geojson/region/{id}`
   - `DELETE /api/v5/geojson/region/{id}`
 
@@ -58,16 +58,14 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas! Esta API 
   - `PUT /api/v5/geojson/street/{id}`
   - `DELETE /api/v5/geojson/street/{id}`
 
+## Instruções de execução
+
+Clique aqui para saber mais: [link para a documentação](#RegionController.md).
+
 ## Autenticação
 
-Esta API requer autenticação para acessar os endpoints. Por favor, consulte a documentação para obter detalhes sobre como autenticar suas solicitações.
+Esta API requer autenticação para acessar os endpoints. Por favor, consulte a documentação para obter detalhes sobre como autenticar suas solicitações: [link para a documentação](#).
 
 ## Formato de Resposta
 
 Todos os endpoints desta API retornam dados no formato JSON.
-
-## Documentação Adicional
-
-Para obter mais detalhes sobre como usar esta API, consulte a documentação completa em [link para a documentação](#RegionController.md).
-
-Fique à vontade para explorar e integrar esses recursos em seu aplicativo de mapas para criar uma experiência rica e envolvente para seus usuários! Se precisar de assistência ou tiver alguma dúvida, não hesite em nos contatar.

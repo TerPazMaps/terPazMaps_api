@@ -57,9 +57,31 @@ class ClasseController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Classe $classe)
+    public function show(int $id)
     {
-        //
+        $classes = Classe::select(
+            'id',
+            'name',
+            'related_color',
+            'related_secondary_color'
+        )
+            ->where('id', $id)
+            ->get()
+            ->map(function ($classe) {
+                $geojson_classe = [
+                    "Classe" => [
+                        "ID" => $classe->id,
+                        "Nome" => $classe->name,
+                        "related_color" => $classe->related_color,
+                        "related_secondary_color" => $classe->related_secondary_color
+                    ]
+                ];
+                return $geojson_classe;
+            });
+
+        header('Content-Type: application/json');
+
+        echo json_encode($classes);
     }
 
     /**

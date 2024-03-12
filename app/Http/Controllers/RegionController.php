@@ -64,7 +64,7 @@ class RegionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Region $id)
+    public function show(int $id)
     {
         $regions = Region::select(
             'id',
