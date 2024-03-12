@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Street;
 use App\Models\Street_condition;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreStreet_conditionRequest;
 use App\Http\Requests\UpdateStreet_conditionRequest;
@@ -16,8 +17,8 @@ class StreetConditionController extends Controller
     public function index()
     {
         $streetConditions = Street::join('street_conditions', 'streets.street_condition_id', '=', 'street_conditions.id')
-            ->select('street_conditions.condition', DB::raw('AsText(streets.geometry) as geometry'))
-            ->where('streets.street_condition_id', 4)
+            ->select('street_conditions.condition',
+             DB::raw('AsText(streets.geometry) as geometry'))
             ->get();
 
         // Converte os dados para UTF-8
@@ -59,9 +60,32 @@ class StreetConditionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Street_condition $street_condition)
+    public function show(int $id)
     {
-        //
+        $streetConditions = Street::join('street_conditions', 'streets.street_condition_id', '=', 'street_conditions.id')
+            ->select('street_conditions.condition',
+             DB::raw('AsText(streets.geometry) as geometry'))
+            ->where('streets.id', $id)
+            ->get();
+
+        // Converte os dados para UTF-8
+        $streetConditions->transform(function ($streetCondition) {
+            foreach ($streetCondition->getAttributes() as $key => $value) {
+                if ($key === 'properties') {
+                    // Trata o campo 'properties' como JSON
+                    $streetCondition->{$key} = json_decode($value, true);
+                    // Converte os valores para UTF-8
+                    $streetCondition->{$key} = array_map(function ($propValue) {
+                        return mb_convert_encoding($propValue, 'UTF-8', 'UTF-8');
+                    }, $streetCondition->{$key});
+                } else {
+                    $streetCondition->{$key} = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+                }
+            }
+            return $streetCondition;
+        });
+
+        return response()->json($streetConditions);
     }
 
     /**

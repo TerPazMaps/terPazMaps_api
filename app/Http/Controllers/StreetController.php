@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Activitie;
+use App\Models\Street;
 use Illuminate\Routing\Controller;
-use App\Http\Requests\StoreActivitieRequest;
-use App\Http\Requests\UpdateActivitieRequest;
+use App\Http\Requests\StoreStreetRequest;
+use App\Http\Requests\UpdateStreetRequest;
 
-class ActivitieController extends Controller
+class StreetController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -28,7 +28,7 @@ class ActivitieController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreActivitieRequest $request)
+    public function store(StoreStreetRequest $request)
     {
         //
     }
@@ -36,7 +36,7 @@ class ActivitieController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Activitie $activitie)
+    public function show(Street $street)
     {
         //
     }
@@ -44,7 +44,7 @@ class ActivitieController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Activitie $activitie)
+    public function edit(Street $street)
     {
         //
     }
@@ -52,7 +52,7 @@ class ActivitieController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateActivitieRequest $request, Activitie $activitie)
+    public function update(UpdateStreetRequest $request, Street $street)
     {
         //
     }
@@ -60,7 +60,7 @@ class ActivitieController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Activitie $activitie)
+    public function destroy(Street $street)
     {
         //
     }

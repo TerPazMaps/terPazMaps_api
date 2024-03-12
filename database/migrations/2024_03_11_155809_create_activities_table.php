@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('activities', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('region_id');
+            $table->unsignedBigInteger('subclass_id');
+            $table->string('name', 191)->nullable();
+            $table->point('geometry')->nullable();
+            $table->tinyInteger('active')->default(1);
+            $table->unsignedBigInteger('level')->default(1);
             $table->timestamps();
+
+            $table->foreign('region_id')->references('id')->on('regions');
+            $table->foreign('subclass_id')->references('id')->on('subclasses');
         });
     }
 

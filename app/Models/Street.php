@@ -5,13 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RoadNetwork extends Model
+class Street extends Model
 {
     use HasFactory;
-
+    
     protected $fillable = [
         'region_id',
-        'name',
+        'street_condition_id',
         'geometry',
         'properties',
         'color',
@@ -19,10 +19,17 @@ class RoadNetwork extends Model
         'continuous',
         'line_cap',
         'line_dash_pattern',
+        'created_at',
+        'updated_at',
     ];
 
     public function region()
     {
         return $this->belongsTo(Region::class);
+    }
+
+    public function streetCondition()
+    {
+        return $this->belongsTo(Street_Condition::class);
     }
 }

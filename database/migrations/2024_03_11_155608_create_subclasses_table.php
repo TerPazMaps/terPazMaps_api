@@ -11,22 +11,24 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('street_conditions', function (Blueprint $table) {
+        Schema::create('subclasses', function (Blueprint $table) {
             $table->id();
-            $table->string('condition');
+            $table->unsignedBigInteger('class_id');
+            $table->string('name', 191);
+            $table->string('related_color', 191)->nullable();
             $table->timestamps();
+
+            $table->foreign('class_id')->references('id')->on('classes');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::dropIfExists('street_conditions');
+        Schema::dropIfExists('subclasses');
     }
 };

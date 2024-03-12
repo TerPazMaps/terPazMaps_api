@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subclasse;
+use Illuminate\Routing\Controller;
 use App\Http\Requests\StoreSubclasseRequest;
 use App\Http\Requests\UpdateSubclasseRequest;
 

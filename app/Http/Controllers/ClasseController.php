@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classe;
+use Illuminate\Routing\Controller;
 use App\Http\Requests\StoreClasseRequest;
 use App\Http\Requests\UpdateClasseRequest;
 
@@ -13,7 +14,28 @@ class ClasseController extends Controller
      */
     public function index()
     {
-        //
+        $classes = Classe::select(
+            'id',
+            'name',
+            'related_color',
+            'related_secondary_color'
+        )
+            ->get()
+            ->map(function ($classe) {
+                $geojson_classe = [
+                    "Classe" => [
+                        "ID" => $classe->id,
+                        "Nome" => $classe->name,
+                        "related_color" => $classe->related_color,
+                        "related_secondary_color" => $classe->related_secondary_color
+                    ]
+                ];
+                return $geojson_classe;
+            });
+
+        header('Content-Type: application/json');
+
+        echo json_encode($classes);
     }
 
     /**

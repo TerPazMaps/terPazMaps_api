@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Region;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreRegionRequest;
 use App\Http\Requests\UpdateRegionRequest;
