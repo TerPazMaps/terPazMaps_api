@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Controllers\ActivitieController;
+use App\Http\Controllers\ClasseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\StreetConditionController;
+use App\Http\Controllers\StreetController;
+use App\Http\Controllers\SubclasseController;
+use App\Models\Classe;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,15 +35,30 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'api/v5'], function () {
     Route::group(['prefix' => '/geojson'], function () {
-        Route::group(['prefix' => '/regions'], function () {
-            
-            Route::get('/',[RegionController::class, 'allRegions'] );
-
-            // /{region_id}
-            Route::get('/{id}',[RegionController::class, 'onlyRegion'] );
-
-        });
-        Route::get('/street-conditions', [StreetConditionController::class, 'index']);
+    
+        Route::apiResource('Classe', ClasseController::class);
+        
+        Route::apiResource('Region', RegionController::class);
+        
+        Route::apiResource('Street_condition', StreetConditionController::class);
+        
+        Route::apiResource('Subclasse', SubclasseController::class);
+        
+        Route::apiResource('Activitie', ActivitieController::class);
+        
+        Route::apiResource('Street', StreetController::class);
+    
     });
 });
 
+/**
+ * Classe
+ * Region
+ * Street_condition
+ * 
+ * Subclasse
+ * Activitie
+ * Street
+ * 
+ * 
+ */

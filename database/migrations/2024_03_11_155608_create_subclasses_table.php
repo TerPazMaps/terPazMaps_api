@@ -8,15 +8,19 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
     public function up(): void
     {
-        Schema::create('classes', function (Blueprint $table) {
+        Schema::create('subclasses', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('class_id');
             $table->string('name', 191);
             $table->string('related_color', 191)->nullable();
-            $table->string('related_secondary_color', 191)->nullable();
             $table->timestamps();
+
+            $table->foreign('class_id')->references('id')->on('classes');
         });
     }
 
@@ -25,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('classes');
+        Schema::dropIfExists('subclasses');
     }
 };

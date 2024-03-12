@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Region;
-use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\StoreRegionRequest;
+use App\Http\Requests\UpdateRegionRequest;
 
 class RegionController extends Controller
 {
-    public function allRegions()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
         $regions = Region::select(
             'id',
@@ -40,7 +45,26 @@ class RegionController extends Controller
         echo json_encode($geojson);
     }
 
-    public function onlyRegion($id)
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreRegionRequest $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(int $id)
     {
         $regions = Region::select(
             'id',
@@ -65,5 +89,29 @@ class RegionController extends Controller
         header('Content-Type: application/json');
 
         echo json_encode($geojson_region);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Region $region)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateRegionRequest $request, Region $region)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Region $region)
+    {
+        //
     }
 }
