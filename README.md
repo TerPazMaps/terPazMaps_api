@@ -60,11 +60,13 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
 
 ## Instruções de execução
 
-Clique aqui para saber mais: [link para a documentação](#RegionController.md).
+Clique aqui para saber mais: 
+[link para a documentação](/docs/api/instrucoes_de_execucao.md).
 
 ## Autenticação
 
-Esta API requer autenticação para acessar os endpoints. Por favor, consulte a documentação para obter detalhes sobre como autenticar suas solicitações: [link para a documentação](#).
+Esta API requer autenticação para acessar os endpoints. Por favor, consulte a documentação para obter detalhes sobre como autenticar suas solicitações:
+[link para a documentação](/docs/api/instrucoes_de_autenticacao.md).
 
 ## Formato de Resposta
 
