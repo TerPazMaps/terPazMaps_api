@@ -50,15 +50,3 @@ Route::group(['prefix' => 'api/v5'], function () {
     
     });
 });
-
-/**
- * Classe
- * Region
- * Street_condition
- * 
- * Subclasse
- * Activitie
- * Street
- * 
- * 
- */
