@@ -9,7 +9,6 @@ class Subclasse extends Model
 {
     use HasFactory;
 
-    
     protected $fillable = [
         'class_id',
         'name',
@@ -25,5 +24,4 @@ class Subclasse extends Model
     {
         return $this->hasMany(Icon::class);
     }
-
 }

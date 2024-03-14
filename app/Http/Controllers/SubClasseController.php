@@ -44,8 +44,6 @@ class SubclasseController extends Controller
         return response()->json($subclasses);
     }
 
-
-
     /**
      * Show the form for creating a new resource.
      */
