@@ -3,18 +3,77 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activitie;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreActivitieRequest;
 use App\Http\Requests\UpdateActivitieRequest;
+// use GuzzleHttp\Psr7\Request;
 
 class ActivitieController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $activities = Activitie::select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->orderBy('id');
+
+        if ($request->regions)
+            $activities = $activities->whereIn('region_id', $request->regions);
+
+        if ($request->subclasses)
+            $activities = $activities->whereIn('subclass_id', $request->subclasses);
+
+        if ($request->ids)
+            $activities = $activities->whereIn('id', $request->ids);
+
+        $activities = $activities->get();
+
+        if ($request->only_references) {
+            $activities = $activities
+                ->map(function ($activity) {
+                    $geojson_activity = [
+                        "type" => "Feature",
+                        "geometry" => json_decode($activity->geometry),
+                        "properties" => [
+                            "ID Geral" => $activity->id,
+                            "Nome" => $activity->name ?? '',
+                            "ID Subclasse" => $activity->subclass->id,
+                            "ID Bairro" => $activity->region->id,
+                            "Nível" => $activity->level
+                        ]
+                    ];
+
+                    return $geojson_activity;
+                });
+        } else {
+            $activities = $activities
+                ->map(function ($activity) {
+                    $geojson_activity = [
+                        "type" => "Feature",
+                        "geometry" => json_decode($activity->geometry),
+                        "properties" => [
+                            "ID Geral" => $activity->id,
+                            "Nome" => $activity->name ?? '',
+                            "Classe" => $activity->subclass->class->name,
+                            "Sub-classe" => $activity->subclass->name,
+                            "Bairro" => $activity->region->name,
+                            "Nível" => $activity->level
+                        ]
+                    ];
+
+                    return $geojson_activity;
+                });
+        }
+
+        $geojson = [
+            "type" => "FeatureCollection",
+            "features" => $activities
+        ];
+
+        return $geojson;
     }
 
     /**

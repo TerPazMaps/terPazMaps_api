@@ -35,6 +35,8 @@ Comandos no terminal (dentro do diretório do projeto):
 
 -php artisan key:generate
 
+-php artisan storage:link
+
 -php artisan serve
 
 Após isso basta clicar no link que aparecera no terminal ou acessar em seu navegador a url: http://127.0.0.1:8000

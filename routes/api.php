@@ -1,14 +1,16 @@
 <?php
 
-use App\Http\Controllers\ActivitieController;
-use App\Http\Controllers\ClasseController;
+use App\Models\Classe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\IconController;
+use App\Http\Controllers\ClasseController;
 use App\Http\Controllers\RegionController;
-use App\Http\Controllers\StreetConditionController;
 use App\Http\Controllers\StreetController;
+use App\Http\Controllers\ActivitieController;
 use App\Http\Controllers\SubclasseController;
-use App\Models\Classe;
+use App\Http\Controllers\StreetConditionController;
+use App\Models\Subclasse;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,29 +38,22 @@ Route::get('/', function () {
 Route::group(['prefix' => 'api/v5'], function () {
     Route::group(['prefix' => '/geojson'], function () {
     
-        Route::apiResource('Classe', ClasseController::class);
+        Route::apiResource('classe', ClasseController::class);
         
-        Route::apiResource('Region', RegionController::class);
+        Route::get('/classe/{id}/subclasses', [ClasseController::class, 'getSubclassesByClass']);
+
         
-        Route::apiResource('Street_condition', StreetConditionController::class);
+        Route::apiResource('region', RegionController::class);
         
-        Route::apiResource('Subclasse', SubclasseController::class);
+        Route::apiResource('street_condition', StreetConditionController::class);
         
-        Route::apiResource('Activitie', ActivitieController::class);
+        Route::apiResource('subclasse', SubclasseController::class);
+
+        Route::apiResource('activitie', ActivitieController::class);
         
-        Route::apiResource('Street', StreetController::class);
+        Route::apiResource('street', StreetController::class);
+
+        Route::apiResource('icon', IconController::class);
     
     });
 });
-
-/**
- * Classe
- * Region
- * Street_condition
- * 
- * Subclasse
- * Activitie
- * Street
- * 
- * 
- */
