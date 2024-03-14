@@ -15,62 +15,65 @@ class ActivitieController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $request = Request::create('/', 'POST', [
-            'regions' => null, // Defina os IDs das regiões conforme necessário
-            'subclasses' => null, // Defina os IDs das subclasses conforme necessário
-            'name' => null, // Defina o nome da atividade conforme necessário
-        ]);
-
         $activities = Activitie::select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->orderBy('id');
 
-        if ($request->regions) {
+        if ($request->regions)
             $activities = $activities->whereIn('region_id', $request->regions);
-        }
-        if ($request->subclasses) {
+
+        if ($request->subclasses)
             $activities = $activities->whereIn('subclass_id', $request->subclasses);
-        }
-        if ($request->name) {
-            $activities = $activities->where(function ($query) use ($request) {
-                $query->where('name', 'like', $request->name . '%')
-                    ->orWhere('name', 'like', '%' . $request->name . '%');
-            });
-        }
+
+        if ($request->ids)
+            $activities = $activities->whereIn('id', $request->ids);
+
         $activities = $activities->get();
 
-        // Construir a estrutura desejada para cada atividade
-        $features = [];
-        foreach ($activities as $activity) {
-            $feature = [
-                'type' => 'Feature',
-                'properties' => [
-                    'id' => $activity->id,
-                    'region_id' => $activity->region_id,
-                    'subclass_id' => $activity->subclass_id,
-                    'name' => $activity->name,
-                    'active' => $activity->active,
-                    'level' => $activity->level,
-                    'created_at' => $activity->created_at,
-                    'updated_at' => $activity->updated_at
-                ],
-                'geometry' => json_decode($activity->geometry)
-            ];
-            $features[] = $feature;
+        if ($request->only_references) {
+            $activities = $activities
+                ->map(function ($activity) {
+                    $geojson_activity = [
+                        "type" => "Feature",
+                        "geometry" => json_decode($activity->geometry),
+                        "properties" => [
+                            "ID Geral" => $activity->id,
+                            "Nome" => $activity->name ?? '',
+                            "ID Subclasse" => $activity->subclass->id,
+                            "ID Bairro" => $activity->region->id,
+                            "Nível" => $activity->level
+                        ]
+                    ];
+
+                    return $geojson_activity;
+                });
+        } else {
+            $activities = $activities
+                ->map(function ($activity) {
+                    $geojson_activity = [
+                        "type" => "Feature",
+                        "geometry" => json_decode($activity->geometry),
+                        "properties" => [
+                            "ID Geral" => $activity->id,
+                            "Nome" => $activity->name ?? '',
+                            "Classe" => $activity->subclass->class->name,
+                            "Sub-classe" => $activity->subclass->name,
+                            "Bairro" => $activity->region->name,
+                            "Nível" => $activity->level
+                        ]
+                    ];
+
+                    return $geojson_activity;
+                });
         }
 
-        // Construir a estrutura final
         $geojson = [
-            'type' => 'FeatureCollection',
-            'features' => $features
+            "type" => "FeatureCollection",
+            "features" => $activities
         ];
 
-        // Converter para JSON
-        $jsonData = json_encode($geojson);
-
-        // Retornar o JSON
-        return $jsonData;
+        return $geojson;
     }
 
     /**

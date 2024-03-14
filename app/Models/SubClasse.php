@@ -18,6 +18,12 @@ class Subclasse extends Model
 
     public function class()
     {
-        return $this->belongsTo(Classe::class);
+        return $this->belongsTo(Classe::class, 'class_id');
     }
+
+    public function icon()
+    {
+        return $this->hasMany(Icon::class);
+    }
+
 }

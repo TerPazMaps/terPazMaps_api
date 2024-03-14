@@ -27,4 +27,7 @@ class Activitie extends Model
     {
         return $this->belongsTo(Subclasse::class);
     }
+
+    
+  
 }
