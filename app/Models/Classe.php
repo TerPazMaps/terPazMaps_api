@@ -15,8 +15,9 @@ class Classe extends Model
         'related_secondary_color',
     ];
 
-    public function subclasses()
+
+    public function subclasse()
     {
-        return $this->hasMany(Subclasse::class);
+        return $this->hasMany(Subclasse::class, 'class_id');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Icon;
 use App\Models\Classe;
 use Illuminate\Routing\Controller;
 use App\Http\Requests\StoreClasseRequest;
@@ -82,6 +83,28 @@ class ClasseController extends Controller
         header('Content-Type: application/json');
 
         echo json_encode($classes);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function getSubclassesByClass(int $id)
+    {
+        $classe = Classe::where('id', $id)
+            ->with('subclasse.icon')
+            ->first();
+
+        // Adicionar o link para a imagem em cada ícone
+        $baseUrl = config('app.url');
+        foreach ($classe->subclasse as $subclasse) {
+            foreach ($subclasse->icon as $icon) {
+                $icon->image_url = $baseUrl . '/storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
+            }
+        }
+
+        header('Content-Type: application/json');
+
+        return response()->json($classe);
     }
 
     /**

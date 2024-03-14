@@ -21,8 +21,4 @@ class Region extends Model
         return $this->hasMany(Street::class);
     }
 
-    public function roadNetworks()
-    {
-        return $this->hasMany(RoadNetwork::class);
-    }
 }
