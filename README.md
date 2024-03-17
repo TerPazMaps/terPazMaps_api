@@ -15,19 +15,23 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   <!-- - `PUT /api/v5/geojson/classe/{id}`
   - `DELETE /api/v5/geojson/classe/{id}` -->
 
-### Região
+### Region
 - **Descrição**: Recurso para gerenciar informações sobre regiões geográficas.
 - **Endpoints**:
   - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/](/docs/api/RegionController.md)
   <!-- - `POST /api/v5/geojson/region` -->
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region{id}](/docs/api/RegionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}](/docs/api/RegionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}/streets](/docs/api/RegionController.md)
  
   <!-- - `PUT /api/v5/geojson/region/{id}`
   - `DELETE /api/v5/geojson/region/{id}` -->
 
-### Condição da Rua
+### Street condition
 - **Descrição**: Recurso para gerenciar informações sobre as condições das ruas.
 - **Endpoints**:
+
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/street_condition/](/docs/api/StreetConditionController.md)
+  
   <!-- - `GET /api/v5/geojson/street_condition`
   - `POST /api/v5/geojson/street_condition`
   - `GET /api/v5/geojson/street_condition/{id}`
@@ -44,7 +48,7 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `PUT /api/v5/geojson/subclasse/{id}`
   - `DELETE /api/v5/geojson/subclasse/{id}` -->
 
-### Atividade
+### Activitie
 - **Descrição**: Recurso para gerenciar informações sobre atividades geográficas.
 - **Endpoints**:
   - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/activitie/](/docs/api/ActivitieController.md)
@@ -55,7 +59,7 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `PUT /api/v5/geojson/activitie/{id}`
   - `DELETE /api/v5/geojson/activitie/{id}` -->
 
-### Rua
+### Street
 - **Descrição**: Recurso para gerenciar informações sobre ruas geográficas.
 - **Endpoints**:
   <!-- - `GET /api/v5/geojson/street`

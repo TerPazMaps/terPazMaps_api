@@ -49,16 +49,16 @@
     },
 
 ```
-`type`: Tipo do objeto. [ string ]  
-`features`: Array de objetos de recursos. [ array de objetos ]  
-`geometry`: Objeto de geometria do recurso. [ objeto ]  
-`type`: Tipo de geometria. [ string ]  
-`coordinates`: Coordenadas da geometria. [ array de arrays de arrays de números ]  
-`ID`: ID da região. [ int ]  
-`Nome`: Nome da região. [ string ]  
-`Centro`: Informações do centro da região. [ objeto ]  
-`type`: Tipo do centro. [ string ]  
-`coordinates`: Coordenadas do centro. [ array de números ]  
+- `type`: Tipo do objeto. [ string ]  
+- `features`: Array de objetos de recursos. [ array de objetos ]  
+- `geometry`: Objeto de geometria do recurso. [ objeto ]  
+- `type`: Tipo de geometria. [ string ]  
+- `coordinates`: Coordenadas da geometria. [ array de arrays de arrays de números ]  
+- `ID`: ID da região. [ int ]  
+- `Nome`: Nome da região. [ string ]  
+- `Centro`: Informações do centro da região. [ objeto ]  
+- `type`: Tipo do centro. [ string ]  
+- `coordinates`: Coordenadas do centro. [ array de números ]  
 
 .  
 
@@ -111,15 +111,87 @@
 
 ```
 
-`type`: Tipo do objeto. [ string ]  
-`features`: Array de objetos de recursos. [ array de objetos ]  
-`geometry`: Objeto de geometria do recurso. [ objeto ]  
-`type`: Tipo de geometria. [ string ]  
-`coordinates`: Coordenadas da geometria. [ array de arrays de arrays de números ]  
-`ID`: ID da região. [ int ]  
-`Nome`: Nome da região. [ string ]  
-`Centro`: Informações do centro da região. [ objeto ]  
-`type`: Tipo do centro. [ string ]  
-`coordinates`: Coordenadas do centro. [ array de números ]  
+- `type`: Tipo do objeto. [ string ]  
+- `features`: Array de objetos de recursos. [ array de objetos ]  
+- `geometry`: Objeto de geometria do recurso. [ objeto ]  
+- `type`: Tipo de geometria. [ string ]  
+- `coordinates`: Coordenadas da geometria. [ array de arrays de arrays de números ]  
+- `ID`: ID da região. [ int ]  
+- `Nome`: Nome da região. [ string ]  
+- `Centro`: Informações do centro da região. [ objeto ]  
+- `type`: Tipo do centro. [ string ]  
+- `coordinates`: Coordenadas do centro. [ array de números ]  
+
+
+# Ruas por Região
+
+![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
+`/api/v5/geojson/Region/{id}/streets` 
+
+## Parâmetros
+
+
+| Nome         | Descrição                                                                                                  |
+|--------------|------------------------------------------------------------------------------------------------------------|
+| id*          | int, obrigatório. O ID da região.                                                                         |
+| condition_id | array de inteiros. Opcional. Os IDs de condição para filtrar as ruas. Apenas as ruas correspondentes aos IDs de condição fornecidos serão retornadas. |
+
+Ex: `/api/v5/geojson/region/1/streets?condition_id=2,3`    
+
+## Retorno status:200 - ruas de região específica seja poygon, linestring, multilinestring
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -48.4025469110289,
+              -1.30916980179879
+            ],[...]
+          ]
+        ]
+      },
+      "properties": {
+        "id": 3267,
+        "region_id": 2,
+        "condition": "Rua pavimentada (asfalto)",
+        "condition_id": 1,
+        "color": "#ffad29",
+        "with": null,
+        "continuous": 1,
+        "line_cap": "",
+        "line_dash_pattern": "",
+        "stroke": "#ff0000",
+        "stroke-opacity": 1,
+        "fill-opacity": 0,
+        "NOME_RUA": "RUA OITAVA"
+      }
+    },
+```
+- `type`: Tipo do objeto. [ string ]
+- `features`: Array de objetos de recursos. [ array de objetos ]
+- `geometry`: Objeto de geometria do recurso. [ objeto ]
+- `type`: Tipo de geometria. [ string ]
+- `coordinates`: Coordenadas da geometria. [ array de arrays de arrays de números ]
+- `id`: ID da rua. [ int ]
+- `region_id`: ID da região. [ int ]
+- `condition`: Condição da rua. [ string ]
+- `condition_id`: ID da condição da rua. [ int ]
+- `color`: Cor relacionada. [ string ]
+- `with`: Descrição relacionada. [ null ou string ]
+- `continuous`: Descrição relacionada. [ int ]
+- `line_cap`: Descrição relacionada. [ string ]
+- `line_dash_pattern`: Descrição relacionada. [ string ]
+- `stroke`: Cor da linha da rua. [ string ]
+- `stroke-opacity`: Opacidade da linha da rua. [ número ]
+- `fill-opacity`: Opacidade de preenchimento da rua. [ número ]
+- `NOME_RUA`: Nome da rua. [ string ]
+
+
 
 [Voltar a pagina principal](/README.md) 

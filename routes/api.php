@@ -31,6 +31,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
+Route::get('/maps', function () {
+    return view('streets');
+});
+
 //                                    api/v5
 //      geojson.io
 // http://localhost/api/v5/geojson/regions
@@ -39,11 +44,10 @@ Route::group(['prefix' => 'api/v5'], function () {
     Route::group(['prefix' => '/geojson'], function () {
     
         Route::apiResource('classe', ClasseController::class);
-        
         Route::get('/classe/{id}/subclasses', [ClasseController::class, 'getSubclassesByClass']);
-
         
         Route::apiResource('region', RegionController::class);
+        Route::get('/region/{id}/streets', [RegionController::class, 'getStreetsByRegion']);
         
         Route::apiResource('street_condition', StreetConditionController::class);
         

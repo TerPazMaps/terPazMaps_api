@@ -16,27 +16,7 @@ class StreetConditionController extends Controller
      */
     public function index()
     {
-        $streetConditions = Street::join('street_conditions', 'streets.street_condition_id', '=', 'street_conditions.id')
-            ->select('street_conditions.condition',
-             DB::raw('AsText(streets.geometry) as geometry'))
-            ->get();
-
-        // Converte os dados para UTF-8
-        $streetConditions->transform(function ($streetCondition) {
-            foreach ($streetCondition->getAttributes() as $key => $value) {
-                if ($key === 'properties') {
-                    // Trata o campo 'properties' como JSON
-                    $streetCondition->{$key} = json_decode($value, true);
-                    // Converte os valores para UTF-8
-                    $streetCondition->{$key} = array_map(function ($propValue) {
-                        return mb_convert_encoding($propValue, 'UTF-8', 'UTF-8');
-                    }, $streetCondition->{$key});
-                } else {
-                    $streetCondition->{$key} = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
-                }
-            }
-            return $streetCondition;
-        });
+        $streetConditions = Street_condition::select('*')->get();
 
         return response()->json($streetConditions);
     }
