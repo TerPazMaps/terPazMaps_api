@@ -20,14 +20,21 @@ class ActivitieController extends Controller
         $activities = Activitie::select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->orderBy('id');
 
-        if ($request->regions)
-            $activities = $activities->whereIn('region_id', $request->regions);
+        if ($request->regions) {
+            $regions_id = $request->regions ? array_map('intval', explode(',', $request->regions)) : [];
+            $activities = $activities->whereIn('region_id', $regions_id);
+        }
 
-        if ($request->subclasses)
-            $activities = $activities->whereIn('subclass_id', $request->subclasses);
-
-        if ($request->ids)
-            $activities = $activities->whereIn('id', $request->ids);
+        if ($request->subclasses) {
+            $subclasses_id = $request->subclasses ? array_map('intval', explode(',', $request->subclasses)) : [];
+            $activities = $activities->whereIn('subclass_id', $subclasses_id);
+        }
+        // dd($request->all());
+        
+        if ($request->ids) {
+            $ids = $request->ids ? array_map('intval', explode(',', $request->ids)) : [];
+            $activities = $activities->whereIn('id', $ids);
+        }
 
         $activities = $activities->get();
 
@@ -59,6 +66,7 @@ class ActivitieController extends Controller
                             "Nome" => $activity->name ?? '',
                             "Classe" => $activity->subclass->class->name,
                             "Sub-classe" => $activity->subclass->name,
+                            "Bairro_id" => $activity->region->id,
                             "Bairro" => $activity->region->name,
                             "Nível" => $activity->level
                         ]

@@ -136,7 +136,7 @@
 | id*          | int, obrigatório. O ID da região.                                                                         |
 | condition_id | array de inteiros. Opcional. Os IDs de condição para filtrar as ruas. Apenas as ruas correspondentes aos IDs de condição fornecidos serão retornadas. |
 
-Ex: `/api/v5/geojson/region/1/streets?condition_id=2,3`    
+Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`    
 
 ## Retorno status:200 - ruas de região específica seja poygon, linestring, multilinestring
 ```json
