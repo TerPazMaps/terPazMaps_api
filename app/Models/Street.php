@@ -30,6 +30,6 @@ class Street extends Model
 
     public function streetCondition()
     {
-        return $this->belongsTo(Street_Condition::class);
+        return $this->belongsTo(Street_condition::class);
     }
 }

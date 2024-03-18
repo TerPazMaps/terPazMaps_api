@@ -122,10 +122,6 @@ class RegionController extends Controller
             $coordinates = $geometry->coordinates;
             $type = $geometry->type;
 
-            if ($type === 'MultiLineString') {
-                $type = 'LineString';
-                $coordinates = $coordinates[0]; // Take the first LineString from MultiLineString
-            }
             $properties = json_decode($street->properties, true);
 
             // Adiciona todas as propriedades desejadas de uma vez utilizando array_merge
@@ -141,25 +137,43 @@ class RegionController extends Controller
                 "line_dash_pattern" => $street->line_dash_pattern,
             ], $properties);
 
-            $geojson_feature = [
-                "type" => "Feature",
-                "geometry" => [
-                    "type" => $type,
-                    "coordinates" => $coordinates
-                ],
-                "properties" => $properties,
-            ];
+            // Se o tipo de geometria for MultiLineString, processa todas as linhas
+            if ($type === 'MultiLineString') {
+                $type = 'LineString';
+                $multiCoordinates = $coordinates;
+                $features = [];
 
-            return $geojson_feature;
-        });
+                // Itera sobre cada conjunto de coordenadas do MultiLineString
+                foreach ($multiCoordinates as $lineCoordinates) {
+                    $feature = [
+                        "type" => "Feature",
+                        "geometry" => [
+                            "type" => $type,
+                            "coordinates" => $lineCoordinates
+                        ],
+                        "properties" => $properties,
+                    ];
 
-        // Monta o GeoJSON FeatureCollection
-        $geojson_collection = [
-            "type" => "FeatureCollection",
-            "features" => $streets->toArray()
-        ];
+                    $features[] = $feature;
+                }
 
-        return response()->json($geojson_collection);
+                return $features;
+            } else {
+                // Se não for MultiLineString, retorna normalmente
+                $geojson_feature = [
+                    "type" => "Feature",
+                    "geometry" => [
+                        "type" => $type,
+                        "coordinates" => $coordinates
+                    ],
+                    "properties" => $properties,
+                ];
+
+                return $geojson_feature;
+            }
+        })->flatten(1); // Aplanar o array de recursos GeoJSON
+
+        return $streets;
     }
 
     /**
