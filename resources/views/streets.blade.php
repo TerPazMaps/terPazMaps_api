@@ -13,18 +13,28 @@
             height: 400px;
             width: 100%;
         }
+
+        #checkboxes {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%; /* Para centralizar verticalmente */
+            padding: 0 20%; /* Adiciona espaço de 20px nos lados */
+        }
     </style>
+
 </head>
 
 <body>
     <h1>Ruas por região</h1>
 
-    <form id="streetForm" action="#" method="POST">
+    <form id="streetForm" method="POST">
         <label for="regionId">Region:</label><br>
         <select id="regionId" name="regionId"></select><br><br>
         <hr>
         <div id="checkboxes"></div>
-       <button type="submit" style="background-color: #28a745; color: #fff; border: none; padding: 8px 16px; cursor: pointer;">Carregar</button>
+        <button type="submit"
+            style="background-color: #28a745; color: #fff; border: none; padding: 8px 16px; cursor: pointer;">Carregar</button>
     </form>
 
     <div id="map"></div>
@@ -44,6 +54,7 @@
                     checkbox.type = 'checkbox';
                     checkbox.name = 'conditionIds[]';
                     checkbox.value = item.id;
+                    checkbox.checked = true; // Marcando o checkbox por padrão
                     var label = document.createElement('label');
                     label.appendChild(document.createTextNode(item.id + "-" + item.condition));
                     label.appendChild(document.createElement('br'));
@@ -53,6 +64,7 @@
             })
             .catch(error => console.error('Error fetching street conditions:', error));
 
+
         fetch('http://127.0.0.1:8000/api/v5/geojson/region/')
             .then(response => response.json())
             .then(data => {
@@ -60,7 +72,7 @@
                 data.features.forEach(item => {
                     var option = document.createElement('option');
                     option.value = item.properties.ID;
-                    option.text = item.properties.ID+"-"+item.properties.Nome;
+                    option.text = item.properties.ID + "-" + item.properties.Nome;
                     regionSelect.appendChild(option);
                 });
             })
@@ -92,9 +104,19 @@
                 .then(data => {
                     // Adiciona as novas linhas ao mapa
                     streetsLayer = L.geoJSON(data).addTo(map);
+
+                    // Centraliza o mapa com base nas coordenadas do centro do bairro
+                    fetch('http://127.0.0.1:8000/api/v5/geojson/region/' + regionId)
+                        .then(response => response.json())
+                        .then(regionData => {
+                            var centerCoordinates = regionData.properties.Centro.coordinates;
+                            map.setView([centerCoordinates[1], centerCoordinates[0]], 14);
+                        })
+                        .catch(error => console.error('Error fetching region center coordinates:', error));
                 })
                 .catch(error => console.error('Error fetching streets:', error));
         }
+
 
         map.setView([-1.3936, -48.3951], 11);
 
