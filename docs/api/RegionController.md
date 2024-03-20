@@ -138,7 +138,7 @@
 
 Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`    
 
-## Retorno status:200 - ruas de região específica seja poygon, linestring, multilinestring
+## Retorno status:200 - ruas de região específica seja polygon, linestring, multilinestring
 ```json
 {
   "type": "FeatureCollection",
@@ -146,30 +146,29 @@ Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
     {
       "type": "Feature",
       "geometry": {
-        "type": "Polygon",
+        "type": "LineString",
         "coordinates": [
           [
-            [
-              -48.4025469110289,
-              -1.30916980179879
-            ],[...]
+            -48.4022481,
+            -1.3430973
+          ],
+          [
+            -48.401970824822,
+            -1.34345044005687
           ]
         ]
       },
       "properties": {
-        "id": 3267,
-        "region_id": 2,
-        "condition": "Rua pavimentada (asfalto)",
-        "condition_id": 1,
-        "color": "#ffad29",
+        "id": 1582,
+        "region_id": 1,
+        "condition": "Trecho com alagamento ou inundação",
+        "condition_id": 3,
+        "color": "#0300da",
         "with": null,
         "continuous": 1,
         "line_cap": "",
         "line_dash_pattern": "",
-        "stroke": "#ff0000",
-        "stroke-opacity": 1,
-        "fill-opacity": 0,
-        "NOME_RUA": "RUA OITAVA"
+        "name": null
       }
     },
 ```

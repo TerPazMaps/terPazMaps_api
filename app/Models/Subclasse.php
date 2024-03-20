@@ -22,6 +22,6 @@ class Subclasse extends Model
 
     public function icon()
     {
-        return $this->hasMany(Icon::class);
+        return $this->hasOne(Icon::class);
     }
 }

@@ -48,6 +48,7 @@ Route::group(['prefix' => 'api/v5'], function () {
         
         Route::apiResource('region', RegionController::class);
         Route::get('/region/{id}/streets', [RegionController::class, 'getStreetsByRegion']);
+        Route::get('/region/{id}/classe', [RegionController::class, 'getIconsByRegion']);
         
         Route::apiResource('street_condition', StreetConditionController::class);
         

@@ -29,7 +29,7 @@ class Icon extends Model
 
     public function subclasse()
     {
-        return $this->belongsTo(Subclasse::class, 'subclasse_id');
+        return $this->belongsTo(Subclasse::class);
     }
 
 }
