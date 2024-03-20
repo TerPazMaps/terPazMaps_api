@@ -17,7 +17,12 @@ class ActivitieController extends Controller
      */
     public function index(Request $request)
     {
-        $activities = Activitie::select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+        $activities = Activitie::select(
+            '*', 
+            DB::raw('ST_AsGeoJSON(geometry) as geometry')
+            )
+            ->with('subclass.classe')
+            ->has('subclass.classe')
             ->orderBy('id');
 
         if ($request->regions) {
@@ -38,6 +43,7 @@ class ActivitieController extends Controller
 
         $activities = $activities->get();
 
+        // dd($activities);
         if ($request->only_references) {
             $activities = $activities
                 ->map(function ($activity) {
@@ -64,7 +70,7 @@ class ActivitieController extends Controller
                         "properties" => [
                             "ID Geral" => $activity->id,
                             "Nome" => $activity->name ?? '',
-                            "Classe" => $activity->subclass->class->name,
+                            "Classe" => $activity->subclass->classe->name ?? '',
                             "Sub-classe" => $activity->subclass->name,
                             "Bairro_id" => $activity->region->id,
                             "Bairro" => $activity->region->name,

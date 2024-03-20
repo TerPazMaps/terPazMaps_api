@@ -20,8 +20,10 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
 - **Endpoints**:
   - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/](/docs/api/RegionController.md)
   <!-- - `POST /api/v5/geojson/region` -->
+
   - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}](/docs/api/RegionController.md)
   - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}/streets](/docs/api/RegionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}/icons](/docs/api/RegionController.md)
  
   <!-- - `PUT /api/v5/geojson/region/{id}`
   - `DELETE /api/v5/geojson/region/{id}` -->

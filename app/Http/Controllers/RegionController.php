@@ -53,47 +53,69 @@ class RegionController extends Controller
 
     public function getIconsByRegion(int $id, Request $request)
     {
-        // Consulta para recuperar todas as atividades da região específica com suas subclasses relacionadas
-        $activities = Activitie::where('region_id', $id)
-        ->select(
-            DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-            )
-            ->with('subclass.icon') // Carregar as subclasses e os ícones relacionados
-            ->has('subclass.icon') // Garantir que apenas atividades com ícones relacionados sejam recuperadas
-            ->get();
+        $activities = Activitie::with(['subclass.icon'])
+            ->has('subclass.icon')
+            ->where('region_id', $id)
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'));
 
-        // Array para armazenar os dados das atividades com ícones
-        $activitiesData = [];
-
-        foreach ($activities as $activity) {
-            $activityData = [
-                'id' => $activity->id,
-                'name' => $activity->name,
-                'geometry' => json_decode($activity->geometry),
-                // Adicione outras propriedades da atividade conforme necessário
-            ];
-
-            // Verifica se a atividade tem uma subclasse e um ícone associado
-            if ($activity->subclass && $activity->subclass->icon) {
-                $icon = $activity->subclass->icon;
-                // Construa a URL da imagem do ícone
-                $imageUrl = config('app.url') . '/storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
-                // Adicione a URL da imagem ao array de dados da atividade
-                $activityData['img_url'] = $imageUrl;
-            }
-
-            // Adicione os dados da atividade ao array de atividades
-            $activitiesData[] = $activityData;
+        if ($request->class_id) {
+            $class_ids = array_map('intval', explode(',', $request->class_id));
+            $activities->whereIn('subclass_id', $class_ids);
         }
 
-        // Converta o array de dados das atividades em JSON
-        $jsonData = json_encode($activitiesData);
+        $activities = $activities->get();
+
+
+        // dd($activities);
+        // Array para armazenar os dados das atividades com ícones
+        $geojsonFeatures = [];
+
+        foreach ($activities as $activity) {
+            $geometry = json_decode($activity->geometry);
+
+            // Construa a URL da imagem do ícone
+            $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
+
+            // Criar a feature do GeoJSON
+            $feature = [
+                'type' => 'Feature',
+                'geometry' => $geometry,
+                'properties' => [
+                    'id' => $activity->id,
+                    'name' => $activity->name,
+                    'subclass' => [
+                        'id' => $activity->subclass->id,
+                        'class_id' => $activity->subclass->class_id,
+                        'name' => $activity->subclass->name,
+                        'icon' => [
+                            'id' => $activity->subclass->icon->id,
+                            'disk_name' => $activity->subclass->icon->disk_name,
+                            'file_name' => $activity->subclass->icon->file_name,
+                            'file_size' => $activity->subclass->icon->file_size,
+                            'content_type' => $activity->subclass->icon->content_type,
+                            'is_public' => $activity->subclass->icon->is_public,
+                            'sort_order' => $activity->subclass->icon->sort_order,
+                            'img_url' => $imageUrl,
+                        ],
+                    ],
+                ],
+            ];
+
+            $geojsonFeatures[] = $feature;
+        }
+
+        // Construir o objeto GeoJSON
+        $geojson = [
+            'type' => 'FeatureCollection',
+            'features' => $geojsonFeatures,
+        ];
+
+        // Converta o GeoJSON em JSON
+        $jsonData = json_encode($geojson);
 
         // Exiba o JSON
-       echo  $jsonData;
+        echo $jsonData;
     }
-
-
 
     /**
      * Show the form for creating a new resource.

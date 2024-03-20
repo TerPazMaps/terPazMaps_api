@@ -114,11 +114,8 @@
           "title": null,
           "description": null,
           "field": "related_icon",
-          "attachment_type": "BitsEBytes\\MapasDigitais\\Models\\ActivitySubclass",
           "is_public": true,
           "sort_order": 346,
-          "created_at": "2021-09-23T18:26:04.000000Z",
-          "updated_at": "2021-09-23T18:26:05.000000Z",
           "image_url": "http://localhost/storage/614/cc6/bc9/614cc6bc9734a411287997.png"
         }
       ]
@@ -152,8 +149,6 @@
 `Tipo de Anexo:` Tipo de anexo relacionado ao ícone. [ **string** ]  
 `Público:` Indica se o ícone é público. [ **boolean** ]  
 `Ordem de Classificação:` Ordem de classificação do ícone. [ **int** ]  
-`Data de criação:` Data de criação do ícone. [ **string (timestamp)** ]  
-`Última atualização:` Data da última atualização do ícone. [ **string (timestamp)** ]  
 `URL da Imagem:` URL para acessar a imagem do ícone. [ **string** ]  
 
 

@@ -192,5 +192,75 @@ Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
 - `NOME_RUA`: Nome da rua. [ string ]
 
 
+# Ícones por Região
+
+[![GET](https://img.shields.io/badge/HTTP-GET-0080FF)](/api/v5/geojson/Region/{id}/icons)  
+`/api/v5/geojson/Region/{id}/icons` 
+
+## Parâmetros
+
+| Nome         | Descrição                                                                                                  |
+|--------------|------------------------------------------------------------------------------------------------------------|
+| id*          | int, obrigatório. O ID da região.                                                                         |
+| class_id     | array, opcional. IDs de classe separados por vírgula. Apenas as atividades correspondentes às classes fornecidas serão retornadas. |
+
+Exemplo: `/api/v5/geojson/region/1/icons?subclass=2,3`    
+
+## Retorno status:200 - ícones de região específica
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -48.3385533347598,
+          -1.34779343816126
+        ]
+      },
+      "properties": {
+        "id": 1831,
+        "name": "Assembleia de Deus Congregação Betel",
+        "subclass": {
+          "id": 7,
+          "class_id": 3,
+          "name": "Igreja evangélica",
+          "icon": {
+            "id": 338,
+            "disk_name": "614cc60cc25c2845391616.png",
+            "file_name": "igreja_evangelica.png",
+            "file_size": 1482,
+            "content_type": "image/png",
+            "is_public": true,
+            "sort_order": 338,
+            "img_url": "http://127.0.0.1:8000/storage/614/cc6/0cc/614cc60cc25c2845391616.png"
+          }
+        }
+      }
+    },
+  ]
+}
+```
+
+- `type`: Tipo de geometria. [ string ]
+- `coordinates`: Coordenadas da geometria. [ array de números ]
+- `id`: ID da atividade. [ int ]
+- `name`: Nome da atividade. [ string ]
+- `subclass`: Objeto de subclasse relacionado. [ objeto ]
+- `id`: ID da subclasse. [ int ]
+- `class_i`d: ID da classe à qual a subclasse pertence. [ int ]
+- `name`: Nome da subclasse. [ string ]
+- `icon`: Objeto de ícone relacionado. [ objeto ]
+- `id`: ID do ícone. [ int ]
+- `disk_name`: Nome do arquivo do ícone no disco. [ string ]
+- `file_name`: Nome do arquivo do ícone. [ string ]
+- `file_size`: Tamanho do arquivo do ícone. [ int ]
+- `content_type`: Tipo de conteúdo do ícone. [ string ]
+- `is_public`: Indicação de se o ícone é público ou não. [ boolean ]
+- `sort_order`: Ordem de classificação do ícone. [ int ]
+- `img_url`: URL da imagem do ícone. [ string ]
 
 [Voltar a pagina principal](/README.md) 
