@@ -15,13 +15,13 @@ class Subclasse extends Model
         'related_color',
     ];
 
-    public function class()
+    public function classe()
     {
         return $this->belongsTo(Classe::class, 'class_id');
     }
 
     public function icon()
     {
-        return $this->hasMany(Icon::class);
+        return $this->hasOne(Icon::class);
     }
 }

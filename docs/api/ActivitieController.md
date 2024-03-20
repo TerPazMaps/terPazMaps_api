@@ -19,6 +19,8 @@
 | ids           | Lista de IDs das atividades para filtrar as atividades. [ **array** ]      |
 | only_references | Parâmetro booleano para retornar apenas as referências das atividades. [ **boolean** ] |
 
+Exemplo:/api/v5/geojson/activitie?regions=1&subclasses=1&ids=850&only_references=1
+
 ## Retorno status:200 - lista de atividades
 
 ```json
