@@ -36,7 +36,8 @@ class SubclasseController extends Controller
         // Adicionar link para acessar a imagem a cada objeto
         $baseUrl = config('app.url');
         $subclasses->transform(function ($item, $key) use ($baseUrl) {
-            $item['image_url'] = $baseUrl . '/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
+            // $item['image_url'] = $baseUrl . '/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
+            $item['image_url'] = 'http://127.0.0.1:8000/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
             return $item;
         });
 

@@ -17,20 +17,33 @@ class ActivitieController extends Controller
      */
     public function index(Request $request)
     {
-        $activities = Activitie::select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+        $activities = Activitie::select(
+            '*', 
+            DB::raw('ST_AsGeoJSON(geometry) as geometry')
+            )
+            ->with('subclass.classe')
+            ->has('subclass.classe')
             ->orderBy('id');
 
-        if ($request->regions)
-            $activities = $activities->whereIn('region_id', $request->regions);
+        if ($request->regions) {
+            $regions_id = $request->regions ? array_map('intval', explode(',', $request->regions)) : [];
+            $activities = $activities->whereIn('region_id', $regions_id);
+        }
 
-        if ($request->subclasses)
-            $activities = $activities->whereIn('subclass_id', $request->subclasses);
-
-        if ($request->ids)
-            $activities = $activities->whereIn('id', $request->ids);
+        if ($request->subclasses) {
+            $subclasses_id = $request->subclasses ? array_map('intval', explode(',', $request->subclasses)) : [];
+            $activities = $activities->whereIn('subclass_id', $subclasses_id);
+        }
+        // dd($request->all());
+        
+        if ($request->ids) {
+            $ids = $request->ids ? array_map('intval', explode(',', $request->ids)) : [];
+            $activities = $activities->whereIn('id', $ids);
+        }
 
         $activities = $activities->get();
 
+        // dd($activities);
         if ($request->only_references) {
             $activities = $activities
                 ->map(function ($activity) {
@@ -57,8 +70,9 @@ class ActivitieController extends Controller
                         "properties" => [
                             "ID Geral" => $activity->id,
                             "Nome" => $activity->name ?? '',
-                            "Classe" => $activity->subclass->class->name,
+                            "Classe" => $activity->subclass->classe->name ?? '',
                             "Sub-classe" => $activity->subclass->name,
+                            "Bairro_id" => $activity->region->id,
                             "Bairro" => $activity->region->name,
                             "Nível" => $activity->level
                         ]

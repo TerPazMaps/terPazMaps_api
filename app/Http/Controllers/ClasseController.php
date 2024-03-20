@@ -90,20 +90,26 @@ class ClasseController extends Controller
      */
     public function getSubclassesByClass(int $id)
     {
+        // Recuperar a classe com suas subclasses e ícones relacionados
         $classe = Classe::where('id', $id)
-            ->with('subclasse.icon')
-            ->first();
-
+            ->with(['subclasse' => function ($query) {
+                $query->has('icon')->with(['icon' => function ($query) {
+                    $query->select('id', 'subclasse_id', 'disk_name', 'file_name', 'file_size', 'content_type', 'title', 'description', 'field', 'is_public', 'sort_order');
+                }]);
+            }])
+            ->has('subclasse.icon')
+            ->get();
+    
         // Adicionar o link para a imagem em cada ícone
         $baseUrl = config('app.url');
-        foreach ($classe->subclasse as $subclasse) {
-            foreach ($subclasse->icon as $icon) {
+        foreach ($classe as $cl) {
+            foreach ($cl->subclasse as $subclasse) {
+                $icon = $subclasse->icon;
                 $icon->image_url = $baseUrl . '/storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
             }
         }
-
-        header('Content-Type: application/json');
-
+    
+        // Retornar os dados da classe com as modificações
         return response()->json($classe);
     }
 

@@ -20,5 +20,10 @@ class Region extends Model
     {
         return $this->hasMany(Street::class);
     }
+    
+    public function subclass()
+    {
+        return $this->hasMany(Subclasse::class);
+    }
 
 }
