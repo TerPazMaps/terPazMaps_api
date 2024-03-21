@@ -69,9 +69,10 @@
         var baseUrl = "{{ $baseUrl }}";
         var map = L.map('map');
         var streetsLayer;
+        var osmTileLayer; // Defina a variável aqui para que possa ser acessada em todo o escopo
 
         // Função para buscar classes e criar as opções de checkbox
-        fetch( baseUrl  + 'api/v5/geojson/classe/')
+        fetch(baseUrl + 'api/v5/geojson/classe/')
             .then(response => response.json())
             .then(data => {
                 var checkboxesClasse = document.getElementById('checkboxesClasses');
@@ -160,16 +161,33 @@
                 .catch(error => console.error('Error fetching streets:', error));
         }
 
-
-
         map.setView([-1.3936, -48.3951], 11);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        // Adiciona a camada base do OpenStreetMap
+        osmTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             minZoom: 1,
             maxZoom: 19
         }).addTo(map);
+
+        // Define um estilo escuro para a camada de sobreposição
+        var darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/">Carto</a>',
+            maxZoom: 19
+        });
+
+        // Adiciona os controles de camadas
+        var baseLayers = {
+            "OpenStreetMap": osmTileLayer,
+        };
+
+        var overlays = {
+            "Dark": darkLayer,
+        };
+
+        L.control.layers(baseLayers, overlays).addTo(map);
     </script>
+
 </body>
 
 </html>

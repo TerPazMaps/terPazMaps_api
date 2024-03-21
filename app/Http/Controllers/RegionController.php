@@ -70,7 +70,7 @@ class RegionController extends Controller
             $geometry = json_decode($activity->geometry);
 
             // Construa a URL da imagem do ícone
-            $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
+            $imageUrl = config('app.url').'storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
             // Criar a feature do GeoJSON
             $feature = [
