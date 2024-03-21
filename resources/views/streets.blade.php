@@ -14,12 +14,26 @@
             width: 100%;
         }
 
-        #checkboxes, #checkboxesClasses {
+        #checkboxes {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100%; /* Para centralizar verticalmente */
-            padding: 0 20%; /* Adiciona espaço de 20px nos lados */
+            height: 100%;
+            /* Para centralizar verticalmente */
+            padding: 0 20%;
+            /* Adiciona espaço de 20% nos lados */
+
+            /* Adaptação para tornar os checkboxes responsivos */
+            flex-wrap: wrap;
+            /* Permite que os elementos sejam envolvidos para uma nova linha */
+            gap: 10px;
+            /* Espaçamento entre os checkboxes */
+        }
+
+        #checkboxes input[type="checkbox"] {
+            /* Estilos específicos para os checkboxes */
+            margin: 0;
+            /* Remove margem padrão */
         }
     </style>
 
@@ -35,21 +49,16 @@
             style="background-color: #28a745; color: #fff; border: none; padding: 8px 16px; cursor: pointer;">Carregar Região</button>
     </form>
 
-    {{-- <form id="classesForm" method="POST">
-        <div id="checkboxesClasses"></div>
-        <button type="submit"
-            style="background-color: #28a745; color: #fff; border: none; padding: 8px 16px; cursor: pointer;">Carregar atividades</button>
-    </form> --}}
-
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!-- Carrega o arquivo Leaflet.js -->
     <script>
+        var baseUrl = "{{ $baseUrl }}";
         var map = L.map('map');
         var streetsLayer;
 
         // Função para buscar os dados das condições de ruas e criar as opções de checkbox
-        fetch('http://127.0.0.1:8000/api/v5/geojson/street_condition/')
+        fetch(baseUrl+'api/v5/geojson/street_condition/')
             .then(response => response.json())
             .then(data => {
                 var checkboxesDiv = document.getElementById('checkboxes');
@@ -68,28 +77,9 @@
             })
             .catch(error => console.error('Error fetching street conditions:', error));
        
-        // // Função para buscar classes e criar as opções de checkbox
-        // fetch('http://127.0.0.1:8000/api/v5/geojson/classe/')
-        //     .then(response => response.json())
-        //     .then(data => {
-        //         var checkboxesClasse = document.getElementById('checkboxesClasses');
-        //         data.forEach(item => {
-        //             var checkbox = document.createElement('input');
-        //             checkbox.type = 'checkbox';
-        //             checkbox.name = 'classesIds[]';
-        //             checkbox.value = item.Classe.ID;
-        //             // checkbox.checked = true; // Marcando o checkbox por padrão
-        //             var label = document.createElement('label');
-        //             label.appendChild(document.createTextNode(item.Classe.ID + "-" + item.Classe.Nome));
-        //             label.appendChild(document.createElement('br'));
-        //             checkboxesClasse.appendChild(checkbox);
-        //             checkboxesClasse.appendChild(label);
-        //         });
-        //     })
-        //     .catch(error => console.error('Error fetching classes:', error));
+        
 
-
-        fetch('http://127.0.0.1:8000/api/v5/geojson/region/')
+        fetch(baseUrl+'api/v5/geojson/region/')
             .then(response => response.json())
             .then(data => {
                 var regionSelect = document.getElementById('regionId');
@@ -112,23 +102,14 @@
             console.log(regionId); // Imprime o ID da região no console
             fetchAndDisplayStreets(regionId, conditionIds);
         });
-       
-        // document.getElementById('classesForm').addEventListener('submit', function(event) {
-        //     event.preventDefault(); // Impede o comportamento padrão do formulário
-        //     var formData = new FormData(this); // Cria um objeto FormData com os dados do formulário
-        //     var classesIds = formData.getAll('classesIds[]'); // Obtém os valores dos checkboxes
-        //     var regionId = formData.get('regionId'); // Obtém o ID da região selecionada
-        //     console.log(classesIds); // Imprime o array no console
-        //     // fetchAndDisplayStreets(regionId, conditionIds);
-        // });
-
+     
         function fetchAndDisplayStreets(regionId, conditionIds) {
             // Remove as camadas do mapa se já existirem
             if (streetsLayer) {
                 map.removeLayer(streetsLayer);
             }
 
-            var url = 'http://127.0.0.1:8000/api/v5/geojson/region/' + regionId + '/streets/';
+            var url = baseUrl+'api/v5/geojson/region/' + regionId + '/streets/';
             if (conditionIds && conditionIds.length > 0) {
                 url += '?condition_id=' + encodeURIComponent(conditionIds.join(','));
             }
@@ -139,7 +120,7 @@
                     streetsLayer = L.geoJSON(data).addTo(map);
 
                     // Centraliza o mapa com base nas coordenadas do centro do bairro
-                    fetch('http://127.0.0.1:8000/api/v5/geojson/region/' + regionId)
+                    fetch(baseUrl+'api/v5/geojson/region/' + regionId)
                         .then(response => response.json())
                         .then(regionData => {
                             var centerCoordinates = regionData.properties.Centro.coordinates;
