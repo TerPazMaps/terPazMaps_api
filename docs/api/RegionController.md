@@ -204,7 +204,7 @@ Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
 | id*          | int, obrigatório. O ID da região.                                                                         |
 | class_id     | array, opcional. IDs de classe separados por vírgula. Apenas as atividades correspondentes às classes fornecidas serão retornadas. |
 
-Exemplo: `/api/v5/geojson/region/1/icons?subclass=2,3`    
+Exemplo: `/api/v5/geojson/region/1/icons?class_id=2,3`    
 
 ## Retorno status:200 - ícones de região específica
 
