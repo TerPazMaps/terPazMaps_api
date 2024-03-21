@@ -33,7 +33,13 @@ Route::get('/', function () {
 
 
 Route::get('/maps', function () {
-    return view('streets');
+    $baseUrl = config('app.url');
+    return view('streets', compact('baseUrl'));
+});
+
+Route::get('/icons', function () {
+    $baseUrl = config('app.url');
+    return view('icons', compact('baseUrl'));
 });
 
 //                                    api/v5

@@ -54,19 +54,15 @@ class RegionController extends Controller
     public function getIconsByRegion(int $id, Request $request)
     {
         $activities = Activitie::with(['subclass.icon'])
-            ->has('subclass.icon')
+            ->whereHas('subclass', function ($query) use ($request) {
+                if ($request->class_id) {
+                    $class_ids = array_map('intval', explode(',', $request->class_id));
+                    $query->whereIn('class_id', $class_ids);
+                }
+            })
             ->where('region_id', $id)
-            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'));
-
-        if ($request->class_id) {
-            $class_ids = array_map('intval', explode(',', $request->class_id));
-            $activities->whereIn('subclass_id', $class_ids);
-        }
-
-        $activities = $activities->get();
-
-
-        // dd($activities);
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->get();
         // Array para armazenar os dados das atividades com ícones
         $geojsonFeatures = [];
 
@@ -74,7 +70,7 @@ class RegionController extends Controller
             $geometry = json_decode($activity->geometry);
 
             // Construa a URL da imagem do ícone
-            $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
+            $imageUrl = config('app.url').'storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
             // Criar a feature do GeoJSON
             $feature = [
@@ -89,6 +85,7 @@ class RegionController extends Controller
                         'name' => $activity->subclass->name,
                         'icon' => [
                             'id' => $activity->subclass->icon->id,
+                            'sb_id' => $activity->subclass->icon->subclasse_id,
                             'disk_name' => $activity->subclass->icon->disk_name,
                             'file_name' => $activity->subclass->icon->file_name,
                             'file_size' => $activity->subclass->icon->file_size,
