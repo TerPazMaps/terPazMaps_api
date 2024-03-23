@@ -42,6 +42,11 @@ Route::get('/icons', function () {
     return view('icons', compact('baseUrl'));
 });
 
+Route::get('/index', function () {
+    $baseUrl = config('app.url');
+    return view('index', compact('baseUrl'));
+})->name('index');
+
 //                                    api/v5
 //      geojson.io
 // http://localhost/api/v5/geojson/regions
