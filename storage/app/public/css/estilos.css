@@ -1,0 +1,50 @@
+body,
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    /* Adiciona uma posição relativa para permitir o posicionamento absoluto dos elementos filhos */
+}
+
+header {
+    height: 45px;
+    /* Ajuste a altura conforme necessário */
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    /* Garante que o cabeçalho esteja acima do mapa */
+}
+
+.navbar-toggler {
+    margin-left: 5px;
+    /* Adiciona uma pequena margem à esquerda */
+    padding: 5px;
+    /* Adiciona um pouco de preenchimento ao botão */
+}
+
+#regionContainer {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    /* Posiciona o mapa absolutamente em relação ao corpo da página */
+    top: 0;
+    left: 0;
+    z-index: 0;
+    /* Garante que o mapa esteja no fundo */
+    box-sizing: border-box;
+    /* Garante que padding e border não afetem as dimensões totais do elemento */
+}
+
+.custom-offcanvas {
+    width: 50%;
+}

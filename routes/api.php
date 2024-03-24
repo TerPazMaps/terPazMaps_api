@@ -42,7 +42,7 @@ Route::get('/icons', function () {
     return view('icons', compact('baseUrl'));
 });
 
-Route::get('/index', function () {
+Route::get('/terpazmaps', function () { 
     $baseUrl = config('app.url');
     return view('index', compact('baseUrl'));
 })->name('index');
