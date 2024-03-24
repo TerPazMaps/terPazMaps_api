@@ -10,6 +10,8 @@
     <link href="{{ asset('storage/css/estilos.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="icon" href="storage/favicon/favicon.svg" type="image/svg+xml">
+
 </head>
 
 <body>
@@ -31,7 +33,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!-- Carrega o arquivo Leaflet.js -->
 
     <script src="{{ asset('storage/js/scripts.js') }}"></script>
-    
+
     <script src="https://kit.fontawesome.com/bf4bab225b.js" crossorigin="anonymous"></script>
 
 </body>

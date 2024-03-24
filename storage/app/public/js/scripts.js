@@ -8,9 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
     var regionCache = {}; // Objeto para armazenar as regiões em cache
 
     // Adiciona a camada base do Google Maps
-    googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    // googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        //     maxZoom: 20,
+        //     subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        // }).addTo(map);
+        
+    // Adiciona a camada base do OpenStreetMaps
+    osmTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        minZoom: 1,
+        maxZoom: 19
     }).addTo(map);
 
     // Carrega todas as regiões e as armazena em cache
