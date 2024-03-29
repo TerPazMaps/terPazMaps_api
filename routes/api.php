@@ -33,8 +33,19 @@ Route::get('/', function () {
 
 
 Route::get('/maps', function () {
-    return view('streets');
+    $baseUrl = config('app.url');
+    return view('streets', compact('baseUrl'));
 });
+
+Route::get('/icons', function () {
+    $baseUrl = config('app.url');
+    return view('icons', compact('baseUrl'));
+});
+
+Route::get('/terpazmaps', function () { 
+    $baseUrl = config('app.url');
+    return view('index', compact('baseUrl'));
+})->name('index');
 
 //                                    api/v5
 //      geojson.io

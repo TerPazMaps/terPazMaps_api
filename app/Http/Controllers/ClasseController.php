@@ -98,8 +98,7 @@ class ClasseController extends Controller
                 }]);
             }])
             ->has('subclasse.icon')
-            ->get();
-    
+            ->paginate(15);
         // Adicionar o link para a imagem em cada ícone
         $baseUrl = config('app.url');
         foreach ($classe as $cl) {

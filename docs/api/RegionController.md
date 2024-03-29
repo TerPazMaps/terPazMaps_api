@@ -8,7 +8,7 @@
 
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/Region` 
+`/api/v5/geojson/region` 
 
 ## Parâmetros
  Este método não aceita nenhum parâmetro.
@@ -66,7 +66,7 @@
 
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/Region/{id}` 
+`/api/v5/geojson/region/{id}` 
 
 ## Parâmetros
 
@@ -126,7 +126,7 @@
 # Ruas por Região
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/Region/{id}/streets` 
+`/api/v5/geojson/region/{id}/streets` 
 
 ## Parâmetros
 
@@ -195,7 +195,7 @@ Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
 # Ícones por Região
 
 [![GET](https://img.shields.io/badge/HTTP-GET-0080FF)](/api/v5/geojson/Region/{id}/icons)  
-`/api/v5/geojson/Region/{id}/icons` 
+`/api/v5/geojson/region/{id}/icons` 
 
 ## Parâmetros
 
@@ -204,7 +204,7 @@ Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
 | id*          | int, obrigatório. O ID da região.                                                                         |
 | class_id     | array, opcional. IDs de classe separados por vírgula. Apenas as atividades correspondentes às classes fornecidas serão retornadas. |
 
-Exemplo: `/api/v5/geojson/region/1/icons?subclass=2,3`    
+Exemplo: `/api/v5/geojson/region/1/icons?class_id=2,3`    
 
 ## Retorno status:200 - ícones de região específica
 

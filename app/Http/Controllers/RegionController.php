@@ -54,19 +54,22 @@ class RegionController extends Controller
     public function getIconsByRegion(int $id, Request $request)
     {
         $activities = Activitie::with(['subclass.icon'])
-            ->has('subclass.icon')
+            ->whereHas('subclass', function ($query) use ($request) {
+                if ($request->class_id) {
+                    $class_ids = array_map('intval', explode(',', $request->class_id));
+                    $query->whereIn('class_id', $class_ids);
+                }
+            })
             ->where('region_id', $id)
-            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'));
-
-        if ($request->class_id) {
-            $class_ids = array_map('intval', explode(',', $request->class_id));
-            $activities->whereIn('subclass_id', $class_ids);
-        }
-
-        $activities = $activities->get();
-
-
-        // dd($activities);
+            ->where(function ($query) use ($request) {
+                if ($request->subclass_id) {
+                    $subclass_id = array_map('intval', explode(',', $request->subclass_id));
+                    $query->whereIn('subclass_id', $subclass_id);
+                }
+            })
+            
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->get();
         // Array para armazenar os dados das atividades com ícones
         $geojsonFeatures = [];
 
@@ -89,6 +92,7 @@ class RegionController extends Controller
                         'name' => $activity->subclass->name,
                         'icon' => [
                             'id' => $activity->subclass->icon->id,
+                            'sb_id' => $activity->subclass->icon->subclasse_id,
                             'disk_name' => $activity->subclass->icon->disk_name,
                             'file_name' => $activity->subclass->icon->file_name,
                             'file_size' => $activity->subclass->icon->file_size,
