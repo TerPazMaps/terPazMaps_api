@@ -113,6 +113,7 @@
             if (conditionIds && conditionIds.length > 0) {
                 url += '?condition_id=' + encodeURIComponent(conditionIds.join(','));
             }
+            
             fetch(url)
                 .then(response => response.json())
                 .then(data => {

@@ -61,6 +61,13 @@ class RegionController extends Controller
                 }
             })
             ->where('region_id', $id)
+            ->where(function ($query) use ($request) {
+                if ($request->subclass_id) {
+                    $subclass_id = array_map('intval', explode(',', $request->subclass_id));
+                    $query->whereIn('subclass_id', $subclass_id);
+                }
+            })
+            
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->get();
         // Array para armazenar os dados das atividades com ícones
@@ -70,7 +77,7 @@ class RegionController extends Controller
             $geometry = json_decode($activity->geometry);
 
             // Construa a URL da imagem do ícone
-            $imageUrl = config('app.url').'storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
+            $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
             // Criar a feature do GeoJSON
             $feature = [
