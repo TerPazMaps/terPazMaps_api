@@ -9,12 +9,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var regionCache = {}; // Objeto para armazenar as regiões em cache
     var activitiesCache = {}; // Objeto para armazenar as atividades em cache
+    var markers = [];
 
-    // Adiciona a camada base do Google Maps
-    // var googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-    //     maxZoom: 20,
-    //     subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-    // }).addTo(map);
+  
+    // Adiciona a camada base do Google Maps com o estilo personalizado
+    // var googleLayer = L.tileLayer(
+    //     "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    //     {
+    //         maxZoom: 20,
+    //         subdomains: ["mt0", "mt1", "mt2", "mt3"],
+    //         style: customMapStyle, // Adiciona o estilo personalizado
+    //     }
+    // ).addTo(map);
 
     // Adiciona a camada base do OpenStreetMaps
     var osmTileLayer = L.tileLayer(
@@ -78,13 +84,14 @@ document.addEventListener("DOMContentLoaded", function () {
         // Remove as camadas de região existentes do mapa, se houver
         limparCamadasPersonalizadas("região");
 
+        console.log(data);
         // Desenha as regiões no mapa
         streetsLayer = L.geoJSON(data, {
             style: function (feature) {
                 return {
-                    color: data.type === "Feature" ? "black" : "blue", // Cor das bordas
+                    color: feature.type === "Feature" ? "black" : "blue", // Cor das bordas
                     fillColor: "black", // Cor de preenchimento
-                    weight: data.type === "Feature" ? 0.8 : 2, // Espessura da linha
+                    weight: feature.type === "Feature" ? 0.8 : 2, // Espessura da linha
                     opacity: 1, // Opacidade da borda
                     fillOpacity: 0.5, // Opacidade do preenchimento
                 };
@@ -346,6 +353,12 @@ document.addEventListener("DOMContentLoaded", function () {
         getActivities(parseInt(document.getElementById("regionId").value));
         // Exibir o modal de Ruas
         document.getElementById("buscaModal").style.display = "block";
+        // Definir o valor do campo de texto com o texto da opção selecionada
+        // Obter o texto da opção selecionada
+        document.getElementById("nomeBairroBusca").textContent =
+            document.getElementById("regionId").options[
+                document.getElementById("regionId").selectedIndex
+            ].text;
     });
 
     var inputBusca = document.getElementById("inputBusca");
@@ -357,19 +370,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Caso contrário, filtre os resultados de acordo com o termo de busca
         resultados = activitiesCache.filter(function (atividade) {
-            return atividade.nome.toLowerCase().includes(termoBusca);
+            if (atividade.nome.trim() === "") {
+                return atividade.subclasse
+                    .toLowerCase()
+                    .includes(termoBusca.toLowerCase());
+            } else {
+                return atividade.nome
+                    .toLowerCase()
+                    .includes(termoBusca.toLowerCase());
+            }
         });
 
         // Limpa os resultados anteriores
         searchResults.innerHTML = "";
         if (termoBusca === "") {
-            var divItem = document.createElement("div");
-            divItem.classList.add(
+            // Crie a estrutura correspondente
+            var divSearchResults = document.createElement("div");
+            divSearchResults.id = "searchResults";
+            divSearchResults.classList.add("mt-1", "overflow-auto");
+            divSearchResults.style.maxHeight = "85px";
+
+            // Adiciona a lista de resultados
+            var divListGroup = document.createElement("div");
+            divListGroup.classList.add("list-group", "mb-1");
+
+            var divListItem = document.createElement("div");
+            divListItem.classList.add(
                 "list-group-item",
                 "list-group-item-action",
                 "d-flex",
-                "border",
-                "mt-1",
                 "align-items-center"
             );
 
@@ -386,15 +415,24 @@ document.addEventListener("DOMContentLoaded", function () {
             divSubclasse.style.width = "6rem";
             divSubclasse.textContent = "Venda de chopp e similares";
 
-            divItem.appendChild(iconMarker);
-            divItem.appendChild(spanNome);
-            divItem.appendChild(divSubclasse);
+            divListItem.appendChild(iconMarker);
+            divListItem.appendChild(spanNome);
+            divListItem.appendChild(divSubclasse);
 
-            searchResults.appendChild(divItem);
+            divListGroup.appendChild(divListItem);
+            divSearchResults.appendChild(divListGroup);
+
+            // Adiciona a estrutura criada ao searchResults
+            searchResults.appendChild(divSearchResults);
         } else if (resultados.length > 0) {
-            // Adiciona os novos resultados
+            // Crie uma div externa com a classe "list-group"
+            var divListGroup = document.createElement("div");
+            divListGroup.classList.add("list-group", "mb-1");
+
+            // Adicione os novos resultados à div externa "list-group"
             resultados.forEach(function (atividade) {
                 var divItem = document.createElement("div");
+                divItem.setAttribute("type", "button");
                 divItem.classList.add(
                     "list-group-item",
                     "list-group-item-action",
@@ -408,12 +446,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 var imgIcon = document.createElement("img");
                 imgIcon.src = atividade.img_url; // Adiciona a URL da imagem
                 imgIcon.alt = "Ícone"; // Texto alternativo da imagem (opcional)
-                imgIcon.style.width = "2.3rem"; // Define a largura da imagem
-                imgIcon.style.height = "2.3rem"; // Define a altura da imagem
+                imgIcon.style.width = "1.5rem"; // Define a largura da imagem
+                imgIcon.style.height = "1.5rem"; // Define a altura da imagem
 
                 var spanNome = document.createElement("span");
                 spanNome.classList.add("flex-grow-1");
+
                 spanNome.textContent = atividade.nome;
+                if (atividade.nome == "") {
+                    spanNome.classList.add("text-danger");
+                    spanNome.textContent = "Sem nome";
+                }
 
                 var divSubclasse = document.createElement("div");
                 divSubclasse.id = "subclasseAtividade";
@@ -428,9 +471,66 @@ document.addEventListener("DOMContentLoaded", function () {
                 divItem.appendChild(imgIcon); // Adiciona a imagem
                 divItem.appendChild(spanNome);
                 divItem.appendChild(divSubclasse);
+                // Adicionando um evento de clique à divItem
+                // Declara um array global para manter a referência de todos os marcadores
 
-                searchResults.appendChild(divItem);
+                divItem.addEventListener("click", function () {
+                    // Disparar o evento de clique no botão de fechar do modal
+                    var closeButton = document.querySelector(
+                        "#buscaModal .btn-close"
+                    );
+                    closeButton.click();
+
+                    // Remover os marcadores anteriores, se existirem
+                    if (markers.length > 0) {
+                        markers.forEach(function (markerId) {
+                            var markerToRemove = map._layers[markerId];
+                            if (markerToRemove) {
+                                map.removeLayer(markerToRemove);
+                            }
+                        });
+                        markers = []; // Limpar o array de marcadores
+                    }
+
+                    // Criar um novo marcador com as informações da atividade
+                    var icon = L.icon({
+                        iconUrl: atividade.img_url, // URL do ícone do marcador
+                        iconSize: [38, 38], // Tamanho do ícone do marcador
+                        iconAnchor: [19, 38], // Posição do ícone em relação ao marcador
+                        popupAnchor: [0, -38], // Posição do popup em relação ao marcador
+                    });
+
+                    // Centralizar o mapa na coordenada da atividade
+                    var coordenadas = atividade.geometry.coordinates; // Obter as coordenadas da atividade atual e da próxima atividade
+
+                    map.setView([coordenadas[1], coordenadas[0]], 18);
+
+                    var newMarker = L.marker([coordenadas[1], coordenadas[0]], {
+                        icon: icon,
+                    }).addTo(map);
+
+                    // Adicionar informações adicionais ao marcador, como um popup
+                    var popupContent =
+                        "<b>" +
+                        atividade.nome +
+                        "</b><br>" +
+                        "<em>" +
+                        atividade.classe +
+                        " - " +
+                        atividade.subclasse +
+                        "</em>";
+                    newMarker.bindPopup(popupContent).openPopup();
+
+                    // Adicionar o novo marcador ao array de marcadores
+                    markers.push(newMarker._leaflet_id);
+                });
+
+                // Adicione o item de resultado à div externa "list-group"
+                divListGroup.appendChild(divItem);
             });
+
+            // Adicione a div externa "list-group" ao elemento de resultados de busca
+            searchResults.appendChild(divListGroup);
         } else {
             var divItem = document.createElement("div");
             divItem.classList.add(

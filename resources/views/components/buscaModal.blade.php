@@ -4,12 +4,14 @@
                 class="border border-primary border-2 rounded-4 p-1">Buscar</span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
+    <div class="offcanvas-body pt-0">
         <div class="text-center">
+            <small class="text-dark" id="nomeBairroBusca">selct aqui</small><br>
+            <small class="text-secondary">clique no resultado para visualizar no mapa</small>
             <div class="rounded-pill p-1 bg-light">
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
-                    <input type="text" id="inputBusca" class="form-control " placeholder="Açai Pai D'égua..."
+                    <input type="text" id="inputBusca" class="form-control " placeholder="sorve..."
                         aria-label="Pesquisar atividades" aria-describedby="button-addon2">
                     <button class="btn btn-outline-secondary " type="button" id="limpaInputBusca"><i
                             class="fas fa-times"></i></button>

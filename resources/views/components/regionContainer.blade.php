@@ -1,8 +1,8 @@
-<div id="regionContainer" class="bg-white p-1 d-flex">
+<div id="regionContainer" class="bg-white p-1 d-flex ">
     <button id="ferraButton" class="btn btn-primary">
         <i class="fa-solid fa-hammer" style="color: #ffffff;"></i>
     </button>
-    <div id="ferraOptions" class="d-none">
+    <div id="ferraOptions" class="d-none mt-1">
         <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#buscaModal"
             aria-controls="offcanvasExample">
             <i class="fa-solid fa-magnifying-glass fa-2xs" style="color: #ffffff;"></i>
