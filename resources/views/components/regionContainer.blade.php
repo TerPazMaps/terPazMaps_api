@@ -3,9 +3,11 @@
         <i class="fa-solid fa-hammer" style="color: #ffffff;"></i>
     </button>
     <div id="ferraOptions" class="d-none">
-        <button class="btn btn-primary">
+        <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#buscaModal"
+            aria-controls="offcanvasExample">
             <i class="fa-solid fa-magnifying-glass fa-2xs" style="color: #ffffff;"></i>
-            Buscar</button>
+            Buscar
+        </button>
         <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#ruasModal"
             aria-controls="offcanvasExample">
             <i class="fa-solid fa-road fa-2xs" style="color: #ffffff;"></i>

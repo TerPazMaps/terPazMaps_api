@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var streetConditionsData;
 
     var regionCache = {}; // Objeto para armazenar as regiões em cache
+    var activitiesCache = {}; // Objeto para armazenar as atividades em cache
 
     // Adiciona a camada base do Google Maps
     // var googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -252,23 +253,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function resetMap() {
-        // Limpar camadas adicionadas ao mapa, se houver
-        limparCamadasPersonalizadas();
-
-        // Redefinir a visualização do mapa para a posição inicial
-        map.setView([-1.383, -48.4291], 12);
-
-        // Limpar seleção do select de regiões
-        document.getElementById("regionId").value = "0";
-
-        // Desenhar todas as regiões no mapa
-        drawRegionLayer(regionCache.allRegions);
-
-        // Ocultar botões e menu suspenso
-        bottoesMenu(0);
-    }
-
     function limparCamadasPersonalizadas(tipo) {
         // Obtém todas as camadas adicionadas ao mapa
         var layers = map._layers;
@@ -284,6 +268,46 @@ document.addEventListener("DOMContentLoaded", function () {
                 map.removeLayer(layers[layerId]);
             }
         }
+    }
+
+    function getActivities(regions) {
+        fetch(
+            "http://127.0.0.1:8000/api/v5/geojson/activitie?regions=" + regions
+        )
+            .then((response) => response.json())
+            .then((data) => {
+                activitiesCache = data.features.map((feature) => ({
+                    id: feature.properties["ID Geral"],
+                    nome: feature.properties.Nome,
+                    classe: feature.properties.Classe,
+                    subclasse: feature.properties["Sub-classe"],
+                    bairroId: feature.properties.Bairro_id,
+                    bairro: feature.properties.Bairro,
+                    nivel: feature.properties.Nível,
+                    geometry: feature.geometry,
+                    img_url: feature.properties.img_url,
+                }));
+            })
+            .catch((error) =>
+                console.error("Erro ao buscar dados das atividades:", error)
+            );
+    }
+
+    function resetMap() {
+        // Limpar camadas adicionadas ao mapa, se houver
+        limparCamadasPersonalizadas();
+
+        // Redefinir a visualização do mapa para a posição inicial
+        map.setView([-1.383, -48.4291], 12);
+
+        // Limpar seleção do select de regiões
+        document.getElementById("regionId").value = "0";
+
+        // Desenhar todas as regiões no mapa
+        drawRegionLayer(regionCache.allRegions);
+
+        // Ocultar botões e menu suspenso
+        bottoesMenu(0);
     }
 
     function limparCamadaDeRuas() {
@@ -317,27 +341,153 @@ document.addEventListener("DOMContentLoaded", function () {
     // Exemplo de manipulador de evento para a opção "Buscar":
     var buscarOption = ferraOptions.querySelector("button:nth-of-type(1)");
     buscarOption.addEventListener("click", function () {
+        ferraOptions.classList.toggle("d-none");
         // Lógica quando a opção "Buscar" é clicada
+        getActivities(parseInt(document.getElementById("regionId").value));
+        // Exibir o modal de Ruas
+        document.getElementById("buscaModal").style.display = "block";
     });
 
-    // Exemplo de manipulador de evento para a opção "Ruas":
+    var inputBusca = document.getElementById("inputBusca");
+    var searchResults = document.getElementById("searchResults");
+
+    inputBusca.addEventListener("input", function () {
+        var termoBusca = inputBusca.value.toLowerCase();
+        var resultados = [];
+
+        // Caso contrário, filtre os resultados de acordo com o termo de busca
+        resultados = activitiesCache.filter(function (atividade) {
+            return atividade.nome.toLowerCase().includes(termoBusca);
+        });
+
+        // Limpa os resultados anteriores
+        searchResults.innerHTML = "";
+        if (termoBusca === "") {
+            var divItem = document.createElement("div");
+            divItem.classList.add(
+                "list-group-item",
+                "list-group-item-action",
+                "d-flex",
+                "border",
+                "mt-1",
+                "align-items-center"
+            );
+
+            var iconMarker = document.createElement("i");
+            iconMarker.classList.add("fas", "fa-map-marker-alt");
+
+            var spanNome = document.createElement("span");
+            spanNome.classList.add("flex-grow-1");
+            spanNome.textContent = "Sorvete do chicão";
+
+            var divSubclasse = document.createElement("div");
+            divSubclasse.id = "subclasseAtividade";
+            divSubclasse.classList.add("badge", "bg-secondary", "text-wrap");
+            divSubclasse.style.width = "6rem";
+            divSubclasse.textContent = "Venda de chopp e similares";
+
+            divItem.appendChild(iconMarker);
+            divItem.appendChild(spanNome);
+            divItem.appendChild(divSubclasse);
+
+            searchResults.appendChild(divItem);
+        } else if (resultados.length > 0) {
+            // Adiciona os novos resultados
+            resultados.forEach(function (atividade) {
+                var divItem = document.createElement("div");
+                divItem.classList.add(
+                    "list-group-item",
+                    "list-group-item-action",
+                    "d-flex",
+                    "border",
+                    "mt-1",
+                    "align-items-center"
+                );
+
+                // Cria o elemento de imagem
+                var imgIcon = document.createElement("img");
+                imgIcon.src = atividade.img_url; // Adiciona a URL da imagem
+                imgIcon.alt = "Ícone"; // Texto alternativo da imagem (opcional)
+                imgIcon.style.width = "2.3rem"; // Define a largura da imagem
+                imgIcon.style.height = "2.3rem"; // Define a altura da imagem
+
+                var spanNome = document.createElement("span");
+                spanNome.classList.add("flex-grow-1");
+                spanNome.textContent = atividade.nome;
+
+                var divSubclasse = document.createElement("div");
+                divSubclasse.id = "subclasseAtividade";
+                divSubclasse.classList.add(
+                    "badge",
+                    "bg-secondary",
+                    "text-wrap"
+                );
+                // divSubclasse.style.width = "6rem";
+                divSubclasse.textContent = atividade.subclasse;
+
+                divItem.appendChild(imgIcon); // Adiciona a imagem
+                divItem.appendChild(spanNome);
+                divItem.appendChild(divSubclasse);
+
+                searchResults.appendChild(divItem);
+            });
+        } else {
+            var divItem = document.createElement("div");
+            divItem.classList.add(
+                "list-group-item",
+                "list-group-item-action",
+                "d-flex",
+                "border",
+                "mt-1",
+                "align-items-center"
+            );
+
+            var iconFeedback = document.createElement("i");
+            iconFeedback.classList.add(
+                "fas",
+                "fa-exclamation-circle",
+                "me-2",
+                "text-secondary"
+            );
+
+            var spanMessage = document.createElement("span");
+            spanMessage.textContent = "Nenhum resultado encontrado";
+
+            divItem.appendChild(iconFeedback);
+            divItem.appendChild(spanMessage);
+
+            searchResults.appendChild(divItem);
+        }
+    });
+
+    document
+        .getElementById("limpaInputBusca")
+        .addEventListener("click", function () {
+            document.getElementById("inputBusca").value = ""; // Define o valor como uma string vazia
+            document
+                .getElementById("inputBusca")
+                .dispatchEvent(new Event("input")); // Dispara o evento de input
+        });
+
+    window.addEventListener("DOMContentLoaded", (event) => {
+        // Calcula a altura disponível
+        const offcanvasBody = document.querySelector(".offcanvas-body");
+        const maxHeight =
+            offcanvasBody.clientHeight - offcanvasBody.offsetTop - 20; // 20px para folga
+
+        // Define a altura máxima da div searchResults
+        const searchResults = document.getElementById("searchResults");
+        searchResults.style.maxHeight = `${maxHeight}px`;
+    });
+
+    // ---------------Manipulador de Ruas---------------
     var ruasOption = ferraOptions.querySelector("button:nth-of-type(2)");
     ruasOption.addEventListener("click", function () {
         ferraOptions.classList.toggle("d-none"); // Alternar a visibilidade do menu suspenso
         // Quando a opção "Ruas" é clicada
-        ruasOption.addEventListener("click", function () {
-            // Exibir o modal de Ruas
-            document.getElementById("ruasModal").style.display = "block";
-        });
-
-        // Fechar o modal ao clicar fora do modal
-        window.onclick = function (event) {
-            var modal = document.getElementById("ruasModal");
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        };
+        document.getElementById("ruasModal").style.display = "block";
     });
+    // ---------------Manipulador de Ruas---------------Fim
 
     // Exemplo de manipulador de evento para a opção "Temas":
     var temasOption = ferraOptions.querySelector("button:nth-of-type(3)");
@@ -373,4 +523,3 @@ document.addEventListener("DOMContentLoaded", function () {
         bottoesMenu(selectedRegion);
     });
 });
-

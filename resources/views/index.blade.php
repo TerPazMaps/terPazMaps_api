@@ -22,15 +22,15 @@
 
     @include('components.regionContainer')
 
-    {{-- @include('components.configButton') --}}
-
+    
     <main style="padding-top: 45px;"> <!-- 45px é a altura do seu cabeçalho -->
         <div id="map"></div>
     </main>
-
+    
     @include('components.lateral')
-
+    
     @include('components.ruasModal')
+    @include('components.buscaModal')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
