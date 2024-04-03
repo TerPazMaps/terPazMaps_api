@@ -13,7 +13,9 @@
             <i class="fa-solid fa-road fa-2xs" style="color: #ffffff;"></i>
             Ruas
         </button>
-        <button class="btn btn-primary"><i class="fa-solid fa-brush fa-2xs" style="color: #ffffff;"></i>
+        <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#temasModal"
+            aria-controls="offcanvasExample">
+            <i class="fa-solid fa-brush fa-2xs" style="color: #ffffff;"></i>
             Temas</button>
         <button class="btn btn-primary"><i class="fa-solid fa-rotate-right fa-flip-horizontal fa-2xs"
                 style="color: #ffffff;"></i>

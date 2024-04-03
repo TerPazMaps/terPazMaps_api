@@ -593,6 +593,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var temasOption = ferraOptions.querySelector("button:nth-of-type(3)");
     temasOption.addEventListener("click", function () {
         // Lógica quando a opção "Temas" é clicada
+        ferraOptions.classList.toggle("d-none"); // Alternar a visibilidade do menu suspenso
+        // Quando a opção "Ruas" é clicada
+        document.getElementById("temasModal").style.display = "block";
     });
 
     // Exemplo de manipulador de evento para a opção "Desfazer Tudo":
