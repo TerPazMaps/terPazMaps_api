@@ -9,9 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var regionCache = {}; // Objeto para armazenar as regiões em cache
     var activitiesCache = {}; // Objeto para armazenar as atividades em cache
+    var classesCache = {}; // Objeto para armazenar as regiões em cache
+    var subclassesCache = {}; // Objeto para armazenar as regiões em cache
+    var temasAtivosCache = {};
     var markers = [];
 
-  
     // Adiciona a camada base do Google Maps com o estilo personalizado
     // var googleLayer = L.tileLayer(
     //     "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
@@ -59,6 +61,26 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch((error) => console.error("Erro ao buscar regiões:", error));
 
+    fetch("http://127.0.0.1:8000/api/v5/geojson/classe/")
+        .then((response) => response.json())
+        .then((data) => {
+            classesCache = data;
+            temasAtivosCache = [];
+            classesCache.forEach(function () {
+                temasAtivosCache.push([]);
+            });
+            temasAtivosCache.push([]);
+        })
+        .catch((error) => console.error("Erro ao buscar classes:", error));
+
+    fetch("http://127.0.0.1:8000/api/v5/geojson/subclasse/")
+        .then((response) => response.json())
+        .then((data) => {
+            subclassesCache = data;
+            console.log(subclassesCache);
+        })
+        .catch((error) => console.error("Erro ao buscar classes:", error));
+
     // Função para preencher o select de regiões
     function populateRegionSelect(regions) {
         var regionSelect = document.getElementById("regionId");
@@ -84,7 +106,6 @@ document.addEventListener("DOMContentLoaded", function () {
         // Remove as camadas de região existentes do mapa, se houver
         limparCamadasPersonalizadas("região");
 
-        console.log(data);
         // Desenha as regiões no mapa
         streetsLayer = L.geoJSON(data, {
             style: function (feature) {
@@ -317,24 +338,18 @@ document.addEventListener("DOMContentLoaded", function () {
         bottoesMenu(0);
     }
 
-    function limparCamadaDeRuas() {
-        // Itera sobre as camadas e remove apenas as camadas personalizadas do tipo especificado
-        var layers = map._layers;
-        console.log("remover layer:" + Object.keys(layers));
-        console.log("remover layer:" + Object.keys(layers[25]["options"]));
+    function getTemasAtivos() {
+        var totalTemasAtivos = 0;
 
-        for (var layerId in layers) {
-            // Verifica se a camada não é uma camada padrão e tem a propriedade layerType correspondente ao tipo especificado
-            if (
-                !layers[layerId].options.isBaseLayer &&
-                layers[layerId].options.layerType != "região" &&
-                layers[layerId]._url !==
-                    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            ) {
-                map.removeLayer(layers[layerId]);
-                // console.log(Object(map._layers));
-            }
+        // Iterar sobre temasAtivosCache a partir do índice 1
+        for (var i = 1; i < temasAtivosCache.length; i++) {
+            // Adicionar o número de temas ativos para a classe atual ao totalTemasAtivos
+            totalTemasAtivos += temasAtivosCache[i].length;
         }
+        var temaSelecionadosSpan = document.getElementById("temaSelecionados");
+
+        // Define o texto da span com o resultado da função getTemasAtivos() concatenado com " selecionados"
+        temaSelecionadosSpan.textContent = totalTemasAtivos + " selecionados";
     }
 
     var ferraButton = document.getElementById("ferraButton");
@@ -592,10 +607,109 @@ document.addEventListener("DOMContentLoaded", function () {
     // Exemplo de manipulador de evento para a opção "Temas":
     var temasOption = ferraOptions.querySelector("button:nth-of-type(3)");
     temasOption.addEventListener("click", function () {
-        // Lógica quando a opção "Temas" é clicada
         ferraOptions.classList.toggle("d-none"); // Alternar a visibilidade do menu suspenso
-        // Quando a opção "Ruas" é clicada
         document.getElementById("temasModal").style.display = "block";
+
+        var accordionContainer = document.getElementById("accordion1");
+        accordionContainer.innerHTML = ""; // Limpar o conteúdo existente
+
+        // Iterar sobre a classeCache para criar os acordeões
+        classesCache.forEach(function (classe, index) {
+            // Criar os elementos do accordion dinamicamente
+            var accordionItem = document.createElement("div");
+            accordionItem.className = "accordion-item";
+
+            var accordionHeader = document.createElement("h2");
+            accordionHeader.className = "accordion-header";
+            accordionHeader.id = "flush-heading" + index;
+
+            var button = document.createElement("button");
+            button.className = "accordion-button collapsed";
+            button.type = "button";
+            button.setAttribute("data-bs-toggle", "collapse");
+            button.setAttribute("data-bs-target", "#flush-collapse" + index);
+            button.setAttribute("aria-expanded", "false");
+            button.setAttribute("aria-controls", "flush-collapse" + index);
+            button.textContent = classe.Classe.ID + "." + classe.Classe.Nome;
+
+            var accordionCollapse = document.createElement("div");
+            accordionCollapse.id = "flush-collapse" + index;
+            accordionCollapse.className = "accordion-collapse collapse";
+            accordionCollapse.setAttribute(
+                "aria-labelledby",
+                "flush-heading" + index
+            );
+            accordionCollapse.setAttribute("data-bs-parent", "#accordion1");
+
+            var accordionBody = document.createElement("div");
+            accordionBody.className = "accordion-body border border-primary";
+
+            // Iterar sobre a subclassesCache correspondente a esta classe para criar os botões switch
+            subclassesCache.forEach(function (subclass, subIndex) {
+                // Verificar se a subclasse pertence à classe atual
+                if (subclass.subclasse.class_id === classe.Classe.ID) {
+                    var switchContainer = document.createElement("div");
+                    switchContainer.className =
+                        "form-check form-switch form-check-reverse";
+
+                    var inputSwitch = document.createElement("input");
+                    inputSwitch.className = "form-check-input";
+                    inputSwitch.type = "checkbox";
+                    inputSwitch.id =
+                        "flexSwitchCheckReverse_" + index + "_" + subIndex; // Usar um ID único para cada switch
+                    inputSwitch.checked = false; // Definir como não verificado por padrão
+
+                    var labelSwitch = document.createElement("label");
+                    labelSwitch.className = "form-check-label";
+                    labelSwitch.setAttribute(
+                        "for",
+                        "flexSwitchCheckReverse_" + index + "_" + subIndex
+                    );
+                    labelSwitch.textContent = subclass.subclasse.name;
+
+                    // Adicionar ouvinte de evento ao botão switch
+                    inputSwitch.addEventListener("change", function () {
+                        // Verificar se o botão switch está marcado ou não
+                        if (inputSwitch.checked) {
+                            // Se estiver marcado, adicionar a subclasse à variável temasAtivosCache
+                            temasAtivosCache[index + 1].push(
+                                subclass.subclasse.id
+                            );
+                        } else {
+                            // Se não estiver marcado, remover a subclasse da variável temasAtivosCache
+                            var subclasseIndex = temasAtivosCache[
+                                index + 1
+                            ].indexOf(subclass.subclasse.id);
+
+                            if (subclasseIndex !== -1) {
+                                temasAtivosCache[index + 1].splice(
+                                    subclasseIndex,
+                                    1
+                                );
+                            }
+                        }
+                        console.log(temasAtivosCache);
+                        getTemasAtivos();
+                        // Para depurar e verificar temasAtivosCache após a mudança
+                    });
+
+                    switchContainer.appendChild(inputSwitch);
+                    switchContainer.appendChild(labelSwitch);
+                    accordionBody.appendChild(switchContainer);
+                }
+            });
+
+            // Construir a hierarquia dos elementos
+            accordionHeader.appendChild(button);
+            accordionItem.appendChild(accordionHeader);
+            accordionCollapse.appendChild(accordionBody);
+            accordionItem.appendChild(accordionCollapse);
+            accordionContainer.appendChild(accordionItem);
+        });
+
+        // Adicionar estilos para permitir a rolagem dentro do modal
+        accordionContainer.style.maxHeight = "85vh";
+        accordionContainer.style.overflowY = "auto";
     });
 
     // Exemplo de manipulador de evento para a opção "Desfazer Tudo":
