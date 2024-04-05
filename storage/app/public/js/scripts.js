@@ -77,7 +77,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .then((response) => response.json())
         .then((data) => {
             subclassesCache = data;
-            console.log(subclassesCache);
         })
         .catch((error) => console.error("Erro ao buscar classes:", error));
 
@@ -688,7 +687,6 @@ document.addEventListener("DOMContentLoaded", function () {
                                 );
                             }
                         }
-                        console.log(temasAtivosCache);
                         getTemasAtivos();
                         // Para depurar e verificar temasAtivosCache após a mudança
                     });
@@ -725,7 +723,56 @@ document.addEventListener("DOMContentLoaded", function () {
         bottoesMenu(0);
     });
 
-    // Evento de mudança no select de regiões
+    // Evento busca de temas ativos
+    document
+        .getElementById("temasModal")
+        .addEventListener("change", function () {
+            if (
+                document.getElementById("temasModal").style.display == "block"
+            ) {
+                var region = parseInt(
+                    document.getElementById("regionId").value
+                );
+                var subclasseAtivas = [];
+
+                for (var i = 0; i < temasAtivosCache.length; i++) {
+                    var tema = temasAtivosCache[i];
+                    if (Array.isArray(tema)) {
+                        for (var j = 0; j < tema.length; j++) {
+                            subclasseAtivas.push(tema[j]);
+                        }
+                    }
+                }
+
+                if (subclasseAtivas.length > 0) {
+                    var retornoSubclassesAtivas = {};
+                    var parametrosURL = new URLSearchParams();
+                    parametrosURL.append(
+                        "subclasses",
+                        subclasseAtivas.join(",")
+                    ); // Junta as subclasses em uma string separada por vírgula
+                    parametrosURL.append("regions", region);
+
+                    console.log("url:  " + parametrosURL);
+                    // Carrega atividades por id subclasse
+                    fetch(
+                        "http://127.0.0.1:8000/api/v5/geojson/activitie?" +
+                            parametrosURL
+                    )
+                        .then((response) => response.json())
+                        .then((data) => {
+                            retornoSubclassesAtivas = data.features;
+                            console.log(region, subclasseAtivas);
+                            console.log(retornoSubclassesAtivas);
+                            // Aqui você pode fazer o que precisar com o retorno da API
+                        })
+                        .catch((error) =>
+                            console.error("Erro ao buscar atividades:", error)
+                        );
+                }
+            }
+        });
+
     document.getElementById("regionId").addEventListener("change", function () {
         var selectedRegion = parseInt(this.value); // Obtém o valor selecionado e converte para um número inteiro
 
