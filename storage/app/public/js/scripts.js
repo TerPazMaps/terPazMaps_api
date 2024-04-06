@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var classesCache = {}; // Objeto para armazenar as regiões em cache
     var subclassesCache = {}; // Objeto para armazenar as regiões em cache
     var temasAtivosCache = {};
+    var idsSubclassesAtivas = [];
     var markers = [];
 
     // Adiciona a camada base do Google Maps com o estilo personalizado
@@ -41,7 +42,9 @@ document.addEventListener("DOMContentLoaded", function () {
             streetConditionsData.forEach((condition) => {
                 // Adiciona a chave "ativo" com valor booleano true a cada objeto do array
                 condition.ativo = false;
-                if (condition.id == 1 || condition.id == 7) {
+                const array = [1, 3, 7]; // Exemplo de array com os IDs desejados
+
+                if (array.includes(condition.id)) {
                     condition.ativo = true;
                 }
             });
@@ -320,22 +323,6 @@ document.addEventListener("DOMContentLoaded", function () {
             );
     }
 
-    function resetMap() {
-        // Limpar camadas adicionadas ao mapa, se houver
-        limparCamadasPersonalizadas();
-
-        // Redefinir a visualização do mapa para a posição inicial
-        map.setView([-1.383, -48.4291], 12);
-
-        // Limpar seleção do select de regiões
-        document.getElementById("regionId").value = "0";
-
-        // Desenhar todas as regiões no mapa
-        drawRegionLayer(regionCache.allRegions);
-
-        // Ocultar botões e menu suspenso
-        bottoesMenu(0);
-    }
 
     function getTemasAtivos() {
         var totalTemasAtivos = 0;
@@ -657,6 +644,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     inputSwitch.id =
                         "flexSwitchCheckReverse_" + index + "_" + subIndex; // Usar um ID único para cada switch
                     inputSwitch.checked = false; // Definir como não verificado por padrão
+                    if (idsSubclassesAtivas.includes(subclass.subclasse.id)) {
+                        inputSwitch.checked = true;
+                    }
 
                     var labelSwitch = document.createElement("label");
                     labelSwitch.className = "form-check-label";
@@ -688,6 +678,122 @@ document.addEventListener("DOMContentLoaded", function () {
                             }
                         }
                         getTemasAtivos();
+
+                        var region = parseInt(
+                            document.getElementById("regionId").value
+                        );
+                        var subclasseAtivas = [];
+
+                        for (var i = 0; i < temasAtivosCache.length; i++) {
+                            var tema = temasAtivosCache[i];
+                            if (Array.isArray(tema)) {
+                                for (var j = 0; j < tema.length; j++) {
+                                    subclasseAtivas.push(tema[j]);
+                                }
+                            }
+                        }
+                        idsSubclassesAtivas = subclasseAtivas;
+
+                        if (subclasseAtivas.length > 0) {
+                            var retornoSubclassesAtivas = {};
+                            var parametrosURL = new URLSearchParams();
+                            parametrosURL.append(
+                                "subclasses",
+                                subclasseAtivas.join(",")
+                            ); // Junta as subclasses em uma string separada por vírgula
+                            parametrosURL.append("regions", region);
+
+                            // Carrega atividades por id subclasse
+                            fetch(
+                                "http://127.0.0.1:8000/api/v5/geojson/activitie?" +
+                                    parametrosURL
+                            )
+                                .then((response) => response.json())
+                                .then((data) => {
+                                    retornoSubclassesAtivas = data.features;
+                                    // Remover os marcadores anteriores, se existirem
+                                    // Remover os marcadores anteriores, se existirem
+                                    if (markers.length > 0) {
+                                        markers.forEach(function (markerId) {
+                                            var markerToRemove =
+                                                map._layers[markerId];
+                                            if (markerToRemove) {
+                                                map.removeLayer(markerToRemove);
+                                            }
+                                        });
+                                        markers = []; // Limpar o array de marcadores
+                                    }
+
+                                    retornoSubclassesAtivas.forEach(function (
+                                        atividade
+                                    ) {
+                                        // Criar um novo marcador com as informações da atividade
+                                        var icon = L.icon({
+                                            iconUrl:
+                                                atividade.properties.img_url, // URL do ícone do marcador
+                                            iconSize: [38, 38], // Tamanho do ícone do marcador
+                                            iconAnchor: [19, 38], // Posição do ícone em relação ao marcador
+                                            popupAnchor: [0, -38], // Posição do popup em relação ao marcador
+                                        });
+
+                                        // Centralizar o mapa na coordenada da atividade
+                                        var coordenadas =
+                                            atividade.geometry.coordinates; // Obter as coordenadas da atividade atual
+
+                                        var newMarker = L.marker(
+                                            [coordenadas[1], coordenadas[0]],
+                                            {
+                                                icon: icon,
+                                            }
+                                        ).addTo(map);
+
+                                        // Adicionar informações adicionais ao marcador, como um popup
+                                        var popupContent =
+                                            "<b>" +
+                                            atividade.properties.Nome +
+                                            "</b><br>" +
+                                            "<em>" +
+                                            atividade.properties.Classe +
+                                            " - " +
+                                            atividade.properties["Sub-classe"] +
+                                            "</em>";
+                                        newMarker
+                                            .bindPopup(popupContent)
+                                            .openPopup();
+
+                                        // Adicionar o novo marcador ao array de marcadores
+                                        markers.push(newMarker._leaflet_id);
+                                    });
+                                    const idDesejado = region; // Substitua pelo ID desejado
+                                    const regiaoEncontrada =
+                                        regionCache.allRegions.find(
+                                            (regiao) =>
+                                                regiao.properties.ID === region
+                                        );
+                                    // map.setView([regiaoEncontrada.properties.centro[1], coordenadas[0]], 15);
+                                    var centro =
+                                        regiaoEncontrada.properties.Centro
+                                            .coordinates;
+                                    map.setView([centro[1], centro[0]], 15);
+                                })
+                                .catch((error) =>
+                                    console.error(
+                                        "Erro ao buscar atividades:",
+                                        error
+                                    )
+                                );
+                        } else {
+                            if (markers.length > 0) {
+                                markers.forEach(function (markerId) {
+                                    var markerToRemove = map._layers[markerId];
+                                    if (markerToRemove) {
+                                        map.removeLayer(markerToRemove);
+                                    }
+                                });
+                                markers = []; // Limpar o array de marcadores
+                            }
+                        }
+
                         // Para depurar e verificar temasAtivosCache após a mudança
                     });
 
@@ -722,56 +828,6 @@ document.addEventListener("DOMContentLoaded", function () {
         drawRegionLayer(regionCache.allRegions);
         bottoesMenu(0);
     });
-
-    // Evento busca de temas ativos
-    document
-        .getElementById("temasModal")
-        .addEventListener("change", function () {
-            if (
-                document.getElementById("temasModal").style.display == "block"
-            ) {
-                var region = parseInt(
-                    document.getElementById("regionId").value
-                );
-                var subclasseAtivas = [];
-
-                for (var i = 0; i < temasAtivosCache.length; i++) {
-                    var tema = temasAtivosCache[i];
-                    if (Array.isArray(tema)) {
-                        for (var j = 0; j < tema.length; j++) {
-                            subclasseAtivas.push(tema[j]);
-                        }
-                    }
-                }
-
-                if (subclasseAtivas.length > 0) {
-                    var retornoSubclassesAtivas = {};
-                    var parametrosURL = new URLSearchParams();
-                    parametrosURL.append(
-                        "subclasses",
-                        subclasseAtivas.join(",")
-                    ); // Junta as subclasses em uma string separada por vírgula
-                    parametrosURL.append("regions", region);
-
-                    console.log("url:  " + parametrosURL);
-                    // Carrega atividades por id subclasse
-                    fetch(
-                        "http://127.0.0.1:8000/api/v5/geojson/activitie?" +
-                            parametrosURL
-                    )
-                        .then((response) => response.json())
-                        .then((data) => {
-                            retornoSubclassesAtivas = data.features;
-                            console.log(region, subclasseAtivas);
-                            console.log(retornoSubclassesAtivas);
-                            // Aqui você pode fazer o que precisar com o retorno da API
-                        })
-                        .catch((error) =>
-                            console.error("Erro ao buscar atividades:", error)
-                        );
-                }
-            }
-        });
 
     document.getElementById("regionId").addEventListener("change", function () {
         var selectedRegion = parseInt(this.value); // Obtém o valor selecionado e converte para um número inteiro
