@@ -104,37 +104,3 @@ header {
     border-radius: 10px; /* Define um raio de borda menor */
     padding: 2px 5px; /* Ajusta o preenchimento dos botões */
 }
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 100;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.0);
-}
-
-.form-check-input {
-    float: right; /* Alinha o botão de verificação à direita */
-    margin-left: 10px; /* Adiciona um espaçamento entre o texto e o botão de verificação */
-}
-.border {
-    padding: 20px; /* Adiciona algum preenchimento interno para separar os elementos da borda */
-}
-
-.form-check {
-    margin-right: 20px; /* Adiciona algum espaçamento horizontal entre os elementos */
-}
-
-.purple-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: purple; /* Define a cor roxa */
-    margin-left: 5px; /* Adiciona algum espaçamento entre o texto e a bola */
-}
-

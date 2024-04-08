@@ -18,10 +18,11 @@ class ActivitieController extends Controller
     public function index(Request $request)
     {
         $activities = Activitie::select(
-            '*', 
+            '*',
             DB::raw('ST_AsGeoJSON(geometry) as geometry')
-            )
+        )
             ->with('subclass.classe')
+            ->with('subclass.icon')
             ->has('subclass.classe')
             ->orderBy('id');
 
@@ -35,7 +36,7 @@ class ActivitieController extends Controller
             $activities = $activities->whereIn('subclass_id', $subclasses_id);
         }
         // dd($request->all());
-        
+
         if ($request->ids) {
             $ids = $request->ids ? array_map('intval', explode(',', $request->ids)) : [];
             $activities = $activities->whereIn('id', $ids);
@@ -64,6 +65,8 @@ class ActivitieController extends Controller
         } else {
             $activities = $activities
                 ->map(function ($activity) {
+                    // Construa a URL da imagem do ícone
+
                     $geojson_activity = [
                         "type" => "Feature",
                         "geometry" => json_decode($activity->geometry),
@@ -74,7 +77,8 @@ class ActivitieController extends Controller
                             "Sub-classe" => $activity->subclass->name,
                             "Bairro_id" => $activity->region->id,
                             "Bairro" => $activity->region->name,
-                            "Nível" => $activity->level
+                            "Nível" => $activity->level,
+                            "img_url" => 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name
                         ]
                     ];
 
