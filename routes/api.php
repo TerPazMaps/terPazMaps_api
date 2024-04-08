@@ -4,13 +4,14 @@ use App\Models\Classe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\IconController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClasseController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\StreetController;
 use App\Http\Controllers\ActivitieController;
 use App\Http\Controllers\SubclasseController;
 use App\Http\Controllers\StreetConditionController;
-use App\Models\Subclasse;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -35,7 +36,7 @@ Route::get('/', function () {
 Route::get('/maps', function () {
     $baseUrl = config('app.url');
     return view('streets', compact('baseUrl'));
-});
+})->middleware('jwt.auth');
 
 Route::get('/icons', function () {
     $baseUrl = config('app.url');
@@ -70,6 +71,11 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::apiResource('street', StreetController::class);
 
         Route::apiResource('icon', IconController::class);
-    
+        
     });
+
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('jwt.auth');
+    Route::post('refresh', [AuthController::class, 'refresh'])->middleware('jwt.auth');
+    Route::post('me', [AuthController::class, 'me'])->middleware('jwt.auth');
 });
