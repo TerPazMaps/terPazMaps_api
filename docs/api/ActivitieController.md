@@ -38,7 +38,8 @@ Exemplo:/api/v5/geojson/activitie?regions=1&subclasses=1&ids=850&only_references
         "Nome": "Nome da Atividade",
         "ID Subclasse": 1,
         "ID Bairro": 1,
-        "Nível": "Nível da Atividade"
+        "Nível": "Nível da Atividade",
+        "img_url": "url do icone"
       }
     }
     // Mais features aqui
@@ -50,5 +51,6 @@ Exemplo:/api/v5/geojson/activitie?regions=1&subclasses=1&ids=850&only_references
 `ID Subclasse`: ID da subclasse da atividade. [ int ]
 `ID Bairro`: ID do bairro da atividade. [ int ]
 `Nível`: Nível da atividade. [ string ]
+`img_url`: url do icone. [ string ]
 
 [Voltar a pagina principal](/README.md)
