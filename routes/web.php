@@ -1,6 +1,16 @@
 <?php
 
+use App\Models\Classe;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\IconController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClasseController;
+use App\Http\Controllers\RegionController;
+use App\Http\Controllers\StreetController;
+use App\Http\Controllers\ActivitieController;
+use App\Http\Controllers\SubclasseController;
+use App\Http\Controllers\StreetConditionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,7 +23,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
+Route::get('/2', function () {
     return view('welcome');
 });
 
+Route::get('login', [AuthController::class, 'indexLogin']);

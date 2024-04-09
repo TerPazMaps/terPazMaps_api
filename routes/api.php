@@ -74,7 +74,8 @@ Route::group(['prefix' => 'api/v5'], function () {
         
     });
 
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('login', [AuthController::class, 'login'])->name('login');
+    Route::post('register', [AuthController::class, 'register'])->name('register');
     Route::post('logout', [AuthController::class, 'logout'])->middleware('jwt.auth');
     Route::post('refresh', [AuthController::class, 'refresh'])->middleware('jwt.auth');
     Route::post('me', [AuthController::class, 'me'])->middleware('jwt.auth');
