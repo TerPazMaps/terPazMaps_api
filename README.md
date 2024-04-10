@@ -72,11 +72,21 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
 
 ## Instruções de execução
 
+
 Clique aqui para saber mais: [link para a documentação](/docs/api/instrucoes_de_execucao.md).
 
 ## Autenticação
 
-Esta API requer autenticação para acessar os endpoints. Por favor, consulte a documentação para obter detalhes sobre como autenticar suas solicitações: [link para a documentação](/docs/api/instrucoes_de_autenticacao.md).
+Esta API requer autenticação com JSON Web Token para acessar determinados endpoints. Por favor, consulte a documentação para obter detalhes sobre como autenticar suas solicitações: [link para a documentação](/docs/api/instrucoes_de_autenticacao.md).
+
+- **Descrição**: Recurso de registro e login de usuário.
+- **Endpoints**:
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/register](/docs/api/instrucoes_de_autenticacao.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/login](/docs/api/instrucoes_de_autenticacao.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/refresh](/docs/api/instrucoes_de_autenticacao.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/logout](/docs/api/instrucoes_de_autenticacao.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/me](/docs/api/instrucoes_de_autenticacao.md)
+  
 
 ## Formato de Resposta
 
