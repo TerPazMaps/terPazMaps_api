@@ -35,6 +35,10 @@ Comandos no terminal (dentro do diretório do projeto):
 
 -php artisan key:generate
 
+-php artisan jwt:secret
+
+-php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+
 -php artisan storage:link
 
 -php artisan serve
