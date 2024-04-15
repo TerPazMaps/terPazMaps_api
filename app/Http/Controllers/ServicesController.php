@@ -176,6 +176,7 @@ class ServicesController extends Controller
 
     public function getDistance(Request $request)
     {
+        // http://127.0.0.1:8000/api/v5/geojson/services/distance?id=6&id2=1
         // Coordenadas do primeiro ponto
         $id1 = $request->id;
         // Coordenadas do segundo ponto
@@ -276,5 +277,62 @@ class ServicesController extends Controller
         // Remove os caracteres não numéricos e divide as coordenadas
         $coordinates = explode(' ', str_replace(['POINT(', ')'], '', $point));
         return $coordinates;
+    }
+
+    
+    // http://127.0.0.1:8000/api/v5/geojson/services/escolas?id=7&id2=44&raio=300
+    public function getEscolas(Request $request)
+    {
+        // Parâmetros da requisição
+        $igrejas = $request->id; // Subclass_id das igrejas
+        $raio = $request->raio; // Raio em metros para verificar a proximidade
+
+        // Coordenadas do ponto de referência
+        $pontoReferencia = 'POINT(-1.331004 -48.404882)';
+
+        // Consulta para obter as coordenadas das igrejas
+        $coordenadasIgrejas = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('subclass_id', $igrejas)
+            ->get();
+
+        return $coordenadasIgrejas;
+
+        // Array para armazenar as igrejas com escolas próximas no formato GeoJSON
+        $igrejasComEscolasProximas = [
+            'type' => 'FeatureCollection',
+            'features' => []
+        ];
+
+        // Iterar sobre as igrejas
+        foreach ($coordenadasIgrejas as $igreja) {
+            // Consulta para obter as escolas próximas à igreja atual
+            $escolasProximas = DB::table('activities')
+                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+                ->where('subclass_id', 44) // Subclass_id das escolas estaduais
+                ->whereRaw("ST_Distance_Sphere(PointFromText('$igreja->geometry->coordinates', 4326), geometry) <= $raio")
+                ->get();
+
+            // Se houver escolas próximas, adiciona a igreja ao resultado
+            if ($escolasProximas->count() > 0) {
+                $igrejasComEscolasProximas['features'][] = [
+                    'type' => 'Feature',
+                    'geometry' => json_decode($igreja->geometry),
+                    'properties' => [
+                        'id' => $igreja->id,
+                        'region_id' => $igreja->region_id,
+                        'subclass_id' => $igreja->subclass_id,
+                        'name' => $igreja->name
+                    ]
+                ];
+            }
+        }
+
+        // Retornar as igrejas com escolas próximas no formato GeoJSON
+        return $igrejasComEscolasProximas;
+    }
+
+    public function getEscolas2(Request $request)
+    {
     }
 }
