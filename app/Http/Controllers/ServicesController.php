@@ -279,60 +279,172 @@ class ServicesController extends Controller
         return $coordinates;
     }
 
-    
-    // http://127.0.0.1:8000/api/v5/geojson/services/escolas?id=7&id2=44&raio=300
+
+    // http://127.0.0.1:8000/api/v5/geojson/services/points-of-interest?region_id=1&referenciaId=7&pontoBuscadoId=28&raio=100
     public function getEscolas(Request $request)
     {
-        // Parâmetros da requisição
-        $igrejas = $request->id; // Subclass_id das igrejas
+        $region_id = $request->region_id;
+        $referenciaId = $request->referenciaId;
+        $pontoBuscadoId = $request->pontoBuscadoId;
         $raio = $request->raio; // Raio em metros para verificar a proximidade
 
-        // Coordenadas do ponto de referência
-        $pontoReferencia = 'POINT(-1.331004 -48.404882)';
-
-        // Consulta para obter as coordenadas das igrejas
-        $coordenadasIgrejas = DB::table('activities')
+        $startTime = microtime(true); 
+        // Consulta para obter as coordenadas das referencias
+        $referencias = DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-            ->where('subclass_id', $igrejas)
+            ->where('region_id', $region_id)
+            ->where('subclass_id', $referenciaId)
             ->get();
 
-        return $coordenadasIgrejas;
+        // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
+        $features = [];
 
-        // Array para armazenar as igrejas com escolas próximas no formato GeoJSON
-        $igrejasComEscolasProximas = [
-            'type' => 'FeatureCollection',
-            'features' => []
-        ];
+        // Iterar sobre as referencias
+        foreach ($referencias as $referencia) {
 
-        // Iterar sobre as igrejas
-        foreach ($coordenadasIgrejas as $igreja) {
+            $geometry = json_decode($referencia->geometry);
+            $coordinates = $geometry->coordinates;
+            $latitude = $coordinates[1];
+            $longitude = $coordinates[0];
+
             // Consulta para obter as escolas próximas à igreja atual
-            $escolasProximas = DB::table('activities')
+            $pontosProximos = DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-                ->where('subclass_id', 44) // Subclass_id das escolas estaduais
-                ->whereRaw("ST_Distance_Sphere(PointFromText('$igreja->geometry->coordinates', 4326), geometry) <= $raio")
+                ->where('subclass_id', $pontoBuscadoId)
+                ->whereRaw("ST_Distance_Sphere(PointFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio")
                 ->get();
 
-            // Se houver escolas próximas, adiciona a igreja ao resultado
-            if ($escolasProximas->count() > 0) {
-                $igrejasComEscolasProximas['features'][] = [
+            // Se houver pontos próximos, adiciona a referência e suas escolas ao resultado
+            if ($pontosProximos->count() > 0) {
+                $referenciasComPontosProximos = [
                     'type' => 'Feature',
-                    'geometry' => json_decode($igreja->geometry),
+                    'geometry' => json_decode($referencia->geometry),
                     'properties' => [
-                        'id' => $igreja->id,
-                        'region_id' => $igreja->region_id,
-                        'subclass_id' => $igreja->subclass_id,
-                        'name' => $igreja->name
+                        'id' => $referencia->id,
+                        'region_id' => $referencia->region_id,
+                        'subclass_id' => $referencia->subclass_id,
+                        'name' => $referencia->name,
+                        'marker-color' => '#FF0000'
                     ]
                 ];
+
+                $features[] = $referenciasComPontosProximos;
+
+                // Adiciona os pontos proximos da referencia
+                foreach ($pontosProximos as $ponto) {
+                    $featurePontos = [
+                        'type' => 'Feature',
+                        'geometry' => json_decode($ponto->geometry),
+                        'properties' => [
+                            'id' => $ponto->id,
+                            'region_id' => $ponto->region_id,
+                            'subclass_id' => $ponto->subclass_id,
+                            'name' => $ponto->name,
+                        ]
+                    ];
+                    $features[] = $featurePontos;
+                }
+            }
+        }
+        $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
+        $geojson = [
+            'ex_time' => $executionTime. " MS",
+            'type' => 'FeatureCollection',
+            'features' => $features
+        ];
+
+        return $geojson;
+    }
+
+    // http://127.0.0.1:8000/api/v5/geojson/services/points-of-interest-php?region_id=1&referenciaId=7&pontoBuscadoId=28&raio=100
+    public function getEscolas2(Request $request)
+    {
+        $region_id = $request->region_id;
+        $referenciaId = $request->referenciaId;
+        $pontoBuscadoId = $request->pontoBuscadoId;
+        $raio = $request->raio; // Raio em metros para verificar a proximidade
+
+        $startTime = microtime(true);
+        // Consulta para obter as coordenadas das referencias
+        $referencias = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('region_id', $region_id)
+            ->where('subclass_id', $referenciaId)
+            ->get();
+
+        // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
+        $features = [];
+
+        // Iterar sobre as referencias
+        foreach ($referencias as $referencia) {
+
+            $geometry = json_decode($referencia->geometry);
+            $coordinates = $geometry->coordinates;
+            $latitude = $coordinates[1];
+            $longitude = $coordinates[0];
+
+            // Consulta para obter as escolas próximas à igreja atual
+            $pontosProximos = DB::table('activities')
+                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+                ->where('subclass_id', $pontoBuscadoId)
+                ->get();
+
+            $pontosProximos = $pontosProximos->filter(function ($pontos) use ($latitude, $longitude, $raio, $pontoBuscadoId) {
+                $geometry = json_decode($pontos->geometry);
+                $coordinates = $geometry->coordinates;
+                $pointLatitude = $coordinates[1]; // latitude
+                $pointLongitude = $coordinates[0]; // longitude
+
+                $distance = $this->calculateDistance($latitude, $longitude, $pointLatitude, $pointLongitude);
+                return $distance <= $raio;
+            });
+
+
+            // Se houver pontos próximos, adiciona a referência e suas escolas ao resultado
+            if ($pontosProximos->count() > 0) {
+                $referenciasComPontosProximos = [
+                    'type' => 'Feature',
+                    'geometry' => json_decode($referencia->geometry),
+                    'properties' => [
+                        'id' => $referencia->id,
+                        'region_id' => $referencia->region_id,
+                        'subclass_id' => $referencia->subclass_id,
+                        'name' => $referencia->name,
+                        'marker-color' => '#FF0000'
+                    ]
+                ];
+
+                $features[] = $referenciasComPontosProximos;
+
+                // Adiciona os pontos proximos da referencia
+                foreach ($pontosProximos as $ponto) {
+                    $featurePontos = [
+                        'type' => 'Feature',
+                        'geometry' => json_decode($ponto->geometry),
+                        'properties' => [
+                            'id' => $ponto->id,
+                            'region_id' => $ponto->region_id,
+                            'subclass_id' => $ponto->subclass_id,
+                            'name' => $ponto->name,
+                        ]
+                    ];
+                    $features[] = $featurePontos;
+                }
             }
         }
 
-        // Retornar as igrejas com escolas próximas no formato GeoJSON
-        return $igrejasComEscolasProximas;
-    }
+        $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
-    public function getEscolas2(Request $request)
-    {
+        $geojson = [
+            'ex_time' => $executionTime. " MS",
+            'type' => 'FeatureCollection',
+            'features' => $features
+        ];
+
+        return $geojson;
     }
 }
+
