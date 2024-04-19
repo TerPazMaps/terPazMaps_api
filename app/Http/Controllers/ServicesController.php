@@ -135,7 +135,7 @@ class ServicesController extends Controller
 
     public function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
-        $earthRadius = 6371000; // raio da Terra em metros
+        $earthRadius = 6378000; // raio da Terra em metros
 
         // Convertendo graus para radianos
         $lat1Rad = deg2rad($lat1);
@@ -430,22 +430,28 @@ class ServicesController extends Controller
 
         // Verifica se a geometria da rua é um polígono
         if ($linestring->type === 'Polygon') {
-            // Consulta para calcular o comprimento do polígono
+            // Consulta para calcular o comprimento do polígono            
+            $startTime = microtime(true);
             $lengthQuery = DB::selectOne(
-                "SELECT ROUND((ST_Length(ST_ExteriorRing(geometry)) / 2) * 100000, 2) AS length_meters
+                "SELECT ROUND((ST_Length(ST_ExteriorRing(geometry)) / 2) * 111320 , 2) AS length_meters
             FROM streets
             WHERE id = $street_id"
             );
+            $endTime = microtime(true);
+            $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
             return response()->json([
+                'execution_time' => $executionTime . " ms",
                 'length_meters' => $lengthQuery->length_meters . ' metros',
                 'tipo' => ' polygon',
+                'line' => $linestring,
             ]);
         }
 
-        $totalDistance = 0;
 
         // Itera sobre os pontos para calcular a distância entre eles
+        $totalDistance = 0;
+        $startTime = microtime(true);
         for ($i = 1; $i < count($linestring->coordinates); $i++) {
             $coordinates1 = $linestring->coordinates[$i - 1];
             $coordinates2 = $linestring->coordinates[$i];
@@ -461,6 +467,9 @@ class ServicesController extends Controller
             // Soma a distância calculada ao total
             $totalDistance += $distanceQuery->distance;
         }
+        $endTime = microtime(true);
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
 
         // Formatação do comprimento em metros
         $formattedLengthMeters = number_format($totalDistance, 2);
@@ -468,12 +477,106 @@ class ServicesController extends Controller
         return response()->json([
             'length_meters' => $formattedLengthMeters . ' metros',
             'tipo' => ' Linestring',
+            'execution_time' => $executionTime . ' ms',
         ]);
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/length-street2?street_id=1
     public function getLengthStreet2(Request $request)
     {
-        dd($request->all());
+        $street_id = $request->street_id;
+        $street = DB::table('streets')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('id', $street_id)
+            ->first();
+
+        $linestring = json_decode($street->geometry);
+
+        // Verifica se a geometria da rua é um polígono
+        if ($linestring->type === 'Polygon') {
+            $coordinates = $linestring->coordinates[0]; // Obtém as coordenadas do anel exterior
+
+            // Inicializa a variável para armazenar o comprimento total
+            $totalLength = 0;
+
+            // Calcula a distância entre os pontos consecutivos no polígono
+            $startTime = microtime(true);
+            for ($i = 0; $i < count($coordinates) - 1; $i++) {
+                $lon1 = $coordinates[$i][0];
+                $lat1 = $coordinates[$i][1];
+                $lon2 = $coordinates[$i + 1][0];
+                $lat2 = $coordinates[$i + 1][1];
+
+                // Use a função calculateDistance() para calcular a distância
+                $distance = $this->calculateDistance($lat1, $lon1, $lat2, $lon2);
+
+                // Adiciona a distância ao comprimento total
+                $totalLength += $distance;
+            }
+            $endTime = microtime(true);
+            $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
+            // Ajusta a resposta JSON
+            return response()->json([
+                'execution_time' => $executionTime . " ms",
+                'length_meters' => round($totalLength / 2, 2) . ' metros',
+                'tipo' => 'polygon',
+                'function' => 'php',
+                'line' => $linestring,
+            ]);
+        }
+
+        // Itera sobre os pontos para calcular a distância entre eles
+        $totalDistance = 0;
+        $startTime = microtime(true);
+        for ($i = 1; $i < count($linestring->coordinates); $i++) {
+            $coordinates1 = $linestring->coordinates[$i - 1];
+            $coordinates2 = $linestring->coordinates[$i];
+
+            // Consulta para calcular a distância entre os pontos
+            $distanceQuery = $this->calculateDistance($coordinates1[0], $coordinates1[1], $coordinates2[0], $coordinates2[1]);
+
+            // Soma a distância calculada ao total
+            $totalDistance += $distanceQuery;
+        }
+        $endTime = microtime(true);
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
+        // Formatação do comprimento em metros
+        $formattedLengthMeters = number_format($totalDistance, 2);
+
+        return response()->json([
+            'length_meters' => $formattedLengthMeters . ' metros',
+            'tipo' => ' Linestring',
+            'function' => 'php',
+            'execution_time' => $executionTime . " ms",
+        ]);
+    }
+    // http://127.0.0.1:8000/api/v5/geojson/services/buffer?id=1
+    public function buffer(Request $request)
+    {
+        $street_id = $request->id;
+        $street = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('id', $street_id)
+            ->first();
+
+        $geometry = json_decode($street->geometry);
+        $coordinates = $geometry->coordinates;
+
+        $buffer = DB::selectOne(
+            "SELECT ST_AsGeoJSON(ST_Buffer(ST_GeomFromText('POINT($coordinates[0] $coordinates[1])', 4326), 0.0009)) as buf"
+        );
+
+        // Ajusta a resposta JSON
+        return response()->json([
+
+            'type' => 'Feature',
+            'geometry' => json_decode($buffer->buf),
+            'properties' => [
+                'teste' => 'teste2'
+            ]
+
+        ]);
     }
 }

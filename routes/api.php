@@ -77,6 +77,7 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::get('/services/points-of-interest2', [ServicesController::class, 'getEscolas2']);
         Route::get('/services/length-street', [ServicesController::class, 'getLengthStreet']);
         Route::get('/services/length-street2', [ServicesController::class, 'getlengthStreet2']);
+        Route::get('/services/buffer', [ServicesController::class, 'buffer']);
         
         Route::apiResource('street', StreetController::class);
 
