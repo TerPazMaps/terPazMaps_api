@@ -13,27 +13,23 @@ class ServicesController extends Controller
         // Guarda o tempo de início da execução
         // Método para buscar atividades próximas de uma coordenada e raio específico
         // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearby?region_id=7&subclass_id=28&raio=3000&latitude=-1.465815&longitude=-48.459401
+
         $region_id = $request->input('region_id');
         $subclass_id = $request->input('subclass_id');
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
         $raio = $request->input('raio');
 
-        $startTime = microtime(true);
         $query = DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->where('region_id', $region_id)
             ->where('subclass_id', $subclass_id);
 
-        $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
-        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
-
         $startTime = microtime(true);
         $query = $query->whereRaw("ST_Distance_Sphere(PointFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio");
         $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
         $query = $query->get();
-        $executionTime2 = number_format(($endTime - $startTime) * 1000, 4);
-
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         $activities = $query->map(function ($activitie) {
             $geometry = json_decode($activitie->geometry);
@@ -59,16 +55,12 @@ class ServicesController extends Controller
             return $feature;
         });
 
-
         $featureCollection = [
-            'execution_time_select' => $executionTime . " milisegundos",
-            'execution_time_filtro' => $executionTime2 . " milisegundos",
-            'execution_time_total' => $executionTime + $executionTime2 . " total",
+            'execution_time' => $executionTime . " milisegundos",
             'function' => "ST_Distance_Sphere",
             "type" => "FeatureCollection",
             "features" => $activities->toArray(),
         ];
-
         return $featureCollection;
     }
 
@@ -77,6 +69,7 @@ class ServicesController extends Controller
 
         // Método para buscar atividades próximas de uma coordenada e raio específico
         // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearby2?region_id=7&subclass_id=28&raio=3000&latitude=-1.465815&longitude=-48.459401
+
         $region_id = $request->input('region_id');
         $subclass_id = $request->input('subclass_id');
         $latitude = $request->input('latitude');
@@ -84,16 +77,10 @@ class ServicesController extends Controller
         $raio = $request->input('raio');
 
         // Obter todos os pontos da região e subclasse
-        $startTime = microtime(true);
         $activities = DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->where('region_id', $region_id)
             ->where('subclass_id', $subclass_id);
-        $endTime = microtime(true);
-
-        // Calcula o tempo total de execução em milissegundos
-        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
-
         $activities = $activities->get();
 
         // Filtrar os pontos que estão dentro do raio especificado
@@ -112,13 +99,11 @@ class ServicesController extends Controller
         $endTime = microtime(true);
 
         // Calcula o tempo total de execução em milissegundos
-        $executionTime2 = number_format(($endTime - $startTime) * 1000, 4);
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         // Formatar os dados no formato GeoJSON
         $featureCollection = [
-            'execution_time_select' => $executionTime . " milisegundos",
-            'execution_time_filtro' => $executionTime2 . " milisegundos",
-            'execution_time_total' => $executionTime + $executionTime2 . " total",
+            'execution_time' => $executionTime . " milisegundos",
             'function' => "php",
             "type" => "FeatureCollection",
             "features" => $filteredActivities->map(function ($activitie) {
@@ -172,8 +157,6 @@ class ServicesController extends Controller
         return $distance;
     }
 
-
-
     public function getDistance(Request $request)
     {
         // http://127.0.0.1:8000/api/v5/geojson/services/distance?id=6&id2=1
@@ -221,7 +204,7 @@ class ServicesController extends Controller
 
     public function getDistance2(Request $request)
     {
-        // http://127.0.0.1:8000/api/v5/geojson/services/distance?lat=-1.34538115355059&lon=-48.4045690844909&lat2=-1.34519276971018&lon2=-48.4041343555742 
+        // http://127.0.0.1:8000/api/v5/geojson/services/distance2?lat=-1.34538115355059&lon=-48.4045690844909&lat2=-1.34519276971018&lon2=-48.4041343555742 
 
         // Guarda o tempo de início da execução
         $startTime = microtime(true);
@@ -234,34 +217,15 @@ class ServicesController extends Controller
         $lat2 = $request->lat2;
         $lon2 = $request->lon2;
 
-        // Raio da Terra em metros
-        $earthRadius = 6378000; // aproximadamente 6378 km * 1000 para obter o valor em metros
-
-        // Converte graus para radianos
-        $lat1Rad = deg2rad($lat1);
-        $lon1Rad = deg2rad($lon1);
-        $lat2Rad = deg2rad($lat2);
-        $lon2Rad = deg2rad($lon2);
-
-        // Diferença de latitude e longitude
-        $deltaLat = $lat2Rad - $lat1Rad;
-        $deltaLon = $lon2Rad - $lon1Rad;
-
-        // Fórmula de Haversine
-        $a = sin($deltaLat / 2) * sin($deltaLat / 2) +
-            cos($lat1Rad) * cos($lat2Rad) *
-            sin($deltaLon / 2) * sin($deltaLon / 2);
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        $distance = $earthRadius * $c;
-
         // Formata a distância para exibir apenas uma casa decimal e adiciona a unidade "metros"
-        $formattedDistance = number_format($distance, 1) . " metros";
+        $formattedDistance = number_format($this->calculateDistance($lat1, $lon1, $lat2, $lon2), 1) . " metros";
 
         // Guarda o tempo de término da execução
         $endTime = microtime(true);
 
         // Calcula o tempo total de execução em milissegundos
-        $executionTime = number_format(($endTime - $startTime) * 1000, 4); // convertendo para milissegundos
+        // convertendo para milissegundos
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         // Retorna a distância formatada e o tempo de execução
         return [
@@ -288,7 +252,6 @@ class ServicesController extends Controller
         $pontoBuscadoId = $request->pontoBuscadoId;
         $raio = $request->raio; // Raio em metros para verificar a proximidade
 
-        $startTime = microtime(true); 
         // Consulta para obter as coordenadas das referencias
         $referencias = DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
@@ -299,23 +262,29 @@ class ServicesController extends Controller
         // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
         $features = [];
 
+        // Consulta para obter as escolas próximas à igreja atual
+        $pontosProximos = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('subclass_id', $pontoBuscadoId);
+
+        $startTime = microtime(true);
         // Iterar sobre as referencias
         foreach ($referencias as $referencia) {
-
             $geometry = json_decode($referencia->geometry);
             $coordinates = $geometry->coordinates;
             $latitude = $coordinates[1];
             $longitude = $coordinates[0];
 
             // Consulta para obter as escolas próximas à igreja atual
-            $pontosProximos = DB::table('activities')
-                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-                ->where('subclass_id', $pontoBuscadoId)
-                ->whereRaw("ST_Distance_Sphere(PointFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio")
+            $pontosProximosClone = clone $pontosProximos;
+
+            $pontosProximosClone = $pontosProximosClone->whereRaw(
+                "ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio"
+            )
                 ->get();
 
             // Se houver pontos próximos, adiciona a referência e suas escolas ao resultado
-            if ($pontosProximos->count() > 0) {
+            if ($pontosProximosClone->count() > 0) {
                 $referenciasComPontosProximos = [
                     'type' => 'Feature',
                     'geometry' => json_decode($referencia->geometry),
@@ -327,11 +296,10 @@ class ServicesController extends Controller
                         'marker-color' => '#FF0000'
                     ]
                 ];
-
                 $features[] = $referenciasComPontosProximos;
 
                 // Adiciona os pontos proximos da referencia
-                foreach ($pontosProximos as $ponto) {
+                foreach ($pontosProximosClone as $ponto) {
                     $featurePontos = [
                         'type' => 'Feature',
                         'geometry' => json_decode($ponto->geometry),
@@ -350,7 +318,7 @@ class ServicesController extends Controller
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         $geojson = [
-            'ex_time' => $executionTime. " MS",
+            'ex_time' => $executionTime . " MS",
             'type' => 'FeatureCollection',
             'features' => $features
         ];
@@ -366,17 +334,22 @@ class ServicesController extends Controller
         $pontoBuscadoId = $request->pontoBuscadoId;
         $raio = $request->raio; // Raio em metros para verificar a proximidade
 
-        $startTime = microtime(true);
         // Consulta para obter as coordenadas das referencias
         $referencias = DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->where('region_id', $region_id)
             ->where('subclass_id', $referenciaId)
             ->get();
-
         // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
         $features = [];
 
+        // Consulta para obter as escolas próximas à igreja atual
+        $pontosProximos = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('subclass_id', $pontoBuscadoId)
+            ->get();
+
+        $startTime = microtime(true);
         // Iterar sobre as referencias
         foreach ($referencias as $referencia) {
 
@@ -385,13 +358,9 @@ class ServicesController extends Controller
             $latitude = $coordinates[1];
             $longitude = $coordinates[0];
 
-            // Consulta para obter as escolas próximas à igreja atual
-            $pontosProximos = DB::table('activities')
-                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-                ->where('subclass_id', $pontoBuscadoId)
-                ->get();
+            $pontosProximosClone = clone $pontosProximos;
 
-            $pontosProximos = $pontosProximos->filter(function ($pontos) use ($latitude, $longitude, $raio, $pontoBuscadoId) {
+            $pontosProximosClone = $pontosProximosClone->filter(function ($pontos) use ($latitude, $longitude, $raio, $pontoBuscadoId) {
                 $geometry = json_decode($pontos->geometry);
                 $coordinates = $geometry->coordinates;
                 $pointLatitude = $coordinates[1]; // latitude
@@ -403,7 +372,7 @@ class ServicesController extends Controller
 
 
             // Se houver pontos próximos, adiciona a referência e suas escolas ao resultado
-            if ($pontosProximos->count() > 0) {
+            if ($pontosProximosClone->count() > 0) {
                 $referenciasComPontosProximos = [
                     'type' => 'Feature',
                     'geometry' => json_decode($referencia->geometry),
@@ -419,7 +388,7 @@ class ServicesController extends Controller
                 $features[] = $referenciasComPontosProximos;
 
                 // Adiciona os pontos proximos da referencia
-                foreach ($pontosProximos as $ponto) {
+                foreach ($pontosProximosClone as $ponto) {
                     $featurePontos = [
                         'type' => 'Feature',
                         'geometry' => json_decode($ponto->geometry),
@@ -435,16 +404,76 @@ class ServicesController extends Controller
             }
         }
 
-        $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
+        // Calcula o tempo total de execução em milissegundos
+        $endTime = microtime(true);
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         $geojson = [
-            'ex_time' => $executionTime. " MS",
+            'ex_time' => $executionTime . " MS",
             'type' => 'FeatureCollection',
             'features' => $features
         ];
 
         return $geojson;
     }
-}
 
+    // http://127.0.0.1:8000/api/v5/geojson/services/length-street?street_id=17455
+    public function getLengthStreet(Request $request)
+    {
+        $street_id = $request->street_id;
+        $street = DB::table('streets')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('id', $street_id)
+            ->first();
+
+        $linestring = json_decode($street->geometry);
+
+        // Verifica se a geometria da rua é um polígono
+        if ($linestring->type === 'Polygon') {
+            // Consulta para calcular o comprimento do polígono
+            $lengthQuery = DB::selectOne(
+                "SELECT ROUND((ST_Length(ST_ExteriorRing(geometry)) / 2) * 100000, 2) AS length_meters
+            FROM streets
+            WHERE id = $street_id"
+            );
+
+            return response()->json([
+                'length_meters' => $lengthQuery->length_meters . ' metros',
+                'tipo' => ' polygon',
+            ]);
+        }
+
+        $totalDistance = 0;
+
+        // Itera sobre os pontos para calcular a distância entre eles
+        for ($i = 1; $i < count($linestring->coordinates); $i++) {
+            $coordinates1 = $linestring->coordinates[$i - 1];
+            $coordinates2 = $linestring->coordinates[$i];
+
+            // Consulta para calcular a distância entre os pontos
+            $distanceQuery = DB::selectOne(
+                "SELECT ST_Distance_Sphere(
+                POINT($coordinates1[0], $coordinates1[1]),
+                POINT($coordinates2[0], $coordinates2[1])
+            ) as distance"
+            );
+
+            // Soma a distância calculada ao total
+            $totalDistance += $distanceQuery->distance;
+        }
+
+        // Formatação do comprimento em metros
+        $formattedLengthMeters = number_format($totalDistance, 2);
+
+        return response()->json([
+            'length_meters' => $formattedLengthMeters . ' metros',
+            'tipo' => ' Linestring',
+        ]);
+    }
+
+    // http://127.0.0.1:8000/api/v5/geojson/services/length-street2?street_id=1
+    public function getLengthStreet2(Request $request)
+    {
+        dd($request->all());
+    }
+}

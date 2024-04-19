@@ -195,7 +195,8 @@ class RegionController extends Controller
             $coordinates = $geometry->coordinates;
             $type = $geometry->type;
 
-            $properties = [
+            $decodedProperties = json_decode($street->properties, true);
+            $properties = array_merge([
                 "id" => $street->id,
                 "region_id" => $street->region_id,
                 "condition" => $street->streetCondition->condition,
@@ -205,8 +206,7 @@ class RegionController extends Controller
                 "continuous" => $street->continuous,
                 "line_cap" => $street->line_cap,
                 "line_dash_pattern" => $street->line_dash_pattern,
-                "name" => $street->name, // Adicionado o nome da rua como propriedade
-            ];
+            ], $decodedProperties);
 
             // Cria o objeto GeoJSON Feature
             $feature = [

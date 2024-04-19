@@ -74,7 +74,9 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
         Route::get('/services/distance2', [ServicesController::class, 'getDistance2']);
         Route::get('/services/points-of-interest', [ServicesController::class, 'getEscolas']);
-        Route::get('/services/points-of-interest-php', [ServicesController::class, 'getEscolas2']);
+        Route::get('/services/points-of-interest2', [ServicesController::class, 'getEscolas2']);
+        Route::get('/services/length-street', [ServicesController::class, 'getLengthStreet']);
+        Route::get('/services/length-street2', [ServicesController::class, 'getlengthStreet2']);
         
         Route::apiResource('street', StreetController::class);
 
