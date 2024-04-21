@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Faker\Core\Coordinates;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class ServicesController extends Controller
 {
@@ -20,15 +22,22 @@ class ServicesController extends Controller
         $longitude = $request->input('longitude');
         $raio = $request->input('raio');
 
-        $query = DB::table('activities')
-            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-            ->where('region_id', $region_id)
-            ->where('subclass_id', $subclass_id);
+        $chaveCache = "activitiesbyArea_". $region_id ."_". $subclass_id."_". $raio."_". $latitude."_". $longitude;
 
         $startTime = microtime(true);
-        $query = $query->whereRaw("ST_Distance_Sphere(PointFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio");
-        $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
-        $query = $query->get();
+        if(Cache::has("$chaveCache")){
+            $query = Cache::get("$chaveCache");
+        }else{   
+            $query = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('region_id', $region_id)
+            ->where('subclass_id', $subclass_id)
+            ->whereRaw("ST_Distance_Sphere(PointFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio")
+            ->get();
+            Cache::put("$chaveCache", $query, 3600);
+        }
+
+        $endTime = microtime(true);        
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         $activities = $query->map(function ($activitie) {
@@ -420,20 +429,21 @@ class ServicesController extends Controller
     // http://127.0.0.1:8000/api/v5/geojson/services/length-street?street_id=17455
     public function getLengthStreet(Request $request)
     {
+        $grauDeLatitude = 111320;
         $street_id = $request->street_id;
         $street = DB::table('streets')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->where('id', $street_id)
             ->first();
 
-        $linestring = json_decode($street->geometry);
+        $geometry = json_decode($street->geometry);
 
         // Verifica se a geometria da rua é um polígono
-        if ($linestring->type === 'Polygon') {
+        if ($geometry->type === 'Polygon') {
             // Consulta para calcular o comprimento do polígono            
             $startTime = microtime(true);
             $lengthQuery = DB::selectOne(
-                "SELECT ROUND((ST_Length(ST_ExteriorRing(geometry)) / 2) * 111320 , 2) AS length_meters
+                "SELECT (ST_Length(ST_ExteriorRing(geometry)) / 2) * $grauDeLatitude AS length_meters
             FROM streets
             WHERE id = $street_id"
             );
@@ -442,42 +452,28 @@ class ServicesController extends Controller
 
             return response()->json([
                 'execution_time' => $executionTime . " ms",
-                'length_meters' => $lengthQuery->length_meters . ' metros',
-                'tipo' => ' polygon',
-                'line' => $linestring,
+                'length_meters' => number_format($lengthQuery->length_meters, 2) . ' metros',
+                'function' => 'ST_Length(ST_ExteriorRing())',
+                'geometry' => $geometry,
             ]);
         }
 
-
-        // Itera sobre os pontos para calcular a distância entre eles
-        $totalDistance = 0;
         $startTime = microtime(true);
-        for ($i = 1; $i < count($linestring->coordinates); $i++) {
-            $coordinates1 = $linestring->coordinates[$i - 1];
-            $coordinates2 = $linestring->coordinates[$i];
-
-            // Consulta para calcular a distância entre os pontos
-            $distanceQuery = DB::selectOne(
-                "SELECT ST_Distance_Sphere(
-                POINT($coordinates1[0], $coordinates1[1]),
-                POINT($coordinates2[0], $coordinates2[1])
-            ) as distance"
-            );
-
-            // Soma a distância calculada ao total
-            $totalDistance += $distanceQuery->distance;
-        }
+        $totalDistance = DB::selectOne(
+            "SELECT ST_Length(ST_GeomFromGeoJSON(:geometry)) * $grauDeLatitude AS length_meters",
+            ['geometry' => $street->geometry]
+        );
         $endTime = microtime(true);
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
-
         // Formatação do comprimento em metros
-        $formattedLengthMeters = number_format($totalDistance, 2);
+        $formattedLengthMeters = number_format($totalDistance->length_meters, 2);
 
         return response()->json([
-            'length_meters' => $formattedLengthMeters . ' metros',
-            'tipo' => ' Linestring',
             'execution_time' => $executionTime . ' ms',
+            'length_meters' => $formattedLengthMeters . ' metros',
+            'function' => 'ST_Length()',
+            'geometry' => $geometry,
         ]);
     }
 
@@ -519,10 +515,9 @@ class ServicesController extends Controller
             // Ajusta a resposta JSON
             return response()->json([
                 'execution_time' => $executionTime . " ms",
-                'length_meters' => round($totalLength / 2, 2) . ' metros',
-                'tipo' => 'polygon',
+                'length_meters' => number_format($totalLength / 2, 2) . ' metros',
                 'function' => 'php',
-                'line' => $linestring,
+                'geometry' => $linestring,
             ]);
         }
 
@@ -546,37 +541,100 @@ class ServicesController extends Controller
         $formattedLengthMeters = number_format($totalDistance, 2);
 
         return response()->json([
-            'length_meters' => $formattedLengthMeters . ' metros',
-            'tipo' => ' Linestring',
-            'function' => 'php',
             'execution_time' => $executionTime . " ms",
+            'length_meters' => $formattedLengthMeters . ' metros',
+            'function' => 'php',
+            'geometry' => $linestring,
         ]);
     }
-    // http://127.0.0.1:8000/api/v5/geojson/services/buffer?id=1
+    // http://127.0.0.1:8000/api/v5/geojson/services/buffer?id=1&raio=2000
     public function buffer(Request $request)
     {
-        $street_id = $request->id;
-        $street = DB::table('activities')
+        $id = $request->id;
+
+        $point = DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-            ->where('id', $street_id)
+            ->where('id', $id)
             ->first();
 
-        $geometry = json_decode($street->geometry);
+        $geometry = json_decode($point->geometry);
         $coordinates = $geometry->coordinates;
+        $startTime = microtime(true);
+        $raio = round(($request->raio / (111320 * cos(deg2rad(round($coordinates[1], 5))))), 4);
 
         $buffer = DB::selectOne(
-            "SELECT ST_AsGeoJSON(ST_Buffer(ST_GeomFromText('POINT($coordinates[0] $coordinates[1])', 4326), 0.0009)) as buf"
+            "SELECT ST_AsGeoJSON(ST_Buffer(ST_GeomFromText('POINT($coordinates[0] $coordinates[1])', 4326), $raio)) as buf"
         );
+        $endTime = microtime(true);
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         // Ajusta a resposta JSON
         return response()->json([
 
+            'pares' => count($coordinates),
+            'execution_time' => $executionTime . " ms",
             'type' => 'Feature',
             'geometry' => json_decode($buffer->buf),
             'properties' => [
-                'teste' => 'teste2'
+                'raio' => $raio,
             ]
 
         ]);
+    }
+
+    // http://127.0.0.1:8000/api/v5/geojson/services/buffer2?id=1&raio=2000
+    public function buffer2(Request $request)
+    {
+        // Obtém o raio em metros do request
+        $raio_metros = $request->raio;
+        $id = $request->id;
+
+        $point = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('id', $id)
+            ->first();
+
+        $geometry = json_decode($point->geometry);
+        $coordinates = $geometry->coordinates;
+
+        // Obtém as coordenadas do request
+        $longitude = $coordinates[0];
+        $latitude = $coordinates[1];
+
+        $startTime = microtime(true);
+        // Calcula o raio em graus decimais
+        $raio_graus = round($raio_metros / (111320 * cos(deg2rad($latitude))), 4);
+
+        // Define o número de segmentos do círculo (quanto maior, mais suave será o buffer)
+        $num_segmentos = 125;
+
+        // Calcula os pontos do círculo
+        $pontos = [];
+        for ($i = 0; $i <= $num_segmentos; $i++) {
+            $angulo = 2 * pi() * $i / $num_segmentos;
+            $ponto_longitude = $longitude + $raio_graus * cos($angulo);
+            $ponto_latitude = $latitude + $raio_graus * sin($angulo);
+            $pontos[] = [$ponto_longitude, $ponto_latitude];
+        }
+        $endTime = microtime(true);
+        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
+        // Ajusta a resposta JSON
+        $response = [
+            'count' => count($pontos),
+            'segm' => $i,
+            'execution_time' => $executionTime . " ms",
+            'type' => 'Feature',
+            'geometry' => [
+                'type' => 'Polygon',
+                'coordinates' => [$pontos] // Isso forma um polígono que representa o buffer
+            ],
+            'properties' => [
+                'raio' => $raio_graus,
+            ]
+        ];
+
+        // Retorna a resposta JSON
+        return response()->json($response);
     }
 }
