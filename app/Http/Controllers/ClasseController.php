@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Icon;
 use App\Models\Classe;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreClasseRequest;
 use App\Http\Requests\UpdateClasseRequest;
 
@@ -15,24 +16,27 @@ class ClasseController extends Controller
      */
     public function index()
     {
-        $classes = Classe::select(
-            'id',
-            'name',
-            'related_color',
-            'related_secondary_color'
-        )
-            ->get()
-            ->map(function ($classe) {
-                $geojson_classe = [
-                    "Classe" => [
-                        "ID" => $classe->id,
-                        "Nome" => $classe->name,
-                        "related_color" => $classe->related_color,
-                        "related_secondary_color" => $classe->related_secondary_color
-                    ]
-                ];
-                return $geojson_classe;
-            });
+        $chaveCache = "ClasseController_index";
+        $classes = Cache::remember($chaveCache, 3600, function () {
+            return Classe::select(
+                'id',
+                'name',
+                'related_color',
+                'related_secondary_color'
+            )
+                ->get()
+                ->map(function ($classe) {
+                    $geojson_classe = [
+                        "Classe" => [
+                            "ID" => $classe->id,
+                            "Nome" => $classe->name,
+                            "related_color" => $classe->related_color,
+                            "related_secondary_color" => $classe->related_secondary_color
+                        ]
+                    ];
+                    return $geojson_classe;
+                });
+        });
 
         header('Content-Type: application/json');
 
@@ -60,25 +64,28 @@ class ClasseController extends Controller
      */
     public function show(int $id)
     {
-        $classes = Classe::select(
-            'id',
-            'name',
-            'related_color',
-            'related_secondary_color'
-        )
-            ->where('id', $id)
-            ->get()
-            ->map(function ($classe) {
-                $geojson_classe = [
-                    "Classe" => [
-                        "ID" => $classe->id,
-                        "Nome" => $classe->name,
-                        "related_color" => $classe->related_color,
-                        "related_secondary_color" => $classe->related_secondary_color
-                    ]
-                ];
-                return $geojson_classe;
-            });
+        $chaveCache = "ClasseController_show_" . $id;
+        $classes = Cache::remember($chaveCache, 3600, function () use ($id) {
+            return Classe::select(
+                'id',
+                'name',
+                'related_color',
+                'related_secondary_color'
+            )
+                ->where('id', $id)
+                ->get()
+                ->map(function ($classe) {
+                    $geojson_classe = [
+                        "Classe" => [
+                            "ID" => $classe->id,
+                            "Nome" => $classe->name,
+                            "related_color" => $classe->related_color,
+                            "related_secondary_color" => $classe->related_secondary_color
+                        ]
+                    ];
+                    return $geojson_classe;
+                });
+        });
 
         header('Content-Type: application/json');
 
@@ -90,24 +97,28 @@ class ClasseController extends Controller
      */
     public function getSubclassesByClass(int $id)
     {
-        // Recuperar a classe com suas subclasses e ícones relacionados
-        $classe = Classe::where('id', $id)
-            ->with(['subclasse' => function ($query) {
-                $query->has('icon')->with(['icon' => function ($query) {
-                    $query->select('id', 'subclasse_id', 'disk_name', 'file_name', 'file_size', 'content_type', 'title', 'description', 'field', 'is_public', 'sort_order');
-                }]);
-            }])
-            ->has('subclasse.icon')
-            ->paginate(15);
-        // Adicionar o link para a imagem em cada ícone
-        $baseUrl = config('app.url');
-        foreach ($classe as $cl) {
-            foreach ($cl->subclasse as $subclasse) {
-                $icon = $subclasse->icon;
-                $icon->image_url = $baseUrl . '/storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
+        $chaveCache = "ClasseController_getSubclassesByClass_" . $id;
+        $classe = Cache::remember($chaveCache, 3600, function () use ($id) {
+            $classe = Classe::where('id', $id)
+                ->with(['subclasse' => function ($query) {
+                    $query->has('icon')->with(['icon' => function ($query) {
+                        $query->select('id', 'subclasse_id', 'disk_name', 'file_name');
+                    }]);
+                }])
+                ->has('subclasse.icon')
+                ->paginate(15);
+            // Adicionar o link para a imagem em cada ícone
+            $baseUrl = config('app.url');
+            foreach ($classe as $cl) {
+                foreach ($cl->subclasse as $subclasse) {
+                    $icon = $subclasse->icon;
+                    $icon->image_url = $baseUrl . '/storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
+                }
             }
-        }
-    
+
+            return $classe;
+        });
+
         // Retornar os dados da classe com as modificações
         return response()->json($classe);
     }

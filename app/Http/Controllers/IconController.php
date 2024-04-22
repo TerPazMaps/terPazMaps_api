@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Icon;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreIconRequest;
 use App\Http\Requests\UpdateIconRequest;
 
@@ -13,14 +14,17 @@ class IconController extends Controller
      * Display a listing of the resource.
      */
 
-     public function index()
-     {
-         $icons = Icon::with('subclasse')
-             ->has('subclasse') // Somente ícones que têm uma atividade relacionada com uma subclass correspondente
-             ->get();
- 
-         return json_encode($icons);
-     }
+    public function index()
+    {
+        $chaveCache = "IconController_index";
+        $icons = Cache::remember($chaveCache, 3600, function () {
+            return Icon::with('subclasse')
+            ->has('subclasse') // Somente ícones que têm uma atividade relacionada com uma subclass correspondente
+            ->get();
+        });
+
+        return json_encode($icons);
+    }
 
 
     /**
