@@ -11,13 +11,20 @@ use App\Http\Requests\UpdateClasseRequest;
 
 class ClasseController extends Controller
 {
+    private $redis_ttl;
+
+    public function __construct()
+    {
+        $this->redis_ttl = 3600;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $chaveCache = "ClasseController_index";
-        $classes = Cache::remember($chaveCache, 3600, function () {
+        $classes = Cache::remember($chaveCache, $this->redis_ttl, function () {
             return Classe::select(
                 'id',
                 'name',
@@ -40,7 +47,8 @@ class ClasseController extends Controller
 
         header('Content-Type: application/json');
 
-        echo json_encode($classes);
+        return response()->json($classes, 200);
+
     }
 
     /**
@@ -65,7 +73,7 @@ class ClasseController extends Controller
     public function show(int $id)
     {
         $chaveCache = "ClasseController_show_" . $id;
-        $classes = Cache::remember($chaveCache, 3600, function () use ($id) {
+        $classes = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
             return Classe::select(
                 'id',
                 'name',
@@ -89,7 +97,8 @@ class ClasseController extends Controller
 
         header('Content-Type: application/json');
 
-        echo json_encode($classes);
+        return response()->json($classes, 200);
+
     }
 
     /**
@@ -98,8 +107,8 @@ class ClasseController extends Controller
     public function getSubclassesByClass(int $id)
     {
         $chaveCache = "ClasseController_getSubclassesByClass_" . $id;
-        $classe = Cache::remember($chaveCache, 3600, function () use ($id) {
-            $classe = Classe::where('id', $id)
+        $classes = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
+            $classes = Classe::where('id', $id)
                 ->with(['subclasse' => function ($query) {
                     $query->has('icon')->with(['icon' => function ($query) {
                         $query->select('id', 'subclasse_id', 'disk_name', 'file_name');
@@ -109,18 +118,19 @@ class ClasseController extends Controller
                 ->paginate(15);
             // Adicionar o link para a imagem em cada ícone
             $baseUrl = config('app.url');
-            foreach ($classe as $cl) {
+            foreach ($classes as $cl) {
                 foreach ($cl->subclasse as $subclasse) {
                     $icon = $subclasse->icon;
-                    $icon->image_url = $baseUrl . '/storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
+                    $icon->image_url = $baseUrl . 'storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
                 }
             }
 
-            return $classe;
+            return $classes;
         });
 
         // Retornar os dados da classe com as modificações
-        return response()->json($classe);
+        return response()->json($classes, 200);
+
     }
 
     /**

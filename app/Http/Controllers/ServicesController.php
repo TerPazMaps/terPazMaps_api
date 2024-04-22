@@ -10,10 +10,15 @@ use Illuminate\Support\Facades\Cache;
 
 class ServicesController extends Controller
 {
+    private $redis_ttl;
+
+    public function __construct()
+    {
+        $this->redis_ttl = 3600;
+    }
+
     public function getActivitiesbyArea(Request $request)
     {
-        // Guarda o tempo de início da execução
-        // Método para buscar atividades próximas de uma coordenada e raio específico
         // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearby?region_id=7&subclass_id=28&raio=3000&latitude=-1.465815&longitude=-48.459401
 
         $region_id = $request->input('region_id');
@@ -25,7 +30,7 @@ class ServicesController extends Controller
         $startTime = microtime(true);
 
         $chaveCache = "activitiesbyArea_" . $region_id . "_" . $subclass_id . "_" . $raio . "_" . $latitude . "_" . $longitude;
-        $query = Cache::remember($chaveCache, 3600, function () use ($region_id, $subclass_id, $latitude, $longitude, $raio) {
+        $query = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $subclass_id, $latitude, $longitude, $raio) {
             return DB::table('activities')->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('region_id', $region_id)
                 ->where('subclass_id', $subclass_id)
@@ -66,7 +71,8 @@ class ServicesController extends Controller
             "type" => "FeatureCollection",
             "features" => $activities->toArray(),
         ];
-        return $featureCollection;
+
+        return response()->json($featureCollection, 200);
     }
 
     public function getActivitiesbyArea2(Request $request)
@@ -82,7 +88,7 @@ class ServicesController extends Controller
         $raio = $request->input('raio');
 
         $chaveCache = "getActivitiesbyArea2_" . $region_id . "_" . $subclass_id . "_" . $raio . "_" . $latitude . "_" . $longitude;
-        $activities = Cache::remember($chaveCache, 3600, function () use ($region_id, $subclass_id) {
+        $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $subclass_id) {
             return DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('region_id', $region_id)
@@ -132,7 +138,7 @@ class ServicesController extends Controller
             })->toArray(),
         ];
 
-        return $featureCollection;
+        return response()->json($featureCollection, 200);
     }
 
 
@@ -167,7 +173,7 @@ class ServicesController extends Controller
         $id2 = $request->id2;
 
         $chaveCache = "getDistance_" . $id1 . "_" . $id2;
-        $points = Cache::remember($chaveCache, 3600, function () use ($id1, $id2) {
+        $points = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id1, $id2) {
             return DB::table('activities')
                 ->select('id', DB::raw('ST_AsText(geometry) as coordinates'))
                 ->whereIn('id', [$id1, $id2])
@@ -177,9 +183,10 @@ class ServicesController extends Controller
         $coordinates1 = $this->extractCoordinates($points->first()->coordinates);
         $coordinates2 = $this->extractCoordinates($points->last()->coordinates);
 
+
         $startTime = microtime(true);
         $chaveCache = "getDistance_aux_" . $id1 . "_" . $id2;
-        $distanceQuery = Cache::remember($chaveCache, 5, function () use ($coordinates1, $coordinates2) {
+        $distanceQuery = Cache::remember($chaveCache, $this->redis_ttl, function () use ($coordinates1, $coordinates2) {
             return DB::selectOne(
                 "SELECT ST_Distance_Sphere(
                     POINT($coordinates1[0], $coordinates1[1]),
@@ -192,11 +199,11 @@ class ServicesController extends Controller
         $endTime = microtime(true);
         $executionTime = number_format(($endTime - $startTime) * 1000, 4); // convertendo para milissegundos
 
-        return [
+        return response()->json([
             'distance' => $distance,
             'execution_time' => $executionTime . " milissegundos",
             'function' => "ST_Distance_Sphere"
-        ];
+        ], 200);
     }
 
     public function getDistance2(Request $request)
@@ -225,11 +232,12 @@ class ServicesController extends Controller
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
         // Retorna a distância formatada e o tempo de execução
-        return [
+        
+        return response()->json([
             'distance' => $formattedDistance,
             'execution_time' => $executionTime . " milissegundos",
             'function' => "php"
-        ];
+        ], 200);
     }
 
     // Função para extrair as coordenadas de um ponto no formato "POINT(longitude latitude)"
@@ -251,7 +259,7 @@ class ServicesController extends Controller
 
         // Consulta para obter as coordenadas das referencias
         $chaveCache = "getEscolas_referencias_" . $region_id . "_" . $referenciaId;
-        $referencias = Cache::remember($chaveCache, 3600, function () use ($region_id, $referenciaId) {
+        $referencias = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $referenciaId) {
             return DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('region_id', $region_id)
@@ -267,7 +275,6 @@ class ServicesController extends Controller
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             ->where('subclass_id', $pontoBuscadoId);
 
-
         $startTime = microtime(true);
         // Iterar sobre as referencias
         foreach ($referencias as $referencia) {
@@ -280,7 +287,7 @@ class ServicesController extends Controller
             $pontosProximosClone = clone $pontosProximos;
 
             $chaveCache = "getEscolas_pontosProximosClone_" . $longitude . "_" . $latitude . "_" . $raio;
-            $pontosProximosClone = Cache::remember($chaveCache, 3600, function () use ($pontosProximosClone, $longitude, $latitude, $raio) {
+            $pontosProximosClone = Cache::remember($chaveCache, $this->redis_ttl, function () use ($pontosProximosClone, $longitude, $latitude, $raio) {
                 return $pontosProximosClone->whereRaw(
                     "ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio"
                 )
@@ -327,7 +334,7 @@ class ServicesController extends Controller
             'features' => $features
         ];
 
-        return $geojson;
+        return response()->json($geojson, 200);
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/points-of-interest2?region_id=1&referenciaId=7&pontoBuscadoId=28&raio=100
@@ -340,7 +347,7 @@ class ServicesController extends Controller
 
         // Consulta para obter as coordenadas das referencias
         $chaveCache = "getEscolas_referencias_" . $region_id . "_" . $referenciaId;
-        $referencias = Cache::remember($chaveCache, 3600, function () use ($region_id, $referenciaId) {
+        $referencias = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $referenciaId) {
             return DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('region_id', $region_id)
@@ -351,14 +358,8 @@ class ServicesController extends Controller
         // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
         $features = [];
 
-        // Consulta para obter as escolas próximas à igreja atual
-        // $pontosProximos = DB::table('activities')
-        //     ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-        //     ->where('subclass_id', $pontoBuscadoId)
-        //     ->get();
-
         $chaveCache = "getEscolas_referencias_pontosProximos_" . $pontoBuscadoId;
-        $pontosProximos = Cache::remember($chaveCache, 3600, function () use ($pontoBuscadoId) {
+        $pontosProximos = Cache::remember($chaveCache, $this->redis_ttl, function () use ($pontoBuscadoId) {
             return DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('subclass_id', $pontoBuscadoId)
@@ -377,7 +378,7 @@ class ServicesController extends Controller
             $pontosProximosClone = clone $pontosProximos;
 
             $chaveCache = "getEscolas_pontosProximosClone_" . $longitude . "_" . $latitude . "_" . $raio;
-            $pontosProximosClone = Cache::remember($chaveCache, 3600, function () use ($pontosProximosClone, $longitude, $latitude, $raio) {
+            $pontosProximosClone = Cache::remember($chaveCache, $this->redis_ttl, function () use ($pontosProximosClone, $longitude, $latitude, $raio) {
                 return $pontosProximosClone->filter(function ($pontos) use ($latitude, $longitude, $raio) {
                     $geometry = json_decode($pontos->geometry);
                     $coordinates = $geometry->coordinates;
@@ -433,7 +434,7 @@ class ServicesController extends Controller
             'features' => $features
         ];
 
-        return $geojson;
+        return response()->json($geojson,200);
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/length-street?street_id=17455
@@ -443,7 +444,7 @@ class ServicesController extends Controller
         $street_id = $request->street_id;
 
         $chaveCache = "getLengthStreet_" . $street_id;
-        $street = Cache::remember($chaveCache, 3600, function () use ($street_id) {
+        $street = Cache::remember($chaveCache, $this->redis_ttl, function () use ($street_id) {
             return DB::table('streets')
                 ->select(DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('id', $street_id)
@@ -457,7 +458,7 @@ class ServicesController extends Controller
             // Consulta para calcular o comprimento do polígono            
             $startTime = microtime(true);
             $chaveCache = "getLengthStreet_Polygon_" . $street_id;
-            $lengthQuery = Cache::remember($chaveCache, 3600, function () use ($street_id, $grauDeLatitude) {
+            $lengthQuery = Cache::remember($chaveCache, $this->redis_ttl, function () use ($street_id, $grauDeLatitude) {
                 return DB::selectOne(
                     "SELECT (ST_Length(ST_ExteriorRing(geometry)) / 2) * $grauDeLatitude AS length_meters
                 FROM streets WHERE id = $street_id"
@@ -476,7 +477,7 @@ class ServicesController extends Controller
 
         $startTime = microtime(true);
         $chaveCache = "getLengthStreet_Linestring_" . $street_id;
-        $totalDistance = Cache::remember($chaveCache, 3600, function () use ($street, $grauDeLatitude) {
+        $totalDistance = Cache::remember($chaveCache, $this->redis_ttl, function () use ($street, $grauDeLatitude) {
             return DB::selectOne(
                 "SELECT ST_Length(ST_GeomFromGeoJSON(:geometry)) * $grauDeLatitude AS length_meters",
                 ['geometry' => $street->geometry]
@@ -493,7 +494,7 @@ class ServicesController extends Controller
             'length_meters' => $formattedLengthMeters . ' metros',
             'function' => 'ST_Length()',
             'geometry' => $geometry,
-        ]);
+        ], 200);
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/length-street2?street_id=1
@@ -501,7 +502,7 @@ class ServicesController extends Controller
     {
         $street_id = $request->street_id;
         $chaveCache = "getLengthStreet_" . $street_id;
-        $street = Cache::remember($chaveCache, 3600, function () use ($street_id) {
+        $street = Cache::remember($chaveCache, $this->redis_ttl, function () use ($street_id) {
             return DB::table('streets')
                 ->select(DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('id', $street_id)
@@ -542,7 +543,7 @@ class ServicesController extends Controller
                 'length_meters' => number_format($totalLength / 2, 2) . ' metros',
                 'function' => 'php',
                 'geometry' => $linestring,
-            ]);
+            ], 200);
         }
 
         // Itera sobre os pontos para calcular a distância entre eles
@@ -569,7 +570,7 @@ class ServicesController extends Controller
             'length_meters' => $formattedLengthMeters . ' metros',
             'function' => 'php',
             'geometry' => $linestring,
-        ]);
+        ], 200);
     }
     // http://127.0.0.1:8000/api/v5/geojson/services/buffer?id=1&raio=2000
     public function buffer(Request $request)
@@ -577,11 +578,11 @@ class ServicesController extends Controller
         $id = $request->id;
 
         $chaveCache = "buffer_point_" . $id;
-        $point = Cache::remember($chaveCache, 3600, function () use ($id) {
+        $point = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
             return DB::table('activities')
-            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-            ->where('id', $id)
-            ->first();
+                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+                ->where('id', $id)
+                ->first();
         });
 
         $geometry = json_decode($point->geometry);
@@ -589,8 +590,8 @@ class ServicesController extends Controller
         $startTime = microtime(true);
         $raio = round(($request->raio / (111320 * cos(deg2rad(round($coordinates[1], 5))))), 4);
 
-        $chaveCache = "buffer_" . $id ."_". $raio;
-        $buffer = Cache::remember($chaveCache, 3600, function () use ($coordinates, $raio) {
+        $chaveCache = "buffer_" . $id . "_" . $raio;
+        $buffer = Cache::remember($chaveCache, $this->redis_ttl, function () use ($coordinates, $raio) {
             return DB::selectOne(
                 "SELECT ST_AsGeoJSON(ST_Buffer(ST_GeomFromText('POINT($coordinates[0] $coordinates[1])', 4326), $raio)) as buf"
             );
@@ -609,7 +610,7 @@ class ServicesController extends Controller
                 'raio' => $raio,
             ]
 
-        ]);
+        ], 200);
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/buffer2?id=1&raio=2000
@@ -620,11 +621,11 @@ class ServicesController extends Controller
         $id = $request->id;
 
         $chaveCache = "buffer_point_" . $id;
-        $point = Cache::remember($chaveCache, 3600, function () use ($id) {
+        $point = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
             return DB::table('activities')
-            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-            ->where('id', $id)
-            ->first();
+                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+                ->where('id', $id)
+                ->first();
         });
 
         $geometry = json_decode($point->geometry);
@@ -668,6 +669,6 @@ class ServicesController extends Controller
         ];
 
         // Retorna a resposta JSON
-        return response()->json($response);
+        return response()->json($response, 200);
     }
 }

@@ -18,7 +18,7 @@ class StreetConditionController extends Controller
     {
         $streetConditions = Street_condition::select('*')->get();
 
-        return response()->json($streetConditions);
+        return response()->json($streetConditions, 200);
     }
 
     /**

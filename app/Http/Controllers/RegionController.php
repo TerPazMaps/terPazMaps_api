@@ -17,13 +17,19 @@ use App\Http\Requests\UpdateRegionRequest;
 
 class RegionController extends Controller
 {
+    private $redis_ttl;
+
+    public function __construct()
+    {
+        $this->redis_ttl = 3600;
+    }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $chaveCache = "RegionController_index";
-        $regions = Cache::remember($chaveCache, 3600, function () {
+        $regions = Cache::remember($chaveCache, $this->redis_ttl, function () {
             return Region::select(
                 'id',
                 'name',
@@ -52,7 +58,7 @@ class RegionController extends Controller
         ];
         header('Content-Type: application/json');
 
-        echo json_encode($geojson);
+        return response()->json($geojson, 200);
     }
 
     public function getIconsByRegion(int $id, Request $request)
@@ -65,7 +71,7 @@ class RegionController extends Controller
             $chaveCache .= "_" . $request->subclass_id;
         }
 
-        $activities = Cache::remember($chaveCache, 3600, function () use ($request, $id) {
+        $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($request, $id) {
             return Activitie::with(['subclass.icon'])
                 ->whereHas('subclass', function ($query) use ($request) {
                     if ($request->class_id) {
@@ -88,14 +94,13 @@ class RegionController extends Controller
         $geojsonFeatures = [];
 
         $chaveCache = "IconController_index_geojsonFeatures";
-        $geojsonFeatures = Cache::remember($chaveCache, 3600, function () use ($activities) {
+        $geojsonFeatures = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities) {
             foreach ($activities as $activity) {
                 $geometry = json_decode($activity->geometry);
 
                 // Construa a URL da imagem do ícone
                 $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
-                // Criar a feature do GeoJSON
                 $feature = [
                     'type' => 'Feature',
                     'geometry' => $geometry,
@@ -126,15 +131,12 @@ class RegionController extends Controller
             return $geojsonFeatures;
         });
 
-        // Construir o objeto GeoJSON
         $geojson = [
             'type' => 'FeatureCollection',
             'features' => $geojsonFeatures,
         ];
 
-
-        // Exiba o JSON
-        return response()->json($geojson);
+        return response()->json($geojson, 200);
     }
 
     /**
@@ -159,7 +161,7 @@ class RegionController extends Controller
     public function show(int $id)
     {
         $chaveCache = "IconController_show_" . $id;
-        $regions = Cache::remember($chaveCache, 3600, function () use ($id) {
+        $regions = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
             return Region::select(
                 'id',
                 'name',
@@ -183,7 +185,8 @@ class RegionController extends Controller
 
         header('Content-Type: application/json');
 
-        echo json_encode($geojson_region);
+        return response()->json($geojson_region, 200);
+
     }
 
     /**
@@ -211,7 +214,7 @@ class RegionController extends Controller
             $query->whereIn('street_condition_id', $condition_ids);
         }
 
-        $streets = Cache::remember($chaveCache, 3600, function () use ($query) {
+        $streets = Cache::remember($chaveCache, $this->redis_ttl, function () use ($query) {
             return $query->get()->map(function ($street) {
                 $geometry = json_decode($street->geometry);
                 $coordinates = $geometry->coordinates;
@@ -251,7 +254,8 @@ class RegionController extends Controller
             "features" => $streets->toArray(),
         ];
 
-        return $featureCollection;
+        return response()->json($featureCollection, 200);
+
     }
 
     /**

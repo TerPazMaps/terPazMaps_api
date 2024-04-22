@@ -13,6 +13,12 @@ use App\Http\Requests\UpdateSubclasseRequest;
 
 class SubclasseController extends Controller
 {
+    private $redis_ttl;
+
+    public function __construct()
+    {
+        $this->redis_ttl = 3600;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -33,7 +39,7 @@ class SubclasseController extends Controller
             });
         }
 
-        $subclasses = Cache::remember($chaveCache, 3600, function () use ($subclassesQuery) {
+        $subclasses = Cache::remember($chaveCache, $this->redis_ttl, function () use ($subclassesQuery) {
             $aux = $subclassesQuery->get();
 
             $baseUrl = config('app.url');
@@ -47,7 +53,7 @@ class SubclasseController extends Controller
 
 
         // Retornar os resultados em formato JSON
-        return response()->json($subclasses);
+        return response()->json($subclasses, 200);
     }
 
     /**

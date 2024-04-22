@@ -13,6 +13,13 @@ use App\Http\Requests\UpdateActivitieRequest;
 
 class ActivitieController extends Controller
 {
+    private $redis_ttl;
+
+    public function __construct()
+    {
+        $this->redis_ttl = 3600;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -27,7 +34,7 @@ class ActivitieController extends Controller
             ->has('subclass.classe')
             ->orderBy('id');
 
-        $chaveCache = "ActivitieController_index_";
+        $chaveCache = "ActivitieController_index";
 
         // Construindo a chave do cache com base nos parâmetros da solicitação
         if ($request->regions) {
@@ -49,62 +56,66 @@ class ActivitieController extends Controller
         }
 
         $startTime = microtime(true);
-        $activities = Cache::remember($chaveCache, 3600, function () use ($activities) {
+        $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities) {
             return $activities->get();
         });
 
         $endTime = microtime(true);
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
-        // dd($activities);
-        if ($request->only_references) {
-            $activities = $activities
-                ->map(function ($activity) use ($executionTime){
-                    $geojson_activity = [
-                        "time" => $executionTime,
-                        "type" => "Feature",
-                        "geometry" => json_decode($activity->geometry),
-                        "properties" => [
-                            "ID Geral" => $activity->id,
-                            "Nome" => $activity->name ?? '',
-                            "ID Subclasse" => $activity->subclass->id,
-                            "ID Bairro" => $activity->region->id,
-                            "Nível" => $activity->level
-                        ]
-                    ];
 
-                    return $geojson_activity;
-                });
-        } else {
-            $activities = $activities
-                ->map(function ($activity) use ($executionTime){
-                    // Construa a URL da imagem do ícone
+        $chaveCache = "ActivitieController_index_map_". $request->regions . $request->subclasses . $request->ids . $request->only_references;
+        $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities, $request, $executionTime) {
+            if ($request->only_references) {
+                $activities = $activities
+                    ->map(function ($activity) use ($executionTime){
+                        $geojson_activity = [
+                            "time" => $executionTime,
+                            "type" => "Feature",
+                            "geometry" => json_decode($activity->geometry),
+                            "properties" => [
+                                "ID Geral" => $activity->id,
+                                "Nome" => $activity->name ?? '',
+                                "ID Subclasse" => $activity->subclass->id,
+                                "ID Bairro" => $activity->region->id,
+                                "Nível" => $activity->level
+                            ]
+                        ];
 
-                    $geojson_activity = [
-                        "time" => $executionTime,
-                        "type" => "Feature",
-                        "geometry" => json_decode($activity->geometry),
-                        "properties" => [
-                            "ID Geral" => $activity->id,
-                            "Nome" => $activity->name ?? '',
-                            "Classe" => $activity->subclass->classe->name ?? '',
-                            "Sub-classe" => $activity->subclass->name,
-                            "Bairro_id" => $activity->region->id,
-                            "Bairro" => $activity->region->name,
-                            "Nível" => $activity->level,
-                            "img_url" => 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name
-                        ]
-                    ];
+                        return $geojson_activity;
+                    });
+            } else {
+                $activities = $activities
+                    ->map(function ($activity) use ($executionTime){
+                        // Construa a URL da imagem do ícone
 
-                    return $geojson_activity;
-                });
-        }
+                        $geojson_activity = [
+                            "time" => $executionTime,
+                            "type" => "Feature",
+                            "geometry" => json_decode($activity->geometry),
+                            "properties" => [
+                                "ID Geral" => $activity->id,
+                                "Nome" => $activity->name ?? '',
+                                "Classe" => $activity->subclass->classe->name ?? '',
+                                "Sub-classe" => $activity->subclass->name,
+                                "Bairro_id" => $activity->region->id,
+                                "Bairro" => $activity->region->name,
+                                "Nível" => $activity->level,
+                                "img_url" => 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name
+                            ]
+                        ];
+
+                        return $geojson_activity;
+                    });
+            }
+            return $activities;
+        });
 
         $geojson = [
             "type" => "FeatureCollection",
             "features" => $activities
         ];
 
-        return $geojson;
+        return response()->json($geojson, 200);
     }
 
     /**
