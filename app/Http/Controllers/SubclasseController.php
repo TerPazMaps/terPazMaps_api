@@ -7,11 +7,18 @@ use App\Models\Classe;
 use App\Models\Subclasse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreSubclasseRequest;
 use App\Http\Requests\UpdateSubclasseRequest;
 
 class SubclasseController extends Controller
 {
+    private $redis_ttl;
+
+    public function __construct()
+    {
+        $this->redis_ttl = 3600;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -21,7 +28,9 @@ class SubclasseController extends Controller
         $subclassesQuery = Icon::with('subclasse')->has('subclasse');
 
         // Verificar se há um parâmetro 'name' na solicitação
+        $chaveCache = "SubclasseController_index";
         if ($request->has('name')) {
+            $chaveCache .= "_" . $request->name;
             $name = $request->input('name');
 
             // Adicionar a cláusula where para filtrar as subclasses pelo nome
@@ -30,19 +39,21 @@ class SubclasseController extends Controller
             });
         }
 
-        // Executar a consulta
-        $subclasses = $subclassesQuery->get();
+        $subclasses = Cache::remember($chaveCache, $this->redis_ttl, function () use ($subclassesQuery) {
+            $aux = $subclassesQuery->get();
 
-        // Adicionar link para acessar a imagem a cada objeto
-        $baseUrl = config('app.url');
-        $subclasses->transform(function ($item, $key) use ($baseUrl) {
-            // $item['image_url'] = $baseUrl . '/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
-            $item['image_url'] = 'http://127.0.0.1:8000/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
-            return $item;
+            $baseUrl = config('app.url');
+            $aux->transform(function ($item, $key) use ($baseUrl) {
+                // $item['image_url'] = $baseUrl . '/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
+                $item['image_url'] = 'http://127.0.0.1:8000/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
+                return $item;
+            });
+            return $aux;
         });
 
+
         // Retornar os resultados em formato JSON
-        return response()->json($subclasses);
+        return response()->json($subclasses, 200);
     }
 
     /**

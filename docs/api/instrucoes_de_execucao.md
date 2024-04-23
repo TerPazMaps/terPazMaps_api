@@ -3,6 +3,7 @@
 Pré-requisitos:
 1. Xampp v3.3
 2. Composer v2.5
+3. Redis 3.0.504
 
 Após clonar ou baixar o .zip do projeto, execute os passos:
 
