@@ -5,42 +5,52 @@ namespace App\Http\Controllers;
 use App\Models\Icon;
 use App\Models\Region;
 use App\Models\Street;
+use App\Models\Activitie;
 use App\Models\Subclasse;
 use Illuminate\Http\Request;
 use App\Policies\SubclassePolicy;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreRegionRequest;
 use App\Http\Requests\UpdateRegionRequest;
-use App\Models\Activitie;
 
 class RegionController extends Controller
 {
+    private $redis_ttl;
+
+    public function __construct()
+    {
+        $this->redis_ttl = 3600;
+    }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $regions = Region::select(
-            'id',
-            'name',
-            'city',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-            DB::raw('ST_AsGeoJSON(center) as center')
-        )
-            ->get()
-            ->map(function ($region) {
-                $geojson_region = [
-                    "type" => "Feature",
-                    "geometry" => json_decode($region->geometry),
-                    "properties" => [
-                        "ID" => $region->id,
-                        "Nome" => $region->name,
-                        "Centro" => json_decode($region->center)
-                    ]
-                ];
-                return $geojson_region;
-            });
+        $chaveCache = "RegionController_index";
+        $regions = Cache::remember($chaveCache, $this->redis_ttl, function () {
+            return Region::select(
+                'id',
+                'name',
+                'city',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
+                DB::raw('ST_AsGeoJSON(center) as center')
+            )
+                ->get()
+                ->map(function ($region) {
+                    $geojson_region = [
+                        "type" => "Feature",
+                        "geometry" => json_decode($region->geometry),
+                        "properties" => [
+                            "ID" => $region->id,
+                            "Nome" => $region->name,
+                            "Centro" => json_decode($region->center)
+                        ]
+                    ];
+                    return $geojson_region;
+                });
+        });
 
         $geojson = [
             "type" => "FeatureCollection",
@@ -48,77 +58,85 @@ class RegionController extends Controller
         ];
         header('Content-Type: application/json');
 
-        echo json_encode($geojson);
+        return response()->json($geojson, 200);
     }
 
     public function getIconsByRegion(int $id, Request $request)
     {
-        $activities = Activitie::with(['subclass.icon'])
-            ->whereHas('subclass', function ($query) use ($request) {
-                if ($request->class_id) {
-                    $class_ids = array_map('intval', explode(',', $request->class_id));
-                    $query->whereIn('class_id', $class_ids);
-                }
-            })
-            ->where('region_id', $id)
-            ->where(function ($query) use ($request) {
-                if ($request->subclass_id) {
-                    $subclass_id = array_map('intval', explode(',', $request->subclass_id));
-                    $query->whereIn('subclass_id', $subclass_id);
-                }
-            })
-            
-            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-            ->get();
+        $chaveCache = "RegionController_getIconsByRegion_" . $id;
+        if ($request->class_id) {
+            $chaveCache .= "_" . $request->class_id;
+        }
+        if ($request->subclass_id) {
+            $chaveCache .= "_" . $request->subclass_id;
+        }
+
+        $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($request, $id) {
+            return Activitie::with(['subclass.icon'])
+                ->whereHas('subclass', function ($query) use ($request) {
+                    if ($request->class_id) {
+                        $class_ids = array_map('intval', explode(',', $request->class_id));
+                        $query->whereIn('class_id', $class_ids);
+                    }
+                })
+                ->where('region_id', $id)
+                ->where(function ($query) use ($request) {
+                    if ($request->subclass_id) {
+                        $subclass_id = array_map('intval', explode(',', $request->subclass_id));
+                        $query->whereIn('subclass_id', $subclass_id);
+                    }
+                })
+                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+                ->get();
+        });
+
         // Array para armazenar os dados das atividades com ícones
         $geojsonFeatures = [];
 
-        foreach ($activities as $activity) {
-            $geometry = json_decode($activity->geometry);
+        $chaveCache = "IconController_index_geojsonFeatures";
+        $geojsonFeatures = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities) {
+            foreach ($activities as $activity) {
+                $geometry = json_decode($activity->geometry);
 
-            // Construa a URL da imagem do ícone
-            $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
+                // Construa a URL da imagem do ícone
+                $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
-            // Criar a feature do GeoJSON
-            $feature = [
-                'type' => 'Feature',
-                'geometry' => $geometry,
-                'properties' => [
-                    'id' => $activity->id,
-                    'name' => $activity->name,
-                    'subclass' => [
-                        'id' => $activity->subclass->id,
-                        'class_id' => $activity->subclass->class_id,
-                        'name' => $activity->subclass->name,
-                        'icon' => [
-                            'id' => $activity->subclass->icon->id,
-                            'sb_id' => $activity->subclass->icon->subclasse_id,
-                            'disk_name' => $activity->subclass->icon->disk_name,
-                            'file_name' => $activity->subclass->icon->file_name,
-                            'file_size' => $activity->subclass->icon->file_size,
-                            'content_type' => $activity->subclass->icon->content_type,
-                            'is_public' => $activity->subclass->icon->is_public,
-                            'sort_order' => $activity->subclass->icon->sort_order,
-                            'img_url' => $imageUrl,
+                $feature = [
+                    'type' => 'Feature',
+                    'geometry' => $geometry,
+                    'properties' => [
+                        'id' => $activity->id,
+                        'name' => $activity->name,
+                        'subclass' => [
+                            'id' => $activity->subclass->id,
+                            'class_id' => $activity->subclass->class_id,
+                            'name' => $activity->subclass->name,
+                            'icon' => [
+                                'id' => $activity->subclass->icon->id,
+                                'sb_id' => $activity->subclass->icon->subclasse_id,
+                                'disk_name' => $activity->subclass->icon->disk_name,
+                                'file_name' => $activity->subclass->icon->file_name,
+                                'file_size' => $activity->subclass->icon->file_size,
+                                'content_type' => $activity->subclass->icon->content_type,
+                                'is_public' => $activity->subclass->icon->is_public,
+                                'sort_order' => $activity->subclass->icon->sort_order,
+                                'img_url' => $imageUrl,
+                            ],
                         ],
                     ],
-                ],
-            ];
+                ];
 
-            $geojsonFeatures[] = $feature;
-        }
+                $geojsonFeatures[] = $feature;
+            }
+            return $geojsonFeatures;
+        });
 
-        // Construir o objeto GeoJSON
         $geojson = [
             'type' => 'FeatureCollection',
             'features' => $geojsonFeatures,
         ];
 
-        // Converta o GeoJSON em JSON
-        $jsonData = json_encode($geojson);
-
-        // Exiba o JSON
-        echo $jsonData;
+        return response()->json($geojson, 200);
     }
 
     /**
@@ -142,15 +160,18 @@ class RegionController extends Controller
      */
     public function show(int $id)
     {
-        $regions = Region::select(
-            'id',
-            'name',
-            'city',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-            DB::raw('ST_AsGeoJSON(center) as center')
-        )
-            ->where('id', $id)
-            ->first();
+        $chaveCache = "IconController_show_" . $id;
+        $regions = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
+            return Region::select(
+                'id',
+                'name',
+                'city',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
+                DB::raw('ST_AsGeoJSON(center) as center')
+            )
+                ->where('id', $id)
+                ->first();
+        });
 
         $geojson_region = [
             "type" => "Feature",
@@ -164,7 +185,8 @@ class RegionController extends Controller
 
         header('Content-Type: application/json');
 
-        echo json_encode($geojson_region);
+        return response()->json($geojson_region, 200);
+
     }
 
     /**
@@ -184,42 +206,47 @@ class RegionController extends Controller
             ->with('streetCondition');
 
         // Verifica se o parâmetro 'condition_id' está presente na solicitação
+        $chaveCache = "IconController_getStreetsByRegion_".$id;
         if ($request->condition_id) {
             $condition_ids = $request->condition_id ? array_map('intval', explode(',', $request->condition_id)) : [];
+            $chaveCache .= "_".$request->condition_id;
             // Aplica o filtro para 'condition_id'
             $query->whereIn('street_condition_id', $condition_ids);
         }
 
-        $streets = $query->get()->map(function ($street) {
-            $geometry = json_decode($street->geometry);
-            $coordinates = $geometry->coordinates;
-            $type = $geometry->type;
-
-            $properties = [
-                "id" => $street->id,
-                "region_id" => $street->region_id,
-                "condition" => $street->streetCondition->condition,
-                "condition_id" => $street->streetCondition->id,
-                "color" => $street->color,
-                "with" => $street->with,
-                "continuous" => $street->continuous,
-                "line_cap" => $street->line_cap,
-                "line_dash_pattern" => $street->line_dash_pattern,
-                "name" => $street->name, // Adicionado o nome da rua como propriedade
-            ];
-
-            // Cria o objeto GeoJSON Feature
-            $feature = [
-                "type" => "Feature",
-                "geometry" => [
-                    "type" => $type,
-                    "coordinates" => $coordinates
-                ],
-                "properties" => $properties,
-            ];
-
-            return $feature;
+        $streets = Cache::remember($chaveCache, $this->redis_ttl, function () use ($query) {
+            return $query->get()->map(function ($street) {
+                $geometry = json_decode($street->geometry);
+                $coordinates = $geometry->coordinates;
+                $type = $geometry->type;
+    
+                $decodedProperties = json_decode($street->properties, true);
+                $properties = array_merge([
+                    "id" => $street->id,
+                    "region_id" => $street->region_id,
+                    "condition" => $street->streetCondition->condition,
+                    "condition_id" => $street->streetCondition->id,
+                    "color" => $street->color,
+                    "with" => $street->with,
+                    "continuous" => $street->continuous,
+                    "line_cap" => $street->line_cap,
+                    "line_dash_pattern" => $street->line_dash_pattern,
+                ], $decodedProperties);
+    
+                // Cria o objeto GeoJSON Feature
+                $feature = [
+                    "type" => "Feature",
+                    "geometry" => [
+                        "type" => $type,
+                        "coordinates" => $coordinates
+                    ],
+                    "properties" => $properties,
+                ];
+    
+                return $feature;
+            });
         });
+
 
         // Cria o objeto GeoJSON FeatureCollection
         $featureCollection = [
@@ -227,7 +254,8 @@ class RegionController extends Controller
             "features" => $streets->toArray(),
         ];
 
-        return $featureCollection;
+        return response()->json($featureCollection, 200);
+
     }
 
     /**
