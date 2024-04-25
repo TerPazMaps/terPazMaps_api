@@ -1,18 +1,17 @@
 <?php
 
-use App\Models\Classe;
 use Illuminate\Http\Request;
+use App\Mail\PasswordUpdate;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\IconController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\IconController;
 use App\Http\Controllers\ClasseController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\StreetController;
-use App\Http\Controllers\ActivitieController;
 use App\Http\Controllers\ServicesController;
+use App\Http\Controllers\ActivitieController;
 use App\Http\Controllers\SubclasseController;
 use App\Http\Controllers\StreetConditionController;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +43,7 @@ Route::get('/icons', function () {
     return view('icons', compact('baseUrl'));
 });
 
-Route::get('/terpazmaps', function () { 
+Route::get('/terpazmaps', function () {
     $baseUrl = config('app.url');
     return view('index', compact('baseUrl'));
 })->name('index');
@@ -55,20 +54,20 @@ Route::get('/terpazmaps', function () {
 
 Route::group(['prefix' => 'api/v5'], function () {
     Route::group(['prefix' => '/geojson'], function () {
-        
+
         Route::apiResource('classe', ClasseController::class);
         Route::get('/classe/{id}/subclasses', [ClasseController::class, 'getSubclassesByClass']);
-        
+
         Route::apiResource('region', RegionController::class);
         Route::get('/region/{id}/streets', [RegionController::class, 'getStreetsByRegion']);
         Route::get('/region/{id}/icons', [RegionController::class, 'getIconsByRegion']);
-        
+
         Route::apiResource('street_condition', StreetConditionController::class);
-        
+
         Route::apiResource('subclasse', SubclasseController::class);
-        
+
         Route::apiResource('activitie', ActivitieController::class);
-        
+
         Route::get('/services/activities-nearby', [ServicesController::class, 'getActivitiesbyArea']);
         Route::get('/services/activities-nearby2', [ServicesController::class, 'getActivitiesbyArea2']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
@@ -79,11 +78,10 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::get('/services/length-street2', [ServicesController::class, 'getlengthStreet2']);
         Route::get('/services/buffer', [ServicesController::class, 'buffer']);
         Route::get('/services/buffer2', [ServicesController::class, 'buffer2']);
-        
+
         Route::apiResource('street', StreetController::class);
 
         Route::apiResource('icon', IconController::class);
-        
     });
 
     Route::post('login', [AuthController::class, 'login'])->name('login');
@@ -91,4 +89,12 @@ Route::group(['prefix' => 'api/v5'], function () {
     Route::post('logout', [AuthController::class, 'logout'])->middleware('jwt.auth');
     Route::post('refresh', [AuthController::class, 'refresh'])->middleware('jwt.auth');
     Route::post('me', [AuthController::class, 'me'])->middleware('jwt.auth');
+
+
+    Route::get('password-reset-notification', [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
+    Route::post('send-password-reset-notification', [AuthController::class, 'sendPasswordResetNotification'])->name('send-password-reset-notification');
+    
+    
+   
 });
+
