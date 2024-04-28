@@ -92,10 +92,10 @@ Esta API requer autenticação com JSON Web Token para acessar determinados endp
   
 ## Atualização de senha.
 
-- **Descrição**: Recurso para recuperação de contas com envio de link único por e-mail .
+- **Descrição**: Recurso para recuperação de contas com envio de link único por e-mail.
 - **Endpoints**:
   - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/send-password-reset-notification](/docs/api/atualizacao_de_senha.md)
-  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/reset-password](/docs/api/atualizacao_de_senha.md)
+  <!-- - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  [ /api/v5/reset-password](/docs/api/atualizacao_de_senha.md) -->
 
 
 ## Formato de Resposta
