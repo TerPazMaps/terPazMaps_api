@@ -74,6 +74,10 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
 
 Clique aqui para saber mais: [link para a documentação](/docs/api/instrucoes_de_execucao.md).
 
+## Condiguração do envio de e-mails
+
+Clique aqui para saber mais: [link para a documentação](/docs/api/instrucoes_envio_de_email.md).
+
 ## Autenticação
 
 Esta API requer autenticação com JSON Web Token para acessar determinados endpoints. Por favor, consulte a documentação para obter detalhes sobre como autenticar suas solicitações: [link para a documentação](/docs/api/instrucoes_de_autenticacao.md).
