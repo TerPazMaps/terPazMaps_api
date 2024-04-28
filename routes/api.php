@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Http\Request;
-use App\Mail\PasswordUpdate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\IconController;
@@ -30,16 +29,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/', function () {
     return view('welcome');
-});
-
-Route::get('/maps', function () {
-    $baseUrl = config('app.url');
-    return view('streets', compact('baseUrl'));
-})->middleware('jwt.auth');
-
-Route::get('/icons', function () {
-    $baseUrl = config('app.url');
-    return view('icons', compact('baseUrl'));
 });
 
 Route::get('/terpazmaps', function () {
