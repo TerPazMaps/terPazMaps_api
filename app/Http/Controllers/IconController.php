@@ -31,7 +31,6 @@ class IconController extends Controller
         });
 
         return response()->json($icons, 200);
-
     }
 
 

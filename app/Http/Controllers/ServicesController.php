@@ -206,33 +206,22 @@ class ServicesController extends Controller
         ], 200);
     }
 
+    // http://127.0.0.1:8000/api/v5/geojson/services/distance2?lat=-1.34538115355059&lon=-48.4045690844909&lat2=-1.34519276971018&lon2=-48.4041343555742 
     public function getDistance2(Request $request)
     {
-        // http://127.0.0.1:8000/api/v5/geojson/services/distance2?lat=-1.34538115355059&lon=-48.4045690844909&lat2=-1.34519276971018&lon2=-48.4041343555742 
-
-        // Guarda o tempo de início da execução
         $startTime = microtime(true);
 
-        // Coordenadas do primeiro ponto
         $lat1 = $request->lat;
         $lon1 = $request->lon;
-
-        // Coordenadas do segundo ponto
         $lat2 = $request->lat2;
         $lon2 = $request->lon2;
 
-        // Formata a distância para exibir apenas uma casa decimal e adiciona a unidade "metros"
         $formattedDistance = number_format($this->calculateDistance($lat1, $lon1, $lat2, $lon2), 1) . " metros";
 
-        // Guarda o tempo de término da execução
         $endTime = microtime(true);
 
-        // Calcula o tempo total de execução em milissegundos
-        // convertendo para milissegundos
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
-        // Retorna a distância formatada e o tempo de execução
-        
         return response()->json([
             'distance' => $formattedDistance,
             'execution_time' => $executionTime . " milissegundos",
@@ -247,7 +236,6 @@ class ServicesController extends Controller
         $coordinates = explode(' ', str_replace(['POINT(', ')'], '', $point));
         return $coordinates;
     }
-
 
     // http://127.0.0.1:8000/api/v5/geojson/services/points-of-interest?region_id=1&referenciaId=7&pontoBuscadoId=28&raio=100
     public function getEscolas(Request $request)
@@ -270,12 +258,8 @@ class ServicesController extends Controller
         // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
         $features = [];
 
-        // Consulta para obter as escolas próximas à igreja atual
-        $pontosProximos = DB::table('activities')
-            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-            ->where('subclass_id', $pontoBuscadoId);
-
         $startTime = microtime(true);
+
         // Iterar sobre as referencias
         foreach ($referencias as $referencia) {
             $geometry = json_decode($referencia->geometry);
@@ -283,37 +267,38 @@ class ServicesController extends Controller
             $latitude = $coordinates[1];
             $longitude = $coordinates[0];
 
-            // Consulta para obter as escolas próximas à igreja atual
-            $pontosProximosClone = clone $pontosProximos;
-
+            // Consulta para obter os pontos próximos à referência atual
             $chaveCache = "getEscolas_pontosProximosClone_" . $longitude . "_" . $latitude . "_" . $raio;
-            $pontosProximosClone = Cache::remember($chaveCache, $this->redis_ttl, function () use ($pontosProximosClone, $longitude, $latitude, $raio) {
-                return $pontosProximosClone->whereRaw(
-                    "ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio"
-                )
+            $pontosProximos = Cache::remember($chaveCache, $this->redis_ttl, function () use ($pontoBuscadoId, $longitude, $latitude, $raio) {
+                return DB::table('activities')
+                    ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'), DB::raw("ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) as distance"))
+                    ->where('subclass_id', $pontoBuscadoId)
+                    ->whereRaw("ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio")
                     ->get();
             });
 
             // Se houver pontos próximos, adiciona a referência e suas escolas ao resultado
-            if ($pontosProximosClone->count() > 0) {
-                $referenciasComPontosProximos = [
+            if ($pontosProximos->count() > 0) {
+                // Adiciona a referência ao array de features
+                $features[] = [
                     'type' => 'Feature',
-                    'geometry' => json_decode($referencia->geometry),
+                    'geometry' => $geometry,
                     'properties' => [
                         'id' => $referencia->id,
                         'region_id' => $referencia->region_id,
                         'subclass_id' => $referencia->subclass_id,
                         'name' => $referencia->name,
-                        'marker-color' => '#FF0000'
+                        'marker-color' => '#FF0000',
+
                     ]
                 ];
-                $features[] = $referenciasComPontosProximos;
 
-                // Adiciona os pontos proximos da referencia
-                foreach ($pontosProximosClone as $ponto) {
-                    $featurePontos = [
+                // Adiciona os pontos próximos da referência ao array de features
+                foreach ($pontosProximos as $ponto) {
+                    $geometryPonto = json_decode($ponto->geometry);
+                    $features[] = [
                         'type' => 'Feature',
-                        'geometry' => json_decode($ponto->geometry),
+                        'geometry' => $geometryPonto,
                         'properties' => [
                             'id' => $ponto->id,
                             'region_id' => $ponto->region_id,
@@ -321,10 +306,10 @@ class ServicesController extends Controller
                             'name' => $ponto->name,
                         ]
                     ];
-                    $features[] = $featurePontos;
                 }
             }
         }
+
         $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
@@ -434,7 +419,7 @@ class ServicesController extends Controller
             'features' => $features
         ];
 
-        return response()->json($geojson,200);
+        return response()->json($geojson, 200);
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/length-street?street_id=17455
