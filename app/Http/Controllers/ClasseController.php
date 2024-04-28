@@ -21,6 +21,7 @@ class ClasseController extends Controller
     /**
      * Display a listing of the resource.
      */
+     // http://127.0.0.1:8000/api/v5/geojson/classe/
     public function index()
     {
         $chaveCache = "ClasseController_index";
@@ -33,7 +34,7 @@ class ClasseController extends Controller
             )
                 ->get()
                 ->map(function ($classe) {
-                    $geojson_classe = [
+                    $classe = [
                         "Classe" => [
                             "ID" => $classe->id,
                             "Nome" => $classe->name,
@@ -41,14 +42,11 @@ class ClasseController extends Controller
                             "related_secondary_color" => $classe->related_secondary_color
                         ]
                     ];
-                    return $geojson_classe;
+                    return $classe;
                 });
         });
 
-        header('Content-Type: application/json');
-
         return response()->json($classes, 200);
-
     }
 
     /**
@@ -73,32 +71,20 @@ class ClasseController extends Controller
     public function show(int $id)
     {
         $chaveCache = "ClasseController_show_" . $id;
-        $classes = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
+        $classe = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
             return Classe::select(
                 'id',
                 'name',
                 'related_color',
                 'related_secondary_color'
-            )
-                ->where('id', $id)
-                ->get()
-                ->map(function ($classe) {
-                    $geojson_classe = [
-                        "Classe" => [
-                            "ID" => $classe->id,
-                            "Nome" => $classe->name,
-                            "related_color" => $classe->related_color,
-                            "related_secondary_color" => $classe->related_secondary_color
-                        ]
-                    ];
-                    return $geojson_classe;
-                });
+            )->find($id);
         });
-
-        header('Content-Type: application/json');
-
-        return response()->json($classes, 200);
-
+    
+        if (!$classe) {
+            return response()->json(['error' => 'Classe não encontrada'], 404);
+        }
+    
+        return response()->json(['Classe' => $classe], 200);
     }
 
     /**
@@ -109,11 +95,7 @@ class ClasseController extends Controller
         $chaveCache = "ClasseController_getSubclassesByClass_" . $id;
         $classes = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
             $classes = Classe::where('id', $id)
-                ->with(['subclasse' => function ($query) {
-                    $query->has('icon')->with(['icon' => function ($query) {
-                        $query->select('id', 'subclasse_id', 'disk_name', 'file_name');
-                    }]);
-                }])
+                ->has('subclasse')
                 ->has('subclasse.icon')
                 ->paginate(15);
             // Adicionar o link para a imagem em cada ícone
@@ -128,9 +110,7 @@ class ClasseController extends Controller
             return $classes;
         });
 
-        // Retornar os dados da classe com as modificações
         return response()->json($classes, 200);
-
     }
 
     /**

@@ -23,15 +23,15 @@ class ActivitieController extends Controller
     /**
      * Display a listing of the resource.
      */
+    // http://127.0.0.1:8000/api/v5/geojson/activities
     public function index(Request $request)
     {
         $activities = Activitie::select(
             '*',
             DB::raw('ST_AsGeoJSON(geometry) as geometry')
         )
-            ->with('subclass.classe')
-            ->with('subclass.icon')
             ->has('subclass.classe')
+            ->has('subclass.icon')
             ->orderBy('id');
 
         $chaveCache = "ActivitieController_index";
@@ -63,11 +63,11 @@ class ActivitieController extends Controller
         $endTime = microtime(true);
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
-        $chaveCache = "ActivitieController_index_map_". $request->regions . $request->subclasses . $request->ids . $request->only_references;
+        $chaveCache = "ActivitieController_index_map_" . $request->regions . $request->subclasses . $request->ids . $request->only_references;
         $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities, $request, $executionTime) {
             if ($request->only_references) {
                 $activities = $activities
-                    ->map(function ($activity) use ($executionTime){
+                    ->map(function ($activity) use ($executionTime) {
                         $geojson_activity = [
                             "time" => $executionTime,
                             "type" => "Feature",
@@ -85,9 +85,9 @@ class ActivitieController extends Controller
                     });
             } else {
                 $activities = $activities
-                    ->map(function ($activity) use ($executionTime){
+                    ->map(function ($activity) use ($executionTime) {
                         // Construa a URL da imagem do ícone
-
+                      
                         $geojson_activity = [
                             "time" => $executionTime,
                             "type" => "Feature",

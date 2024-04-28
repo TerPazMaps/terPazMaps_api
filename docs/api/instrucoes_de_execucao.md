@@ -3,7 +3,7 @@
 Pré-requisitos:
 1. Xampp v3.3
 2. Composer v2.5
-3. Redis 3.0.504
+3. Redis 3.0.504 (windows) || Redis 6 (Linux)
 
 Após clonar ou baixar o .zip do projeto, execute os passos:
 
@@ -39,6 +39,11 @@ Comandos no terminal (dentro do diretório do projeto):
 -php artisan jwt:secret
 
 -php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+
+-php artisan vendor:publish
+
+selecione a opção laravel-mail(deve ser a 14, então digite no terminal e de enter) 
+-14
 
 -php artisan storage:link
 

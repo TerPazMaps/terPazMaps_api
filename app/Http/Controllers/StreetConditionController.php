@@ -16,7 +16,7 @@ class StreetConditionController extends Controller
      */
     public function index()
     {
-        $streetConditions = Street_condition::select('*')->get();
+        $streetConditions = Street_condition::all();
 
         return response()->json($streetConditions, 200);
     }
