@@ -66,9 +66,11 @@ class RegionController extends Controller
         $chaveCache = "RegionController_getIconsByRegion_" . $id;
         if ($request->class_id) {
             $chaveCache .= "_" . $request->class_id;
+            $class_ids = array_map('intval', explode(',', $request->class_id));
         }
         if ($request->subclass_id) {
             $chaveCache .= "_" . $request->subclass_id;
+            $subclass_id = array_map('intval', explode(',', $request->subclass_id));
         }
 
         $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($request, $id) {
@@ -90,46 +92,41 @@ class RegionController extends Controller
                 ->get();
         });
 
-        // Array para armazenar os dados das atividades com ícones
         $geojsonFeatures = [];
 
-        $chaveCache = "IconController_index_geojsonFeatures";
-        $geojsonFeatures = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities) {
-            foreach ($activities as $activity) {
-                $geometry = json_decode($activity->geometry);
+        foreach ($activities as $activity) {
+            $geometry = json_decode($activity->geometry);
 
-                // Construa a URL da imagem do ícone
-                $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
+            // Construa a URL da imagem do ícone
+            $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
-                $feature = [
-                    'type' => 'Feature',
-                    'geometry' => $geometry,
-                    'properties' => [
-                        'id' => $activity->id,
-                        'name' => $activity->name,
-                        'subclass' => [
-                            'id' => $activity->subclass->id,
-                            'class_id' => $activity->subclass->class_id,
-                            'name' => $activity->subclass->name,
-                            'icon' => [
-                                'id' => $activity->subclass->icon->id,
-                                'sb_id' => $activity->subclass->icon->subclasse_id,
-                                'disk_name' => $activity->subclass->icon->disk_name,
-                                'file_name' => $activity->subclass->icon->file_name,
-                                'file_size' => $activity->subclass->icon->file_size,
-                                'content_type' => $activity->subclass->icon->content_type,
-                                'is_public' => $activity->subclass->icon->is_public,
-                                'sort_order' => $activity->subclass->icon->sort_order,
-                                'img_url' => $imageUrl,
-                            ],
+            $feature = [
+                'type' => 'Feature',
+                'geometry' => $geometry,
+                'properties' => [
+                    'id' => $activity->id,
+                    'name' => $activity->name,
+                    'subclass' => [
+                        'id' => $activity->subclass->id,
+                        'class_id' => $activity->subclass->class_id,
+                        'name' => $activity->subclass->name,
+                        'icon' => [
+                            'id' => $activity->subclass->icon->id,
+                            'sb_id' => $activity->subclass->icon->subclasse_id,
+                            'disk_name' => $activity->subclass->icon->disk_name,
+                            'file_name' => $activity->subclass->icon->file_name,
+                            'file_size' => $activity->subclass->icon->file_size,
+                            'content_type' => $activity->subclass->icon->content_type,
+                            'is_public' => $activity->subclass->icon->is_public,
+                            'sort_order' => $activity->subclass->icon->sort_order,
+                            'img_url' => $imageUrl,
                         ],
                     ],
-                ];
+                ],
+            ];
 
-                $geojsonFeatures[] = $feature;
-            }
-            return $geojsonFeatures;
-        });
+            $geojsonFeatures[] = $feature;
+        }
 
         $geojson = [
             'type' => 'FeatureCollection',
@@ -161,7 +158,7 @@ class RegionController extends Controller
     public function show(int $id)
     {
         $chaveCache = "IconController_show_" . $id;
-        $regions = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
+        $region = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
             return Region::select(
                 'id',
                 'name',
@@ -169,24 +166,21 @@ class RegionController extends Controller
                 DB::raw('ST_AsGeoJSON(geometry) as geometry'),
                 DB::raw('ST_AsGeoJSON(center) as center')
             )
-                ->where('id', $id)
-                ->first();
+                ->find($id);
         });
 
         $geojson_region = [
             "type" => "Feature",
-            "geometry" => json_decode($regions->geometry),
+            "geometry" => json_decode($region->geometry),
             "properties" => [
-                "ID" => $regions->id,
-                "Nome" => $regions->name,
-                "Centro" => json_decode($regions->center)
+                "ID" => $region->id,
+                "Nome" => $region->name,
+                "Cidade" => $region->city,
+                "Centro" => json_decode($region->center)
             ]
         ];
 
-        header('Content-Type: application/json');
-
         return response()->json($geojson_region, 200);
-
     }
 
     /**
@@ -203,13 +197,13 @@ class RegionController extends Controller
             DB::raw('ST_AsGeoJSON(geometry) as geometry')
         )
             ->where('region_id', $id)
-            ->with('streetCondition');
+            ->has('streetCondition');
 
         // Verifica se o parâmetro 'condition_id' está presente na solicitação
-        $chaveCache = "IconController_getStreetsByRegion_".$id;
+        $chaveCache = "IconController_getStreetsByRegion_" . $id;
         if ($request->condition_id) {
             $condition_ids = $request->condition_id ? array_map('intval', explode(',', $request->condition_id)) : [];
-            $chaveCache .= "_".$request->condition_id;
+            $chaveCache .= "_" . $request->condition_id;
             // Aplica o filtro para 'condition_id'
             $query->whereIn('street_condition_id', $condition_ids);
         }
@@ -219,7 +213,7 @@ class RegionController extends Controller
                 $geometry = json_decode($street->geometry);
                 $coordinates = $geometry->coordinates;
                 $type = $geometry->type;
-    
+
                 $decodedProperties = json_decode($street->properties, true);
                 $properties = array_merge([
                     "id" => $street->id,
@@ -232,7 +226,7 @@ class RegionController extends Controller
                     "line_cap" => $street->line_cap,
                     "line_dash_pattern" => $street->line_dash_pattern,
                 ], $decodedProperties);
-    
+
                 // Cria o objeto GeoJSON Feature
                 $feature = [
                     "type" => "Feature",
@@ -242,11 +236,10 @@ class RegionController extends Controller
                     ],
                     "properties" => $properties,
                 ];
-    
+
                 return $feature;
             });
         });
-
 
         // Cria o objeto GeoJSON FeatureCollection
         $featureCollection = [
@@ -255,7 +248,6 @@ class RegionController extends Controller
         ];
 
         return response()->json($featureCollection, 200);
-
     }
 
     /**

@@ -24,35 +24,29 @@ class SubclasseController extends Controller
      */
     public function index(Request $request)
     {
-        // Iniciar a consulta para recuperar todas as subclasses com ícones relacionados
         $subclassesQuery = Icon::with('subclasse')->has('subclasse');
 
-        // Verificar se há um parâmetro 'name' na solicitação
         $chaveCache = "SubclasseController_index";
-        if ($request->has('name')) {
+        if ($request->name) {
             $chaveCache .= "_" . $request->name;
-            $name = $request->input('name');
+            $name = $request->name;
 
             // Adicionar a cláusula where para filtrar as subclasses pelo nome
             $subclassesQuery->whereHas('subclasse', function ($query) use ($name) {
                 $query->where('name', 'like', '%' . $name . '%');
-            });
+            })->get();
         }
 
         $subclasses = Cache::remember($chaveCache, $this->redis_ttl, function () use ($subclassesQuery) {
-            $aux = $subclassesQuery->get();
+            $subclasses = $subclassesQuery->get();
 
-            $baseUrl = config('app.url');
-            $aux->transform(function ($item, $key) use ($baseUrl) {
-                // $item['image_url'] = $baseUrl . '/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
-                $item['image_url'] = 'http://127.0.0.1:8000/storage/' . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
+            $subclasses->transform(function ($item) {
+                $item['image_url'] = config('app.url') . "storage/" . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
                 return $item;
             });
-            return $aux;
+            return $subclasses;
         });
 
-
-        // Retornar os resultados em formato JSON
         return response()->json($subclasses, 200);
     }
 
