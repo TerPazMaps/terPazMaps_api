@@ -11,6 +11,7 @@ use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ActivitieController;
 use App\Http\Controllers\SubclasseController;
 use App\Http\Controllers\StreetConditionController;
+use App\Http\Controllers\UserCustomMapController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,6 +71,8 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::apiResource('street', StreetController::class);
 
         Route::apiResource('icon', IconController::class);
+        
+        Route::apiResource('user-custom-maps', UserCustomMapController::class)->middleware('jwt.auth');
     });
 
     Route::post('login', [AuthController::class, 'login'])->name('login');
@@ -80,6 +83,6 @@ Route::group(['prefix' => 'api/v5'], function () {
 
     Route::get('password-reset-notification', [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
     Route::post('send-password-reset-notification', [AuthController::class, 'sendPasswordResetNotification'])->name('send-password-reset-notification');
-   
+
 });
 

@@ -69,6 +69,20 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `PUT /api/v5/geojson/street/{id}`
   - `DELETE /api/v5/geojson/street/{id}` -->
 
+
+### UserCunstomMaps
+> [!WARNING]
+> JWT: Todos esses endpoints são protegidos por autenticação Json Web Token.
+- **Descrição**: Recurso para gerenciar mapas personalizados do usuário.
+- **Endpoints**:
+
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-custom-maps](/docs/api/ActivitieController.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)[ /api/v5/geojson/user-custom-maps](/docs/api/instrucoes_de_autenticacao.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/ActivitieController.md)
+  - ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/ActivitieController.md)
+  - ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/ActivitieController.md)
+
+---
 ## Instruções de execução
 
 
@@ -101,3 +115,19 @@ Esta API requer autenticação com JSON Web Token para acessar determinados endp
 ## Formato de Resposta
 
 Todos os endpoints desta API retornam dados no formato JSON.
+
+
+<!-- > [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions. -->
