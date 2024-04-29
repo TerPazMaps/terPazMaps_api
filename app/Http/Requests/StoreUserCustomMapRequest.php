@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Utils\GeoJsonValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -37,7 +38,7 @@ class StoreUserCustomMapRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'geojson.required' => 'O campo geojson é obrigatório.'
+            'geojson.required' => 'O campo geojson é obrigatório.',
         ];
     }
 
@@ -54,22 +55,28 @@ class StoreUserCustomMapRequest extends FormRequest
         throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
     }
 
-     /**
+    /**
      * Prepare the data for validation.
      *
      * @return void
      */
     protected function prepareForValidation()
-    {
-        // Converting JSON string to array
+    {        
+        // Verificando a validade do GeoJSON
+        if (!GeoJsonValidator::validate($this->geojson)) {
+            $this->validator->errors()->add('geojson', 'O GeoJSON fornecido é inválido.');
+            throw new HttpResponseException(response()->json(['errors' => $this->validator->errors()], 422));
+        }
+        
+        // Convertendo a string JSON fornecida em um array associativo
         $geojson = json_decode($this->geojson, true);
-
-        // Extracting data from GeoJSON
+        
+        // Extração dos dados do GeoJSON
         $features = $geojson['features'][0];
         $properties = $features['properties'];
         $geometry = $features['geometry'];
 
-        // Setting input data for validation
+        // Definindo os dados de entrada para validação
         $this->merge([
             'name' => $properties['Nome'],
             'city' => $properties['Cidade'],
