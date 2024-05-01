@@ -656,4 +656,73 @@ class ServicesController extends Controller
         // Retorna a resposta JSON
         return response()->json($response, 200);
     }
+
+    public static function GeoJsonValidator($data)
+    {
+        $json = json_decode($data);
+
+        // Verificar se o JSON é válido
+        if ($json === null) {
+            return ['type' => 'InvalidJSON', 'message' => 'O JSON fornecido é inválido.'];
+        }
+
+        // Verificar se é um FeatureCollection
+        if (!isset($json->type) || $json->type !== 'FeatureCollection') {
+            return ['type' => 'InvalidFeatureCollection', 'message' => 'O JSON deve ser um FeatureCollection.'];
+        }
+
+        // Verificar se há features
+        if (!isset($json->features) || !is_array($json->features)) {
+            return ['type' => 'MissingFeatures', 'message' => 'O JSON deve conter uma lista de features.'];
+        }
+
+        // Validar cada feature
+        foreach ($json->features as $feature) {
+            // Verificar se é uma feature válida
+            if (
+                !isset($feature->type) || $feature->type !== 'Feature' ||
+                !isset($feature->geometry) || !isset($feature->properties)
+            ) {
+                return ['type' => 'InvalidFeature', 'message' => 'Cada feature deve ter um tipo e uma geometria válida.'];
+            }
+
+            // Verificar o tipo de geometria (apenas suportando Polygon)
+            if (!isset($feature->geometry->type) || $feature->geometry->type !== 'Polygon') {
+                return ['type' => 'InvalidGeometry', 'message' => 'A geometria de cada feature deve ser um polígono.'];
+            }
+
+            // Verificar se as coordenadas são um array
+            if (!isset($feature->geometry->coordinates) || !is_array($feature->geometry->coordinates)) {
+                return ['type' => 'InvalidCoordinates', 'message' => 'As coordenadas de cada feature devem ser um array.'];
+            }
+
+            // Verificar se as coordenadas são válidas (um array de arrays de arrays de números)
+            foreach ($feature->geometry->coordinates as $coordinates) {
+                if (!is_array($coordinates)) {
+                    return ['type' => 'InvalidCoordinatesFormat', 'message' => 'As coordenadas de cada feature devem ser uma lista de pontos.'];
+                }
+                foreach ($coordinates as $point) {
+                    if (
+                        !is_array($point) || count($point) !== 2 ||
+                        !is_numeric($point[0]) || !is_numeric($point[1])
+                    ) {
+                        return ['type' => 'InvalidPointFormat', 'message' => 'Cada ponto deve ser um par de números.'];
+                    }
+                }
+                // Verificar se o primeiro ponto é igual ao último ponto (forma fechada)
+                $firstPoint = $coordinates[0];
+                $lastPoint = end($coordinates);
+                if ($firstPoint !== $lastPoint) {
+                    return ['type' => 'UnclosedPolygon', 'message' => 'O primeiro e o último ponto de cada polígono devem ser iguais (forma fechada).'];
+                }
+            }
+
+            // Verificar se as propriedades são um objeto
+            if (!is_object($feature->properties)) {
+                return ['type' => 'InvalidProperties', 'message' => 'As propriedades de cada feature devem ser um objeto.'];
+            }
+        }
+
+        return true;
+    }
 }

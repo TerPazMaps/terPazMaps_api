@@ -73,6 +73,7 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::apiResource('icon', IconController::class);
         
         Route::apiResource('user-custom-maps', UserCustomMapController::class)->middleware('jwt.auth');
+        // Route::apiResource('user-custom-maps', UserCustomMapController::class)->middleware('jwt.auth');
     });
 
     Route::post('login', [AuthController::class, 'login'])->name('login');

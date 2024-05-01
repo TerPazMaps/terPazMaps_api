@@ -12,7 +12,6 @@ class UserCustomMap extends Model
     protected $fillable = [
         'user_id',
         'name',
-        'city',
         'geometry',
         'center',
     ];

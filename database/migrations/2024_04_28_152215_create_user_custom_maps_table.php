@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('name', 191);
-            $table->string('city', 191);
             $table->polygon('geometry')->nullable();
             $table->point('center')->nullable();
             $table->timestamps();

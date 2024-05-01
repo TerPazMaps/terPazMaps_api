@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+// use App\Utils\GeoJsonValidator;
+
+use App\Http\Controllers\ServicesController;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -25,7 +28,6 @@ class UpdateUserCustomMapRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string'],
-            'city' => ['required', 'string'],
             'geometry' => ['required', 'array'],
         ];
     }
@@ -39,7 +41,6 @@ class UpdateUserCustomMapRequest extends FormRequest
     {
         return [
             'name.required' => 'O campo nome é obrigatório.',
-            'city.required' => 'O campo cidade é obrigatório.',
             'geometry.required' => 'O campo geometry é obrigatório.',
             'geometry.array' => 'O campo geometry deve ser um array.',
         ];
@@ -60,21 +61,26 @@ class UpdateUserCustomMapRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        // Converting JSON string to array
+        // Convertendo a string JSON fornecida em um array associativo
         $geojson = json_decode($this->geojson, true);
 
-        // Extracting data from GeoJSON
+        // Extração dos dados do GeoJSON
         $features = $geojson['features'][0];
-        $geometry = $features['geometry'];
         $properties = $features['properties'];
+        $geometry = $features['geometry'];
 
-        // Setting input data for validation
+        // Definindo os dados de entrada para validação
         $this->merge([
             'name' => $properties['Nome'],
-            'city' => $properties['Cidade'],
             'geometry' => $geometry['coordinates'],
         ]);
+
+        // Verificando a validade do GeoJSON
+        $validateGeojson = ServicesController::GeoJsonValidator($this->geojson);
+        if ($validateGeojson !== true) {
+            $this->getValidatorInstance();
+            $this->validator->errors()->add($validateGeojson['type'], $validateGeojson['message']);
+            throw new HttpResponseException(response()->json(['errors' => $this->validator->errors()], 422));
+        }
     }
 }
-
-
