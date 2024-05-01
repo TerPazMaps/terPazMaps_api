@@ -11,15 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_custom_maps', function (Blueprint $table) {
+        Schema::create('feedback_activities', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('name', 191);
-            $table->polygon('geometry')->nullable();
-            $table->point('center')->nullable();
+            $table->unsignedBigInteger('region_id');
+            $table->unsignedBigInteger('subclass_id');
+            $table->string('name', 191)->nullable();
+            $table->point('geometry')->nullable();
             $table->timestamps();
-
+            
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('region_id')->references('id')->on('regions');
+            $table->foreign('subclass_id')->references('id')->on('subclasses');
         });
     }
 
@@ -28,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_custom_maps');
+        Schema::dropIfExists('feedback_activities');
     }
 };

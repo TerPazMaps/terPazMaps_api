@@ -9,6 +9,8 @@ use App\Http\Controllers\RegionController;
 use App\Http\Controllers\StreetController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ActivitieController;
+use App\Http\Controllers\FeedbackActivitieController;
+use App\Http\Controllers\FeedbackStreetController;
 use App\Http\Controllers\SubclasseController;
 use App\Http\Controllers\StreetConditionController;
 use App\Http\Controllers\UserCustomMapController;
@@ -73,7 +75,8 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::apiResource('icon', IconController::class);
         
         Route::apiResource('user-custom-maps', UserCustomMapController::class)->middleware('jwt.auth');
-        // Route::apiResource('user-custom-maps', UserCustomMapController::class)->middleware('jwt.auth');
+        Route::apiResource('user-feedback-activitie', FeedbackActivitieController::class)->middleware('jwt.auth');
+        Route::apiResource('user-feedback-street', FeedbackStreetController::class)->middleware('jwt.auth');
     });
 
     Route::post('login', [AuthController::class, 'login'])->name('login');
