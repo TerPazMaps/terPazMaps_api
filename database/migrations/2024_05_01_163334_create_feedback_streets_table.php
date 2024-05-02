@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('feedback_streets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('street_id');
+            $table->unsignedBigInteger('street_id')->unique();
             $table->unsignedBigInteger('street_condition_id');
             $table->timestamps();
 

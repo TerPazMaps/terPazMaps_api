@@ -1,4 +1,4 @@
-# Feedback de activities do usuário 
+# Feedback de street do usuário 
 
   <!-- - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-custom-maps](/docs/api/UserCustomMapContoller.md)
   - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)[ /api/v5/geojson/user-custom-maps](/docs/api/UserCustomMapContoller.md)
@@ -6,11 +6,11 @@
   - ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/UserCustomMapContoller.md)
   - ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/UserCustomMapContoller.md) -->
   
-## Activities
+## Streets
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF) 
 
-`/api/v5/geojson/user-feedback-activitie` 
+`/api/v5/geojson/user-feedback-street` 
 
 ## Parâmetros
 Deve receber uma requisição via GET com os names abaixo
@@ -25,43 +25,28 @@ Deve receber uma requisição via GET com os names abaixo
 ```json
 [
     {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ],
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ]
-                ]
-            ]
-        },
-        "properties": {
-            "ID": 10,
-            "user_ID": 0,
-            "Nome": "São Francisco",
-            "Centro": {
-                "type": "Point",
-                "coordinates": [
-                    -48.338833248539,
-                    -1.3512433726156
-                ]
-            },
-            "created_at": "28/04/2024 21:40:46",
-            "updated_at": "30/04/2024 22:56:45"
-        }
+        "id": 1,
+        "user_id": 0,
+        "street_id": 1,
+        "street_condition_id": 2,
+        "created_at": "02/05/2024 14:39:06",
+        "updated_at": "02/05/2024 14:39:06"
     },
+    {
+        "id": 4,
+        "user_id": 0,
+        "street_id": 17,
+        "street_condition_id": 2,
+        "created_at": "02/05/2024 15:19:11",
+        "updated_at": "02/05/2024 15:19:11"
+    }
+]
 ```
 ## Retorno caso de erro ou usuário sem registros
 
 ```json
 {
-    "message": "Este usuário não possui registros feedbacks de activities"
+    "message": "Este usuário não possui registros feedback de ruas"
 }
 ```
 ```json
@@ -71,11 +56,11 @@ Deve receber uma requisição via GET com os names abaixo
 }
 ```
 
-## Salvar um feedback de activitie
+## Salvar um feedback de street
 
 ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  
 
-`/api/v5/geojson/user-feedback-activitie` 
+`/api/v5/geojson/user-feedback-street` 
 
 ## Parâmetros
 Deve receber uma requisição via POST com os names abaixo
@@ -84,7 +69,8 @@ Deve receber uma requisição via POST com os names abaixo
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
 | Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
-| geojson       | FeatureCollection tipo polygon [***required,String***]        |
+| street_id       | id da street que deseja dar o feedback [***required,exists:streets,unique:feedback_streets***]        |
+| street_condition_id       | id da street_condition que atribuir a street [***required,exists:street_conditions***]        |
 
 ## Retorno caso sucesso
 
@@ -98,8 +84,8 @@ Deve receber uma requisição via POST com os names abaixo
 ```json
 {
     "errors": {
-        "InvalidGeometry": [
-            "A geometria deve ser um Point."
+        "street_id": [
+            "O campo street_id deve ser único na tabela feedback_streets."
         ]
     }
 }
@@ -108,7 +94,7 @@ Deve receber uma requisição via POST com os names abaixo
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF) 
 
-`/api/v5/geojson/user-feedback-activitie/{id}` 
+`/api/v5/geojson/user-feedback-street/{id}` 
 
 ## Parâmetros
 Deve receber uma requisição via GET com os names abaixo
@@ -124,37 +110,13 @@ Deve receber uma requisição via GET com os names abaixo
 ```json
 [
     {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ],
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ]
-                ]
-            ]
-        },
-        "properties": {
-            "ID": 10,
-            "user_ID": 0,
-            "Nome": "São Francisco",
-            "Centro": {
-                "type": "Point",
-                "coordinates": [
-                    -48.338833248539,
-                    -1.3512433726156
-                ]
-            },
-            "created_at": "28/04/2024 21:40:46",
-            "updated_at": "30/04/2024 22:56:45"
-        }
-    },
+        "id": 1,
+        "user_id": 0,
+        "street_id": 1,
+        "street_condition_id": 2,
+        "created_at": "02/05/2024 14:39:06",
+        "updated_at": "02/05/2024 14:39:06"
+    }
 ]
 ```
 
@@ -168,7 +130,7 @@ Deve receber uma requisição via GET com os names abaixo
 ```
 ```json
 {
-    "message": "Este usuário não possui registros feedbacks de activities"
+    "message": "Este usuário não possui registros feedback de ruas"
 }
 ```
 
@@ -176,7 +138,7 @@ Deve receber uma requisição via GET com os names abaixo
 
 ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)
 
-`/api/v5/geojson/user-feedback-activitie/{id}` 
+`/api/v5/geojson/user-feedback-street/{id}` 
 
 ## Parâmetros
 Deve receber uma requisição via PUT ou PATCH com os names abaixo
@@ -185,14 +147,14 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
 | Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
-| geojson       | FeatureCollection tipo polygon [***required,String***]        |
+| street_condition_id       | id da street_condition que atribuir a street [***required,exists:street_conditions***]        |
 
 
 ## Retorno caso sucesso
 
 ```json
 {
-    "message": "Atividade atualizada com sucesso"
+    "message": "Feedback de rua atualizado com sucesso"
 }
 ```
 ## Retorno caso haja erros de validação
@@ -200,17 +162,22 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 ```json
 {
     "errors": {
-        "InvalidFeatureCollection": [
-            "O JSON deve ser um FeatureCollection."
+        "street_condition_id": [
+            "O campo street_condition_id deve existir na tabela street_conditions."
         ]
     }
+}
+```
+```json
+{
+    "message": "Feedback de rua não encontrado"
 }
 ```
 ## Deletar feedback
 
 ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)
 
-`/api/v5/geojson/user-feedback-activitie/{id}` 
+`/api/v5/geojson/user-feedback-street/{id}` 
 
 ## Parâmetros
 Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
@@ -238,7 +205,7 @@ Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
 ```
 ```json
 {
-    "message": "Atividade não encontrada"
+    "message": "Feedback de rua não encontrado"
 }
 ```
 ```json
