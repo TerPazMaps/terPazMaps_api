@@ -102,7 +102,7 @@ class FeedbackActivitieController extends Controller
             ->find($id);
 
         if (!$FeedbackActivitie) {
-            return response()->json(['message' => 'Este usuário não possui registros de mapas personalizados'], 404);
+            return response()->json(['message' => 'Este usuário não possui registros feedbacks de activities'], 404);
         }
 
         $FeedbackActivitieMap = [

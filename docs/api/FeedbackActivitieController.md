@@ -6,11 +6,11 @@
   - ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/UserCustomMapContoller.md)
   - ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/UserCustomMapContoller.md) -->
   
-## Mapas
+## Activities
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF) 
 
-`/api/v5/geojson/user-custom-maps` 
+`/api/v5/geojson/user-feedback-activitie` 
 
 ## Parâmetros
 Deve receber uma requisição via GET com os names abaixo
@@ -18,7 +18,7 @@ Deve receber uma requisição via GET com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
 
 ## Retorno caso de sucesso
 
@@ -57,11 +57,11 @@ Deve receber uma requisição via GET com os names abaixo
         }
     },
 ```
-## Retorno caso de erro ou usuario sem registros
+## Retorno caso de erro ou usuário sem registros
 
 ```json
 {
-    "message": "Este usuário não possui registros de mapas personalizados"
+    "message": "Este usuário não possui registros feedbacks de activities"
 }
 ```
 ```json
@@ -71,11 +71,11 @@ Deve receber uma requisição via GET com os names abaixo
 }
 ```
 
-## Salvar mapa
+## Salvar um feedback de activitie
 
 ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  
 
-`/api/v5/geojson/user-custom-maps` 
+`/api/v5/geojson/user-feedback-activitie` 
 
 ## Parâmetros
 Deve receber uma requisição via POST com os names abaixo
@@ -83,7 +83,7 @@ Deve receber uma requisição via POST com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
 | geojson       | FeatureCollection tipo polygon [***required,String***]        |
 
 ## Retorno caso sucesso
@@ -98,17 +98,17 @@ Deve receber uma requisição via POST com os names abaixo
 ```json
 {
     "errors": {
-        "InvalidFeatureCollection": [
-            "O JSON deve ser um FeatureCollection."
+        "InvalidGeometry": [
+            "A geometria deve ser um Point."
         ]
     }
 }
 ```
-## Ver mapa por ID
+## Ver feedback por ID
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF) 
 
-`/api/v5/geojson/user-custom-maps/{id}` 
+`/api/v5/geojson/user-feedback-activitie/{id}` 
 
 ## Parâmetros
 Deve receber uma requisição via GET com os names abaixo
@@ -116,7 +116,7 @@ Deve receber uma requisição via GET com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
 
 
 ## Retorno caso sucesso
@@ -168,15 +168,15 @@ Deve receber uma requisição via GET com os names abaixo
 ```
 ```json
 {
-    "message": "Mapa não encontrado"
+    "message": "Este usuário não possui registros feedbacks de activities"
 }
 ```
 
-## Atualizar mapa
+## Atualizar feedback
 
 ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)
 
-`/api/v5/geojson/user-custom-maps/{id}` 
+`/api/v5/geojson/user-feedback-activitie/{id}` 
 
 ## Parâmetros
 Deve receber uma requisição via PUT ou PATCH com os names abaixo
@@ -184,7 +184,7 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
 | geojson       | FeatureCollection tipo polygon [***required,String***]        |
 
 
@@ -192,7 +192,7 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 
 ```json
 {
-    "message": "Salvo com sucesso"
+    "message": "Atividade atualizada com sucesso"
 }
 ```
 ## Retorno caso haja erros de validação
@@ -206,11 +206,11 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
     }
 }
 ```
-## Deletar mapa
+## Deletar feedback
 
 ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)
 
-`/api/v5/geojson/user-custom-maps/{id}` 
+`/api/v5/geojson/user-feedback-activitie/{id}` 
 
 ## Parâmetros
 Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
@@ -218,7 +218,7 @@ Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
 
 
 ## Retorno caso sucesso
@@ -238,6 +238,11 @@ Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
 ```
 ```json
 {
-    "message": "Mapa não encontrado"
+    "message": "Atividade não encontrada"
+}
+```
+```json
+{
+    "message": "Erro ao deletar"
 }
 ```
