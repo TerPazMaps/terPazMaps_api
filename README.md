@@ -69,6 +69,18 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `PUT /api/v5/geojson/street/{id}`
   - `DELETE /api/v5/geojson/street/{id}` -->
 
+### Classe de serviços
+- **Descrição**: Recurso para gerenciar serviços, como calculo de distância entre pontos ou pontos por área.
+- **Endpoints**:
+  <!-- - `POST /api/v5/geojson/region` -->
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/activities-nearby](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/distance](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/points-of-interest](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/length-street](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/buffer](/docs/api/ServicesController.md)
+ 
+  <!-- - `PUT /api/v5/geojson/region/{id}`
+  - `DELETE /api/v5/geojson/region/{id}` -->
 
 ### UserCunstomMaps
 > [!NOTE]

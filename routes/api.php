@@ -60,15 +60,10 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::apiResource('activitie', ActivitieController::class);
 
         Route::get('/services/activities-nearby', [ServicesController::class, 'getActivitiesbyArea']);
-        Route::get('/services/activities-nearby2', [ServicesController::class, 'getActivitiesbyArea2']);
+        Route::get('/services/points-of-interest', [ServicesController::class, 'getPointsOfInterest']);
+        Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
-        Route::get('/services/distance2', [ServicesController::class, 'getDistance2']);
-        Route::get('/services/points-of-interest', [ServicesController::class, 'getEscolas']);
-        Route::get('/services/points-of-interest2', [ServicesController::class, 'getEscolas2']);
-        Route::get('/services/length-street', [ServicesController::class, 'getLengthStreet']);
-        Route::get('/services/length-street2', [ServicesController::class, 'getlengthStreet2']);
         Route::get('/services/buffer', [ServicesController::class, 'buffer']);
-        Route::get('/services/buffer2', [ServicesController::class, 'buffer2']);
 
         Route::apiResource('street', StreetController::class);
 

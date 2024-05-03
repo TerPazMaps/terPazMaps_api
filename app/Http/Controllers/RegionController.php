@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Icon;
 use App\Models\Region;
 use App\Models\Street;
 use App\Models\Activitie;
-use App\Models\Subclasse;
 use Illuminate\Http\Request;
-use App\Policies\SubclassePolicy;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
