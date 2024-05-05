@@ -63,7 +63,7 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::get('/services/points-of-interest', [ServicesController::class, 'getPointsOfInterest']);
         Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
-        Route::get('/services/buffer', [ServicesController::class, 'buffer']);
+        Route::get('/services/buffer', [ServicesController::class, 'getBuffer']);
 
         Route::apiResource('street', StreetController::class);
 
@@ -80,7 +80,7 @@ Route::group(['prefix' => 'api/v5'], function () {
     Route::post('refresh', [AuthController::class, 'refresh'])->middleware('jwt.auth');
     Route::post('me', [AuthController::class, 'me'])->middleware('jwt.auth');
 
-    Route::get('password-reset-notification', [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
+    Route::get('send-password-reset-notification', [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
     Route::post('send-password-reset-notification', [AuthController::class, 'sendPasswordResetNotification'])->name('send-password-reset-notification');
 
 });

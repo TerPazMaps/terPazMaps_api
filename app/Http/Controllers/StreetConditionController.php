@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Street;
 use App\Models\Street_condition;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreStreet_conditionRequest;
 use App\Http\Requests\UpdateStreet_conditionRequest;
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Faker\Core\Coordinates;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -77,7 +76,7 @@ class ServicesController extends Controller
         return response()->json($featureCollection, 200);
     }
 
-    // http://127.0.0.1:8000/api/v5/geojson/services/distance2?lat=-1.34538115355059&lon=-48.4045690844909&lat2=-1.34519276971018&lon2=-48.4041343555742 
+    // http://127.0.0.1:8000/api/v5/geojson/services/distance?lat=-1.34538115355059&lon=-48.4045690844909&lat2=-1.34519276971018&lon2=-48.4041343555742 
     public function getDistance(Request $request)
     {
         $startTime = microtime(true);
@@ -94,8 +93,6 @@ class ServicesController extends Controller
 
         return response()->json([
             'distance' => $formattedDistance,
-            'execution_time' => $executionTime . " milissegundos",
-            'function' => "php"
         ], 200);
     }
 
@@ -195,14 +192,17 @@ class ServicesController extends Controller
                     ];
                 }
 
-                $buffer = $this->buffer($raio, $latitude, $longitude);
-                $features[] = $buffer;
+                // $buffer = $this->buffer($raio, $latitude, $longitude);
+                // $features[] = $buffer;
             }
         }
 
         $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
+        if($features == null){
+            return response()->json(['message' => 'sem pontos próximos'], 404);
+        }
         $geojson = [
             'ex_time' => $executionTime . " MS",
             'type' => 'FeatureCollection',
@@ -212,7 +212,7 @@ class ServicesController extends Controller
         return response()->json($geojson, 200);
     }
 
-    // http://127.0.0.1:8000/api/v5/geojson/services/length-street2?street_id=1
+    // http://127.0.0.1:8000/api/v5/geojson/services/length-street?street_id=1
     public function getLengthStreet(Request $request)
     {
         $street_id = $request->street_id;
@@ -254,10 +254,7 @@ class ServicesController extends Controller
 
             // Ajusta a resposta JSON
             return response()->json([
-                'execution_time' => $executionTime . " ms",
                 'length_meters' => number_format($totalLength / 2, 2) . ' metros',
-                'function' => 'php',
-                'geometry' => $linestring,
             ], 200);
         }
 
@@ -281,17 +278,29 @@ class ServicesController extends Controller
         $formattedLengthMeters = number_format($totalDistance, 2);
 
         return response()->json([
-            'execution_time' => $executionTime . " ms",
             'length_meters' => $formattedLengthMeters . ' metros',
-            'function' => 'php',
-            'geometry' => $linestring,
         ], 200);
     }
 
-    public static function buffer($raio, $latitude, $longitude)
+    // http://127.0.0.1:8000/api/v5/geojson/services/buffer?latitude=-1.34538115355059&longitude=-48.4045690844909
+    public function getBuffer(Request $request){
+        $raio = intval($request->raio);
+        $latitude = $request->latitude;
+        $longitude = $request->longitude;
+
+        if($raio < 6){
+            return response()->json(['message'=>'O raio deve ser maior ou igual a 6 metros'], 422);
+        }
+
+        $buffer = $this->buffer($raio, $latitude, $longitude);
+
+        return response()->json($buffer, 200);
+    }
+
+    public function buffer($raio, $latitude, $longitude)
     {
         $chaveCache = "buffer_" . $raio . $latitude . $longitude;
-        $buffer = Cache::remember($chaveCache, 3600, function () use ($raio, $longitude, $latitude) {
+        $buffer = Cache::remember($chaveCache, $this->redis_ttl, function () use ($raio, $longitude, $latitude) {
 
             // Calcula o raio em graus decimais
             $raio_graus = round($raio / (111320 * cos(deg2rad($latitude))), 4);
