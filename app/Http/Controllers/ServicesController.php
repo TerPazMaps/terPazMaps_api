@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use GuzzleHttp\Exception\RequestException;
 
 class ServicesController extends Controller
 {
@@ -200,7 +202,7 @@ class ServicesController extends Controller
         $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
-        if($features == null){
+        if ($features == null) {
             return response()->json(['message' => 'sem pontos próximos'], 404);
         }
         $geojson = [
@@ -226,15 +228,10 @@ class ServicesController extends Controller
 
         $linestring = json_decode($street->geometry);
 
-        // Verifica se a geometria da rua é um polígono
         if ($linestring->type === 'Polygon') {
             $coordinates = $linestring->coordinates[0]; // Obtém as coordenadas do anel exterior
 
-            // Inicializa a variável para armazenar o comprimento total
             $totalLength = 0;
-
-            // Calcula a distância entre os pontos consecutivos no polígono
-            $startTime = microtime(true);
 
             for ($i = 0; $i < count($coordinates) - 1; $i++) {
                 $lon1 = $coordinates[$i][0];
@@ -242,39 +239,26 @@ class ServicesController extends Controller
                 $lon2 = $coordinates[$i + 1][0];
                 $lat2 = $coordinates[$i + 1][1];
 
-                // Use a função calculateDistance() para calcular a distância
                 $distance = $this->calculateDistance($lat1, $lon1, $lat2, $lon2);
 
-                // Adiciona a distância ao comprimento total
                 $totalLength += $distance;
             }
 
-            $endTime = microtime(true);
-            $executionTime = number_format(($endTime - $startTime) * 1000, 4);
-
-            // Ajusta a resposta JSON
             return response()->json([
                 'length_meters' => number_format($totalLength / 2, 2) . ' metros',
             ], 200);
         }
 
-        // Itera sobre os pontos para calcular a distância entre eles
         $totalDistance = 0;
-        $startTime = microtime(true);
         for ($i = 1; $i < count($linestring->coordinates); $i++) {
             $coordinates1 = $linestring->coordinates[$i - 1];
             $coordinates2 = $linestring->coordinates[$i];
 
-            // Consulta para calcular a distância entre os pontos
             $distanceQuery = $this->calculateDistance($coordinates1[0], $coordinates1[1], $coordinates2[0], $coordinates2[1]);
 
-            // Soma a distância calculada ao total
             $totalDistance += $distanceQuery;
         }
-        $endTime = microtime(true);
-        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
 
-        // Formatação do comprimento em metros
         $formattedLengthMeters = number_format($totalDistance, 2);
 
         return response()->json([
@@ -283,19 +267,37 @@ class ServicesController extends Controller
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/buffer?latitude=-1.34538115355059&longitude=-48.4045690844909
-    public function getBuffer(Request $request){
-        $raio = intval($request->raio);
-        $latitude = $request->latitude;
-        $longitude = $request->longitude;
+    public function getBuffer(Request $request)
+    {
+        try {
+            $raio = $request->has('raio') ? intval($request->raio) : null;
+            $latitude = $request->latitude;
+            $longitude = $request->longitude;
 
-        if($raio < 6){
-            return response()->json(['message'=>'O raio deve ser maior ou igual a 6 metros'], 422);
+            if ($raio < 6) {
+                return response()->json([
+                    "error" => [
+                        "status" => "422",
+                        "title" => "Tamanho de raio não suportado",
+                        "detail" => "O raio deve ser maior ou igual a 6 metros."
+                    ]
+                ], 422);
+            }
+
+            $buffer = $this->buffer($raio, $latitude, $longitude);
+            return response()->json($buffer, 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Erro na Solicitação",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
-
-        $buffer = $this->buffer($raio, $latitude, $longitude);
-
-        return response()->json($buffer, 200);
     }
+
 
     public function buffer($raio, $latitude, $longitude)
     {
