@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreActivitieRequest;
 use App\Http\Requests\UpdateActivitieRequest;
-// use GuzzleHttp\Psr7\Request;
 
 class ActivitieController extends Controller
 {
