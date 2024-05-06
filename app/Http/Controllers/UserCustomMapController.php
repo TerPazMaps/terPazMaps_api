@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\UserCustomMap;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Requests\StoreUserCustomMapRequest;
 use App\Http\Requests\UpdateUserCustomMapRequest;
-use Carbon\Carbon;
 
 class UserCustomMapController extends Controller
 {
@@ -40,7 +40,6 @@ class UserCustomMapController extends Controller
                     "ID" => $mapa->id,
                     "user_ID" => $mapa->user_id,
                     "Nome" => $mapa->name,
-                    "City" => $mapa->city,
                     "Centro" => json_decode($mapa->center),
                     "created_at" => Carbon::parse($mapa->created_at)->format('d/m/Y H:i:s'),
                     "updated_at" => Carbon::parse($mapa->updated_at)->format('d/m/Y H:i:s'),
@@ -74,8 +73,6 @@ class UserCustomMapController extends Controller
 
         $userCustomMap->user_id = $user->id;
         $userCustomMap->name = $request->name;
-        $userCustomMap->city = $request->city;
-
 
         // Formate as coordenadas no formato correto (longitude latitude)
         $wktCoordinates = [];
@@ -127,7 +124,6 @@ class UserCustomMapController extends Controller
                 "ID" => $mapa->id,
                 "user_ID" => $mapa->user_id,
                 "Nome" => $mapa->name,
-                "City" => $mapa->city,
                 "Centro" => json_decode($mapa->center),
                 "created_at" => $mapa->created_at,
                 "updated_at" => $mapa->updated_at,
@@ -150,12 +146,10 @@ class UserCustomMapController extends Controller
      */
     public function update(UpdateUserCustomMapRequest $request, UserCustomMap $user_custom_map)
     {
-        // Valide os dados da solicitação
         $validatedData = $request->validated();
-        dd($validatedData);
 
         // Formate as coordenadas no formato correto (longitude latitude)
-        $coordinates = $validatedData['geometry'];
+        $coordinates = $request->geometry;
         $wktCoordinates = [];
         foreach ($coordinates[0] as $point) {
             $wktCoordinates[] = "{$point[0]} {$point[1]}";

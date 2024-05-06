@@ -1,6 +1,6 @@
 ## Instruções de execução
 
-Pré-requisitos:
+Pré-requisitos(windowns):
 1. Xampp v3.3
 2. Composer v2.5
 3. Redis 3.0.504 (windows) || Redis 6 (Linux)
@@ -17,11 +17,14 @@ Após clonar ou baixar o .zip do projeto, execute os passos:
     memory_limit = 1024M
     post_max_size = 1024M
 
-
     -altere em my.ini(C:\xampp\mysql\bin\my.ini)
 
     max_allowed_packet = 1024M
     
+
+-Em caso de problemas de extensao zip na instalação do composer(composer install)
+
+    extension=zip      // ativar removendo o ; 
 
 -Dentro da pasta do projeto criar um arquivo chamado ".env" o seu conteúdo deve ser copiado inteiramente do arquivo .env-example, depois configure apenas as variáveis:
 
@@ -32,21 +35,19 @@ Após clonar ou baixar o .zip do projeto, execute os passos:
 
 Comandos no terminal (dentro do diretório do projeto):
 
--Composer install
+- Composer install
 
--php artisan key:generate
+- php artisan key:generate
 
--php artisan jwt:secret
+- php artisan jwt:secret
 
--php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+- php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
 
--php artisan vendor:publish
-
+- php artisan vendor:publish  
 selecione a opção laravel-mail(deve ser a 14, então digite no terminal e de enter) 
--14
 
--php artisan storage:link
+- php artisan storage:link
 
--php artisan serve
+- php artisan serve
 
 Após isso basta clicar no link que aparecera no terminal ou acessar em seu navegador a url: http://127.0.0.1:8000

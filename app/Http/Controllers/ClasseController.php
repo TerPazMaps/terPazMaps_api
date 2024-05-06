@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Icon;
 use App\Models\Classe;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;

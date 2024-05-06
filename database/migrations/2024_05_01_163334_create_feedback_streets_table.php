@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_custom_maps', function (Blueprint $table) {
+        Schema::create('feedback_streets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('name', 191);
-            $table->polygon('geometry')->nullable();
-            $table->point('center')->nullable();
+            $table->unsignedBigInteger('street_id')->unique();
+            $table->unsignedBigInteger('street_condition_id');
             $table->timestamps();
 
+            // Chaves estrangeiras
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('street_id')->references('id')->on('streets');
+            $table->foreign('street_condition_id')->references('id')->on('street_conditions');
         });
     }
 
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_custom_maps');
+        Schema::dropIfExists('feedback_streets');
     }
 };

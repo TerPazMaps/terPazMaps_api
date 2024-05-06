@@ -9,6 +9,8 @@ use App\Http\Controllers\RegionController;
 use App\Http\Controllers\StreetController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ActivitieController;
+use App\Http\Controllers\FeedbackActivitieController;
+use App\Http\Controllers\FeedbackStreetController;
 use App\Http\Controllers\SubclasseController;
 use App\Http\Controllers\StreetConditionController;
 use App\Http\Controllers\UserCustomMapController;
@@ -58,21 +60,18 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::apiResource('activitie', ActivitieController::class);
 
         Route::get('/services/activities-nearby', [ServicesController::class, 'getActivitiesbyArea']);
-        Route::get('/services/activities-nearby2', [ServicesController::class, 'getActivitiesbyArea2']);
+        Route::get('/services/points-of-interest', [ServicesController::class, 'getPointsOfInterest']);
+        Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
-        Route::get('/services/distance2', [ServicesController::class, 'getDistance2']);
-        Route::get('/services/points-of-interest', [ServicesController::class, 'getEscolas']);
-        Route::get('/services/points-of-interest2', [ServicesController::class, 'getEscolas2']);
-        Route::get('/services/length-street', [ServicesController::class, 'getLengthStreet']);
-        Route::get('/services/length-street2', [ServicesController::class, 'getlengthStreet2']);
-        Route::get('/services/buffer', [ServicesController::class, 'buffer']);
-        Route::get('/services/buffer2', [ServicesController::class, 'buffer2']);
+        Route::get('/services/buffer', [ServicesController::class, 'getBuffer']);
 
         Route::apiResource('street', StreetController::class);
 
         Route::apiResource('icon', IconController::class);
         
         Route::apiResource('user-custom-maps', UserCustomMapController::class)->middleware('jwt.auth');
+        Route::apiResource('user-feedback-activitie', FeedbackActivitieController::class)->middleware('jwt.auth');
+        Route::apiResource('user-feedback-street', FeedbackStreetController::class)->middleware('jwt.auth');
     });
 
     Route::post('login', [AuthController::class, 'login'])->name('login');
@@ -81,7 +80,7 @@ Route::group(['prefix' => 'api/v5'], function () {
     Route::post('refresh', [AuthController::class, 'refresh'])->middleware('jwt.auth');
     Route::post('me', [AuthController::class, 'me'])->middleware('jwt.auth');
 
-    Route::get('password-reset-notification', [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
+    Route::get('send-password-reset-notification', [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
     Route::post('send-password-reset-notification', [AuthController::class, 'sendPasswordResetNotification'])->name('send-password-reset-notification');
 
 });

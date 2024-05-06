@@ -69,20 +69,57 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `PUT /api/v5/geojson/street/{id}`
   - `DELETE /api/v5/geojson/street/{id}` -->
 
+### Classe de serviços
+- **Descrição**: Recurso para gerenciar serviços, como calculo de distância entre pontos ou pontos por área.
+- **Endpoints**:
+  <!-- - `POST /api/v5/geojson/region` -->
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/activities-nearby](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/distance](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/points-of-interest](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/length-street](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/buffer](/docs/api/ServicesController.md)
+ 
+  <!-- - `PUT /api/v5/geojson/region/{id}`
+  - `DELETE /api/v5/geojson/region/{id}` -->
 
 ### UserCunstomMaps
-> [!WARNING]
+> [!NOTE]
 > JWT: Todos esses endpoints são protegidos por autenticação Json Web Token.
 - **Descrição**: Recurso para gerenciar mapas personalizados do usuário.
 - **Endpoints**:
 
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-custom-maps](/docs/api/ActivitieController.md)
-  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)[ /api/v5/geojson/user-custom-maps](/docs/api/instrucoes_de_autenticacao.md)
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/ActivitieController.md)
-  - ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/ActivitieController.md)
-  - ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/ActivitieController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-custom-maps](/docs/api/UserCustomMapContoller.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)[ /api/v5/geojson/user-custom-maps](/docs/api/UserCustomMapContoller.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/UserCustomMapContoller.md)
+  - ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/UserCustomMapContoller.md)
+  - ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)[/api/v5/geojson/user-custom-maps/{id}](/docs/api/UserCustomMapContoller.md)
+   
+   
+### FeedbackActivities
+> [!NOTE]
+> JWT: Todos esses endpoints são protegidos por autenticação Json Web Token.
+- **Descrição**: Recurso para gerenciar feedback de activities do usuário.
+- **Endpoints**:
 
----
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-feedback-activitie](/docs/api/FeedbackActivitieController.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)[ /api/v5/geojson/user-feedback-activitie](/docs/api/FeedbackActivitieController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-feedback-activitie/{id}](/docs/api/FeedbackActivitieController.md)
+  - ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)[/api/v5/geojson/user-feedback-activitie/{id}](/docs/api/FeedbackActivitieController.md)
+  - ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)[/api/v5/geojson/user-feedback-activitie/{id}](/docs/api/FeedbackActivitieController.md)
+
+### FeedbackStreet
+> [!NOTE]
+> JWT: Todos esses endpoints são protegidos por autenticação Json Web Token.
+- **Descrição**: Recurso para gerenciar feedback de streets do usuário.
+- **Endpoints**:
+
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-feedback-street](/docs/api/FeedbackStreetController.md)
+  - ![POST](https://img.shields.io/badge/HTTP-POST-00CC00)[ /api/v5/geojson/user-feedback-street](/docs/api/FeedbackStreetController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[/api/v5/geojson/user-feedback-street/{id}](/docs/api/FeedbackStreetController.md)
+  - ![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)[/api/v5/geojson/user-feedback-street/{id}](/docs/api/FeedbackStreetController.md)
+  - ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)[/api/v5/geojson/user-feedback-street/{id}](/docs/api/FeedbackStreetController.md)
+
+   
 ## Instruções de execução
 
 
