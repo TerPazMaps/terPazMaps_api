@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Street_condition;
 use Illuminate\Routing\Controller;
 use App\Http\Requests\StoreStreet_conditionRequest;
@@ -14,10 +15,21 @@ class StreetConditionController extends Controller
      */
     public function index()
     {
-        $streetConditions = Street_condition::all();
+        try {
+            $streetConditions = Street_condition::all();
 
-        return response()->json($streetConditions, 200);
+            return response()->json($streetConditions, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
+
 
     /**
      * Show the form for creating a new resource.

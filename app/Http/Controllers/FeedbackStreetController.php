@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Support\Carbon;
 use App\Models\FeedbackStreet;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -16,27 +17,41 @@ class FeedbackStreetController extends Controller
      */
     public function index()
     {
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
 
-        $FeedbackStreet = FeedbackStreet::where('user_id', $user->id)
-            ->get();
+            $FeedbackStreet = FeedbackStreet::where('user_id', $user->id)
+                ->get();
 
-        if ($FeedbackStreet->isEmpty()) {
-            return response()->json(['message' => 'Este usuário não possui registros feedback de ruas'], 404);
+            if ($FeedbackStreet->isEmpty()) {
+                return response()->json([
+                    "error" => [
+                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros feedbacks de ruas"
+                    ]
+                ], 404);
+            }
+
+            $FeedbackStreetMap = $FeedbackStreet->map(function ($FeedbackStreet) {
+                return [
+                    "id" => $FeedbackStreet->id,
+                    "user_id" => $FeedbackStreet->user_id,
+                    "street_id" => $FeedbackStreet->street_id,
+                    "street_condition_id" => $FeedbackStreet->street_condition_id,
+                    "created_at" => Carbon::parse($FeedbackStreet->created_at)->format('d/m/Y H:i:s'),
+                    "updated_at" => Carbon::parse($FeedbackStreet->updated_at)->format('d/m/Y H:i:s')
+                ];
+            });
+
+            return response()->json($FeedbackStreetMap, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
-
-        $FeedbackStreetMap = $FeedbackStreet->map(function ($FeedbackStreet) {
-            return [
-                "id" => $FeedbackStreet->id,
-                "user_id" => $FeedbackStreet->user_id,
-                "street_id" => $FeedbackStreet->street_id,
-                "street_condition_id" => $FeedbackStreet->street_condition_id,
-                "created_at" => Carbon::parse($FeedbackStreet->created_at)->format('d/m/Y H:i:s'),
-                "updated_at" => Carbon::parse($FeedbackStreet->updated_at)->format('d/m/Y H:i:s')
-            ];
-        });
-
-        return response()->json($FeedbackStreetMap, 200);
     }
 
     /**
@@ -52,17 +67,32 @@ class FeedbackStreetController extends Controller
      */
     public function store(StoreFeedbackStreetRequest $request)
     {
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
 
-        $feedback = new FeedbackStreet();
-        $feedback->fill($request->validated());
-        $feedback['user_id'] = $user->id;
+            $feedback = new FeedbackStreet();
+            $feedback->fill($request->validated());
+            $feedback['user_id'] = $user->id;
 
-        // Salvar o modelo no banco de dados
-        if ($feedback->save()) {
-            return response()->json(['message' => 'Salvo com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao salvar'], 500);
+            if ($feedback->save()) {
+                return response()->json([
+                    "success" => ["status" => "201", "title" => "Created", "detail" => "Feedback salvo com sucesso"]
+                ], 201);
+            } else {
+                return response()->json([
+                    "error" => [
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao tentar salvar o feedback"
+                    ]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
 
@@ -71,25 +101,34 @@ class FeedbackStreetController extends Controller
      */
     public function show($id)
     {
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $feedbackStreet = FeedbackStreet::find($id);
 
-        $feedbackStreet = FeedbackStreet::find($id);
+            if ($feedbackStreet->count() === 0) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros feedback de ruas"]
+                ], 404);
+            }
 
-        // dd($feedbackStreets);
-        if ($feedbackStreet->count() === 0) {
-            return response()->json(['message' => 'Este usuário não possui registros feedback de ruas'], 404);
+            $feedbackStreetMaps = [
+                "id" => $feedbackStreet->id,
+                "user_id" => $feedbackStreet->user_id,
+                "street_id" => $feedbackStreet->street_id,
+                "street_condition_id" => $feedbackStreet->street_condition_id,
+                "created_at" => Carbon::parse($feedbackStreet->created_at)->format('d/m/Y H:i:s'),
+                "updated_at" => Carbon::parse($feedbackStreet->updated_at)->format('d/m/Y H:i:s')
+            ];
+
+            return response()->json($feedbackStreetMaps, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
-
-        $feedbackStreetMaps = [
-            "id" => $feedbackStreet->id,
-            "user_id" => $feedbackStreet->user_id,
-            "street_id" => $feedbackStreet->street_id,
-            "street_condition_id" => $feedbackStreet->street_condition_id,
-            "created_at" => Carbon::parse($feedbackStreet->created_at)->format('d/m/Y H:i:s'),
-            "updated_at" => Carbon::parse($feedbackStreet->updated_at)->format('d/m/Y H:i:s')
-        ];
-
-        return response()->json($feedbackStreetMaps, 200);
     }
 
 
@@ -106,31 +145,44 @@ class FeedbackStreetController extends Controller
      */
     public function update(UpdateFeedbackStreetRequest $request, $id)
     {
-        // Busca o modelo FeedbackStreet pelo ID
-        $feedbackStreet = FeedbackStreet::find($id);
-    
-        // Verifica se o modelo foi encontrado
-        if (!$feedbackStreet) {
-            return response()->json(['message' => 'Feedback de rua não encontrado'], 404);
-        }
-    
-        // Verifica se o usuário autenticado é o proprietário do feedback de rua
-        $user = JWTAuth::parseToken()->authenticate();
-        if ($feedbackStreet->user_id !== $user->id) {
-            return response()->json(['message' => 'Você não tem permissão para atualizar este registro'], 403);
-        }
-    
-        // Valida os dados da solicitação
-        $validatedData = $request->validated(); 
-    
-        // Preenche o modelo com os dados validados e tenta salvar
-        if ($feedbackStreet->fill($validatedData)->save()) {
-            return response()->json(['message' => 'Feedback de rua atualizado com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao atualizar feedback de rua'], 500);
+        try {
+            $feedbackStreet = FeedbackStreet::find($id);
+
+            if (!$feedbackStreet) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Feedback de rua não encontrado"]
+                ], 404);
+            }
+
+            $user = JWTAuth::parseToken()->authenticate();
+            if ($feedbackStreet->user_id !== $user->id) {
+                return response()->json([
+                    "error" => ["status" => "403", "title" => "Forbidden", "detail" => "Você não tem permissão para atualizar este registro"]
+                ], 403);
+            }
+
+            $validatedData = $request->validated();
+
+            if ($feedbackStreet->fill($validatedData)->save()) {
+                return response()->json([
+                    "success" => ["status" => "200", "title" => "OK", "detail" => "Feedback de rua atualizado com sucesso"]
+                ], 403);
+            } else {
+                return response()->json([
+                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar feedback de rua"]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
-    
+
 
 
     /**
@@ -138,16 +190,33 @@ class FeedbackStreetController extends Controller
      */
     public function destroy($id)
     {
-        $feedbackStreet = FeedbackStreet::find($id);
+        try {
+            $feedbackStreet = FeedbackStreet::find($id);
 
-        if (!$feedbackStreet) {
-            return response()->json(['message' => 'Feedback de rua não encontrado'], 404);
-        }
+            if (!$feedbackStreet) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Feedback de rua não encontrado"]
+                ], 404);
+            }
 
-        if ($feedbackStreet->delete()) {
-            return response()->json(['message' => 'Deletado com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao deletar'], 500);
+            if ($feedbackStreet->delete()) {
+                return response()->json([
+                    "success" => ["status" => "200", "title" => "OK", "detail" => "feedback de rua deletado com sucesso"]
+                ], 200);
+            }
+        
+            return response()->json([
+                "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar feedback de rua"]
+            ], 500);
+        
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
 }

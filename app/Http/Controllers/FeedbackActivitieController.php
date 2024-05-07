@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Support\Carbon;
 use App\Models\FeedbackActivitie;
 use Illuminate\Routing\Controller;
@@ -17,36 +18,50 @@ class FeedbackActivitieController extends Controller
      */
     public function index()
     {
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
 
-        $FeedbackActivitie = FeedbackActivitie::select(
-            '*',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-        )
-            ->where('user_id', $user->id)
-            ->get();
+            $FeedbackActivitie = FeedbackActivitie::select(
+                '*',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
+            )
+                ->where('user_id', $user->id)
+                ->get();
 
-        if ($FeedbackActivitie->isEmpty()) {
-            return response()->json(['message' => 'Este usuário não possui registros de mapas personalizados'], 404);
-        }
+            if ($FeedbackActivitie->isEmpty()) {
+                return response()->json([
+                    "error" => [
+                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros de mapas personalizados"
+                    ]
+                ], 404);
+            }
 
-        $FeedbackActivitieMap = $FeedbackActivitie->map(function ($FeedbackActivitie) {
-            return [
-                "type" => "Feature",
-                "geometry" => json_decode($FeedbackActivitie->geometry),
-                "properties" => [
-                    "id" => $FeedbackActivitie->id,
-                    "user_id" => $FeedbackActivitie->user_id,
-                    "name" => $FeedbackActivitie->name,
-                    "region_id" => $FeedbackActivitie->region_id,
-                    "subclass_id" => $FeedbackActivitie->subclass_id,
-                    "created_at" => Carbon::parse($FeedbackActivitie->created_at)->format('d/m/Y H:i:s'),
-                    "updated_at" => Carbon::parse($FeedbackActivitie->updated_at)->format('d/m/Y H:i:s'),
+            $FeedbackActivitieMap = $FeedbackActivitie->map(function ($FeedbackActivitie) {
+                return [
+                    "type" => "Feature",
+                    "geometry" => json_decode($FeedbackActivitie->geometry),
+                    "properties" => [
+                        "id" => $FeedbackActivitie->id,
+                        "user_id" => $FeedbackActivitie->user_id,
+                        "name" => $FeedbackActivitie->name,
+                        "region_id" => $FeedbackActivitie->region_id,
+                        "subclass_id" => $FeedbackActivitie->subclass_id,
+                        "created_at" => Carbon::parse($FeedbackActivitie->created_at)->format('d/m/Y H:i:s'),
+                        "updated_at" => Carbon::parse($FeedbackActivitie->updated_at)->format('d/m/Y H:i:s'),
+                    ]
+                ];
+            });
+
+            return response()->json($FeedbackActivitieMap, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
                 ]
-            ];
-        });
-
-        return response()->json($FeedbackActivitieMap, 200);
+            ], 500);
+        }
     }
 
     /**
@@ -62,29 +77,39 @@ class FeedbackActivitieController extends Controller
      */
     public function store(StoreFeedbackActivitiesRequest $request)
     {
-         // Autenticar o usuário
-         $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            $FeedbackActivitie = new FeedbackActivitie();
+            $coordinates = $request->geometry;
 
-         $coordinates = $request->geometry;
+            $FeedbackActivitie->user_id = $user->id;
+            $FeedbackActivitie->name = $request->name;
+            $FeedbackActivitie->subclass_id = $request->subclass_id;
+            $FeedbackActivitie->region_id = $request->region_id;
+            $FeedbackActivitie->geometry = DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',0)");
 
-         $FeedbackActivitie = new FeedbackActivitie();
- 
-         $FeedbackActivitie->user_id = $user->id;
-         $FeedbackActivitie->name = $request->name;
-         $FeedbackActivitie->subclass_id = $request->subclass_id;
-         $FeedbackActivitie->region_id = $request->region_id;
-         $FeedbackActivitie->geometry =DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',0)");
- 
-         // verificação de region
-        // $region_id = Region::whereRaw("ST_Contains(geometry, ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',0))")
-        // ->pluck('id');
- 
-         // Salvar o modelo no banco de dados
-         if ($FeedbackActivitie->save()) {
-             return response()->json(['message' => 'Salvo com sucesso'], 200);
-         } else {
-             return response()->json(['message' => 'Erro ao salvar'], 500);
-         }
+            if ($FeedbackActivitie->save()) {
+                return response()->json([
+                    "success" => [
+                        "status" => "201", "title" => "Created", "detail" => "Feedback da atividade salvo com sucesso"
+                    ]
+                ], 201);
+            } else {
+                return response()->json([
+                    "error" => [
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar feedback da atividade"
+                    ]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
 
     /**
@@ -92,34 +117,48 @@ class FeedbackActivitieController extends Controller
      */
     public function show($id)
     {
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
 
-        $FeedbackActivitie = FeedbackActivitie::select(
-            '*',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-        )
-            ->where('user_id', $user->id)
-            ->find($id);
+            $FeedbackActivitie = FeedbackActivitie::select(
+                '*',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
+            )
+                ->where('user_id', $user->id)
+                ->find($id);
 
-        if (!$FeedbackActivitie) {
-            return response()->json(['message' => 'Este usuário não possui registros feedbacks de activities'], 404);
+            if (!$FeedbackActivitie) {
+                return response()->json([
+                    "error" => [
+                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros feedback de activities"
+                    ]
+                ], 404);
+            }
+
+            $FeedbackActivitieMap = [
+                "type" => "Feature",
+                "geometry" => json_decode($FeedbackActivitie->geometry),
+                "properties" => [
+                    "id" => $FeedbackActivitie->id,
+                    "user_id" => $FeedbackActivitie->user_id,
+                    "name" => $FeedbackActivitie->name,
+                    "region_id" => $FeedbackActivitie->region_id,
+                    "subclass_id" => $FeedbackActivitie->subclass_id,
+                    "created_at" => Carbon::parse($FeedbackActivitie->created_at)->format('d/m/Y H:i:s'),
+                    "updated_at" => Carbon::parse($FeedbackActivitie->updated_at)->format('d/m/Y H:i:s'),
+                ]
+            ];
+
+            return response()->json($FeedbackActivitieMap, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
-
-        $FeedbackActivitieMap = [
-            "type" => "Feature",
-            "geometry" => json_decode($FeedbackActivitie->geometry),
-            "properties" => [
-                "id" => $FeedbackActivitie->id,
-                "user_id" => $FeedbackActivitie->user_id,
-                "name" => $FeedbackActivitie->name,
-                "region_id" => $FeedbackActivitie->region_id,
-                "subclass_id" => $FeedbackActivitie->subclass_id,
-                "created_at" => Carbon::parse($FeedbackActivitie->created_at)->format('d/m/Y H:i:s'),
-                "updated_at" => Carbon::parse($FeedbackActivitie->updated_at)->format('d/m/Y H:i:s'),
-            ]
-        ];
-
-        return response()->json($FeedbackActivitieMap, 200);
     }
 
     /**
@@ -135,27 +174,45 @@ class FeedbackActivitieController extends Controller
      */
     public function update(UpdateFeedbackActivitiesRequest $request, $id)
     {
-         $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
 
-         $validatedData = $request->validated(); 
-         $coordinates = $request->geometry;
+            $validatedData = $request->validated();
+            $coordinates = $request->geometry;
 
-         $FeedbackActivitie = FeedbackActivitie::find($id);
- 
-         $FeedbackActivitie->user_id = $user->id;
-         $FeedbackActivitie->name = $request->name;
-         $FeedbackActivitie->subclass_id = $request->subclass_id;
-         $FeedbackActivitie->region_id = $request->region_id;
-         $FeedbackActivitie->geometry =DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',0)");
- 
-        // Atualize os outros campos relevantes do modelo com os dados validados
-        $FeedbackActivitie->fill($validatedData);
+            $FeedbackActivitie = FeedbackActivitie::find($id);
 
-        // Salve as alterações no banco de dados
-        if ($FeedbackActivitie->save()) {
-            return response()->json(['message' => 'Atividade atualizada com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao atualizar atividade'], 500);
+            $FeedbackActivitie->user_id = $user->id;
+            $FeedbackActivitie->name = $request->name;
+            $FeedbackActivitie->subclass_id = $request->subclass_id;
+            $FeedbackActivitie->region_id = $request->region_id;
+            $FeedbackActivitie->geometry = DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',0)");
+
+            // Atualize os outros campos relevantes do modelo com os dados validados
+            $FeedbackActivitie->fill($validatedData);
+
+            // Salve as alterações no banco de dados
+            if ($FeedbackActivitie->save()) {
+                return response()->json([
+                    "success" => [
+                        "status" => "200", "title" => "OK", "detail" => "Atividade atualizada com sucesso"
+                    ]
+                ], 200);
+            } else {
+                return response()->json([
+                    "error" => [
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar atividade"
+                    ]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
 
@@ -164,16 +221,40 @@ class FeedbackActivitieController extends Controller
      */
     public function destroy($id)
     {
-        $FeedbackActivitie = FeedbackActivitie::find($id);
+        try {
+            $FeedbackActivitie = FeedbackActivitie::find($id);
 
-        if (!$FeedbackActivitie) {
-            return response()->json(['message' => 'Atividade não encontrada'], 404);
-        }
+            if (!$FeedbackActivitie) {
+                return response()->json([
+                    "error" => [
+                        "status" => "404",
+                        "title" => "Not Found",
+                        "detail" => "Atividade foi apagada ou não existe.",
+                    ]
+                ], 500);
+            }
 
-        if ($FeedbackActivitie->delete()) {
-            return response()->json(['message' => 'Deletado com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao deletar'], 500);
+            if ($FeedbackActivitie->delete()) {
+                return response()->json([
+                    "success" => [
+                        "status" => "200", "title" => "OK", "detail" => "Feedback da atividade deletado com sucesso"
+                    ]
+                ], 200);
+            } else {
+                return response()->json([
+                    "error" => [
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar feedback da atividade"
+                    ]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
 }

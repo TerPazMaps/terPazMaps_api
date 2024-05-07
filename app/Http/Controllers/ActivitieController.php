@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreActivitieRequest;
 use App\Http\Requests\UpdateActivitieRequest;
+use Exception;
 
 class ActivitieController extends Controller
 {
@@ -25,96 +26,106 @@ class ActivitieController extends Controller
     // http://127.0.0.1:8000/api/v5/geojson/activities
     public function index(Request $request)
     {
-        $activities = Activitie::select(
-            '*',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry')
-        )
-            ->has('subclass.classe')
-            ->has('subclass.icon')
-            ->orderBy('id');
+        try {
+            $activities = Activitie::select(
+                '*',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry')
+            )
+                ->has('subclass.classe')
+                ->has('subclass.icon')
+                ->orderBy('id');
 
-        $chaveCache = "ActivitieController_index";
+            $chaveCache = "ActivitieController_index";
 
-        // Construindo a chave do cache com base nos parâmetros da solicitação
-        if ($request->regions) {
-            $chaveCache .= "_regions_" . $request->regions;
-            $regions_id = array_map('intval', explode(',', $request->regions));
-            $activities = $activities->whereIn('region_id', $regions_id);
-        }
-
-        if ($request->subclasses) {
-            $chaveCache .= "_subclasses_" . $request->subclasses;
-            $subclasses_id = array_map('intval', explode(',', $request->subclasses));
-            $activities = $activities->whereIn('subclass_id', $subclasses_id);
-        }
-
-        if ($request->ids) {
-            $chaveCache .= "_ids_" . $request->ids;
-            $ids = array_map('intval', explode(',', $request->ids));
-            $activities = $activities->whereIn('id', $ids);
-        }
-
-        $startTime = microtime(true);
-        $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities) {
-            return $activities->get();
-        });
-
-        $endTime = microtime(true);
-        $executionTime = number_format(($endTime - $startTime) * 1000, 4);
-
-        $chaveCache = "ActivitieController_index_map_" . $request->regions . $request->subclasses . $request->ids . $request->only_references;
-        $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities, $request, $executionTime) {
-            if ($request->only_references) {
-                $activities = $activities
-                    ->map(function ($activity) use ($executionTime) {
-                        $geojson_activity = [
-                            "time" => $executionTime,
-                            "type" => "Feature",
-                            "geometry" => json_decode($activity->geometry),
-                            "properties" => [
-                                "ID Geral" => $activity->id,
-                                "Nome" => $activity->name ?? '',
-                                "ID Subclasse" => $activity->subclass->id,
-                                "ID Bairro" => $activity->region->id,
-                                "Nível" => $activity->level
-                            ]
-                        ];
-
-                        return $geojson_activity;
-                    });
-            } else {
-                $activities = $activities
-                    ->map(function ($activity) use ($executionTime) {
-                        // Construa a URL da imagem do ícone
-                      
-                        $geojson_activity = [
-                            "time" => $executionTime,
-                            "type" => "Feature",
-                            "geometry" => json_decode($activity->geometry),
-                            "properties" => [
-                                "ID Geral" => $activity->id,
-                                "Nome" => $activity->name ?? '',
-                                "Classe" => $activity->subclass->classe->name ?? '',
-                                "Sub-classe" => $activity->subclass->name,
-                                "Bairro_id" => $activity->region->id,
-                                "Bairro" => $activity->region->name,
-                                "Nível" => $activity->level,
-                                "img_url" => 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name
-                            ]
-                        ];
-
-                        return $geojson_activity;
-                    });
+            // Construindo a chave do cache com base nos parâmetros da solicitação
+            if ($request->regions) {
+                $chaveCache .= "_regions_" . $request->regions;
+                $regions_id = array_map('intval', explode(',', $request->regions));
+                $activities = $activities->whereIn('region_id', $regions_id);
             }
-            return $activities;
-        });
 
-        $geojson = [
-            "type" => "FeatureCollection",
-            "features" => $activities
-        ];
+            if ($request->subclasses) {
+                $chaveCache .= "_subclasses_" . $request->subclasses;
+                $subclasses_id = array_map('intval', explode(',', $request->subclasses));
+                $activities = $activities->whereIn('subclass_id', $subclasses_id);
+            }
 
-        return response()->json($geojson, 200);
+            if ($request->ids) {
+                $chaveCache .= "_ids_" . $request->ids;
+                $ids = array_map('intval', explode(',', $request->ids));
+                $activities = $activities->whereIn('id', $ids);
+            }
+
+            $startTime = microtime(true);
+            $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities) {
+                return $activities->get();
+            });
+
+            $endTime = microtime(true);
+            $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
+            $chaveCache = "ActivitieController_index_map_" . $request->regions . $request->subclasses . $request->ids . $request->only_references;
+            $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities, $request, $executionTime) {
+                if ($request->only_references) {
+                    $activities = $activities
+                        ->map(function ($activity) use ($executionTime) {
+                            $geojson_activity = [
+                                "time" => $executionTime,
+                                "type" => "Feature",
+                                "geometry" => json_decode($activity->geometry),
+                                "properties" => [
+                                    "ID Geral" => $activity->id,
+                                    "Nome" => $activity->name ?? '',
+                                    "ID Subclasse" => $activity->subclass->id,
+                                    "ID Bairro" => $activity->region->id,
+                                    "Nível" => $activity->level
+                                ]
+                            ];
+
+                            return $geojson_activity;
+                        });
+                } else {
+                    $activities = $activities
+                        ->map(function ($activity) use ($executionTime) {
+                            // Construa a URL da imagem do ícone
+
+                            $geojson_activity = [
+                                "time" => $executionTime,
+                                "type" => "Feature",
+                                "geometry" => json_decode($activity->geometry),
+                                "properties" => [
+                                    "ID Geral" => $activity->id,
+                                    "Nome" => $activity->name ?? '',
+                                    "Classe" => $activity->subclass->classe->name ?? '',
+                                    "Sub-classe" => $activity->subclass->name,
+                                    "Bairro_id" => $activity->region->id,
+                                    "Bairro" => $activity->region->name,
+                                    "Nível" => $activity->level,
+                                    "img_url" => 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name
+                                ]
+                            ];
+
+                            return $geojson_activity;
+                        });
+                }
+                return $activities;
+            });
+
+            $geojson = [
+                "type" => "FeatureCollection",
+                "features" => $activities
+            ];
+
+            return response()->json($geojson, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
 
     /**

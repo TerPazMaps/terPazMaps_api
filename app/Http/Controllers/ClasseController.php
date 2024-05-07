@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Classe;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
@@ -20,32 +21,42 @@ class ClasseController extends Controller
     /**
      * Display a listing of the resource.
      */
-     // http://127.0.0.1:8000/api/v5/geojson/classe/
+    // http://127.0.0.1:8000/api/v5/geojson/classe/
     public function index()
     {
-        $chaveCache = "ClasseController_index";
-        $classes = Cache::remember($chaveCache, $this->redis_ttl, function () {
-            return Classe::select(
-                'id',
-                'name',
-                'related_color',
-                'related_secondary_color'
-            )
-                ->get()
-                ->map(function ($classe) {
-                    $classe = [
-                        "Classe" => [
-                            "ID" => $classe->id,
-                            "Nome" => $classe->name,
-                            "related_color" => $classe->related_color,
-                            "related_secondary_color" => $classe->related_secondary_color
-                        ]
-                    ];
-                    return $classe;
-                });
-        });
+        try {
+            $chaveCache = "ClasseController_index";
+            $classes = Cache::remember($chaveCache, $this->redis_ttl, function () {
+                return Classe::select(
+                    'id',
+                    'name',
+                    'related_color',
+                    'related_secondary_color'
+                )
+                    ->get()
+                    ->map(function ($classe) {
+                        $classe = [
+                            "Classe" => [
+                                "ID" => $classe->id,
+                                "Nome" => $classe->name,
+                                "related_color" => $classe->related_color,
+                                "related_secondary_color" => $classe->related_secondary_color
+                            ]
+                        ];
+                        return $classe;
+                    });
+            });
 
-        return response()->json($classes, 200);
+            return response()->json($classes, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
 
     /**
@@ -69,21 +80,35 @@ class ClasseController extends Controller
      */
     public function show(int $id)
     {
-        $chaveCache = "ClasseController_show_" . $id;
-        $classe = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
-            return Classe::select(
-                'id',
-                'name',
-                'related_color',
-                'related_secondary_color'
-            )->find($id);
-        });
-    
-        if (!$classe) {
-            return response()->json(['error' => 'Classe não encontrada'], 404);
+        try {
+            $chaveCache = "ClasseController_show_" . $id;
+            $classe = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
+                return Classe::select(
+                    'id',
+                    'name',
+                    'related_color',
+                    'related_secondary_color'
+                )->find($id);
+            });
+
+            if (!$classe) {
+                return response()->json([
+                    "error" => [
+                        "status" => "404", "title" => "Not Found", "detail" => "Classe não encontrada no banco de dados."
+                    ]
+                ], 404);
+            }
+
+            return response()->json(['Classe' => $classe], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
-    
-        return response()->json(['Classe' => $classe], 200);
     }
 
     /**
@@ -91,25 +116,35 @@ class ClasseController extends Controller
      */
     public function getSubclassesByClass(int $id)
     {
-        $chaveCache = "ClasseController_getSubclassesByClass_" . $id;
-        $classes = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
-            $classes = Classe::where('id', $id)
-                ->has('subclasse')
-                ->has('subclasse.icon')
-                ->paginate(15);
-            // Adicionar o link para a imagem em cada ícone
-            $baseUrl = config('app.url');
-            foreach ($classes as $cl) {
-                foreach ($cl->subclasse as $subclasse) {
-                    $icon = $subclasse->icon;
-                    $icon->image_url = $baseUrl . 'storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
+        try {
+            $chaveCache = "ClasseController_getSubclassesByClass_" . $id;
+            $classes = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
+                $classes = Classe::where('id', $id)
+                    ->has('subclasse')
+                    ->has('subclasse.icon')
+                    ->paginate(15);
+                    
+                $baseUrl = config('app.url');
+                foreach ($classes as $cl) {
+                    foreach ($cl->subclasse as $subclasse) {
+                        $icon = $subclasse->icon;
+                        $icon->image_url = $baseUrl . 'storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
+                    }
                 }
-            }
 
-            return $classes;
-        });
+                return $classes;
+            });
 
-        return response()->json($classes, 200);
+            return response()->json($classes, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
 
     /**
