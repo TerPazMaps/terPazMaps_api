@@ -104,7 +104,7 @@ class FeedbackStreetController extends Controller
         try {
             $feedbackStreet = FeedbackStreet::find($id);
 
-            if ($feedbackStreet->count() === 0) {
+            if (!$feedbackStreet) {
                 return response()->json([
                     "error" => ["status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros feedback de ruas"]
                 ], 404);

@@ -18,7 +18,7 @@ Deve receber uma requisição via GET com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 
 ## Retorno caso de sucesso
 
@@ -80,11 +80,50 @@ Deve receber uma requisição via GET com os names abaixo
 ## Parâmetros
 Deve receber uma requisição via POST com os names abaixo
 
-
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 | geojson       | FeatureCollection tipo polygon [***required,String***]        |
+
+## exemplo de entrada gsojson
+
+```json
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+    "type": "Feature",
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    -48.334619926032,
+                    -1.35332748924725
+                ],
+                [
+                    -48.334619926032,
+                    -1.35332748924725
+                ]...
+            ]
+        ]
+    },
+    "properties": {
+        "ID": 9,
+        "Nome": "São Francisco",
+        "Cidade": "Marituba",
+        "Centro": {
+            "type": "Point",
+            "coordinates": [
+                -48.336453437805176,
+                -1.354496658713901
+            ]
+        }
+    }
+        }      
+    ]
+}
+```
 
 ## Retorno caso sucesso
 
@@ -116,7 +155,7 @@ Deve receber uma requisição via GET com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 
 
 ## Retorno caso sucesso
@@ -184,7 +223,7 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 | geojson       | FeatureCollection tipo polygon [***required,String***]        |
 
 
@@ -218,7 +257,7 @@ Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 
 
 ## Retorno caso sucesso

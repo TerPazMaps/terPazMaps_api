@@ -20,17 +20,17 @@ Deve receber uma requisição via POST com os names abaixo
 
 ```json
 {
-    "errors": {
-        "name": [
-            "O seu nome deve ter no mínimo 3 letras."
-        ],
-        "email": [
-            "Este e-mail já está em uso."
-        ],
-        "password": [
-            "A senha deve ter no mínimo 8 caracteres.",
-            "As senhas não são iguais."
-        ]
+    "error": {
+        "status": "400",
+        "title": "Bad Request",
+        "detail": {
+            "name": [
+                "O campo nome é obrigatório."
+            ],
+            "password": [
+                "As senhas não são iguais."
+            ]
+        }
     }
 }
 ```
@@ -40,13 +40,16 @@ Deve receber uma requisição via POST com os names abaixo
 
 ```json
 {
-    "message": "Usuário registrado com sucesso",
-    "user": {
-        "name": "israel3",
-        "email": "israel@silvaa3",
-        "updated_at": "2024-04-10T16:48:32.000000Z",
-        "created_at": "2024-04-10T16:48:32.000000Z",
-        "id": 4
+    "success": {
+        "status": "201",
+        "title": "Created",
+        "detail": {
+            "name": "tedsdsd",
+            "email": "teste@teste44",
+            "updated_at": "2024-05-08T14:03:51.000000Z",
+            "created_at": "2024-05-08T14:03:51.000000Z",
+            "id": 6
+        }
     }
 }
 ```
@@ -76,10 +79,10 @@ Deve receber uma requisição via POST com os names abaixo
 
 ## Retorno caso de sucesso
 
-Tokem com tempo de vida ed 120 minutos
+Token com tempo de vida de 120 minutos
 
 ```json
-"Token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL3Y1L2xvZ2luIiwiaWF0IjoxNzEyNzgxNjI5LCJleHAiOjE3MTI3ODg4MjksIm5iZiI6MTcxMjc4MTYyOSwianRpIjoiS1hCcUQ5UVM1QmdNMlpZTCIsInN1YiI6IjEiLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.kSZAVXcmafKhdQp5wYj57Uli2YYCYIZ4AmAxcsCl8-8"}
+"Token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL3Y1L2xvZ2luIiwiaWF0IjoxNzEyNzgxNjI5LCJleHAiOjE3MTI3ODg4MjksIm5iZiI6MTcxMjc4MTYyOSwianRpIjoiS1hCcUQ5UVM1QmdNMlpZTCIsInN1YiI6IjEiLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.kSZAVXcmafKhdQp5wYj57Uli2YYCYIZ4AmAxcsCl8-8"
 ```
 
 ## Logout de usuário
@@ -94,7 +97,7 @@ Deve receber uma requisição via POST com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 |||
 
 exemplo de um name   
@@ -112,7 +115,7 @@ OBS: Outros erros podem ser retornados de acordo com o que foi enviado, certifiq
 
 ## Retorno caso de sucesso
 
-O tokem enviado na requisição é invalidado com o logout.
+O Token enviado na requisição é invalidado com o logout.
 
 ```json
 
@@ -131,7 +134,7 @@ Deve receber uma requisição via POST com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 |||
 
 
@@ -142,11 +145,11 @@ Deve receber uma requisição via POST com os names abaixo
     "message": "The token has been blacklisted",
 
 ```
-OBS: use somente uma refresh para cada tokem, apos isso tem um tempo muito grade para poder dar refresh no mesmo tokem, é mais recomandavel solicitar um novo via login.
+OBS: use somente uma refresh para cada Token, apos isso tem um tempo muito grade para poder dar refresh no mesmo Token, é mais recomandavel solicitar um novo via login.
 
 ## Retorno caso de sucesso
 
-O tokem enviado na requisição recebe mais tempo util(mais 120 minutos de duração).
+O Token enviado na requisição recebe mais tempo util(mais 120 minutos de duração).
 
 ```json
 
@@ -167,7 +170,7 @@ Deve receber uma requisição via POST com os names abaixo
 
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| Authorization    | Tokem valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o tokem) |
+| Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o Token) |
 |||
 
 

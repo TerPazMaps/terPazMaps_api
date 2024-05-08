@@ -80,17 +80,52 @@ Deve receber uma requisição via GET com os names abaixo
 ## Parâmetros
 Deve receber uma requisição via POST com os names abaixo
 
-
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
 | Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
 | geojson       | FeatureCollection tipo polygon [***required,String***]        |
 
+## exemplo de entrada de geojson
+
+```json
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -48.334619926032,
+                    -1.3533274892472
+                ]
+            },
+            "properties": {
+                "name": "São",
+                "subclass_id": 28,
+                "region_id": 9,
+                "Centro": {
+                    "type": "Point",
+                    "coordinates": [
+                        -48.338833248539,
+                        -1.3512433726156
+                    ]
+                }
+            }
+        }        
+    ]
+}
+```
+
 ## Retorno caso sucesso
 
 ```json
 {
-    "message": "Salvo com sucesso"
+    "success": {
+        "status": "201",
+        "title": "Created",
+        "detail": "Feedback da atividade salvo com sucesso"
+    }
 }
 ```
 ## Retorno caso haja erros de validação
