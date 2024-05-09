@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 
+use Exception;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\PasswordUpdate;
+use App\Http\Requests\LoginFormRequest;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -49,9 +50,9 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 "error" => [
-                    "status" => "400", "title" => "Bad Request", "detail" => $validator->errors()
+                    "status" => "422", "title" => "Unprocessable Entity", "detail" => $validator->errors()
                 ]
-            ], 400);
+            ]);
         }
 
         $user = User::create([
@@ -67,8 +68,9 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginFormRequest $request)
     {
+        $request->validated();
         $credenciais = $request->all();
 
         $token = Auth('api')->attempt($credenciais);

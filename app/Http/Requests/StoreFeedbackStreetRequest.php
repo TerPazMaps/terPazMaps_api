@@ -45,7 +45,7 @@ class StoreFeedbackStreetRequest extends FormRequest
         ];
     }
 
-     /**
+    /**
      * Handle a failed validation attempt.
      *
      * @param  \Illuminate\Contracts\Validation\Validator  $validator
@@ -55,6 +55,12 @@ class StoreFeedbackStreetRequest extends FormRequest
      */
     protected function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
+        throw new HttpResponseException(response()->json([
+            "error" => [
+                "status" => "422",
+                "title" => "Unprocessable Entity",
+                "detail" => $validator->errors(),
+            ]
+        ], 422));
     }
 }
