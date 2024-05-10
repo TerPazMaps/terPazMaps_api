@@ -56,7 +56,13 @@ class RegionController extends Controller
                 "features" => $regions
             ];
 
-            return response()->json($geojson, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -106,7 +112,7 @@ class RegionController extends Controller
                 $geometry = json_decode($activity->geometry);
 
                 // Construa a URL da imagem do ícone
-                $imageUrl = 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
+                $imageUrl = env('APP_URL') . 'storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
                 $feature = [
                     'type' => 'Feature',
@@ -114,19 +120,16 @@ class RegionController extends Controller
                     'properties' => [
                         'id' => $activity->id,
                         'name' => $activity->name,
+                        'region_id' => $activity->region_id,
                         'subclass' => [
                             'id' => $activity->subclass->id,
                             'class_id' => $activity->subclass->class_id,
                             'name' => $activity->subclass->name,
                             'icon' => [
                                 'id' => $activity->subclass->icon->id,
-                                'sb_id' => $activity->subclass->icon->subclasse_id,
-                                'disk_name' => $activity->subclass->icon->disk_name,
+                                'subclasse_id' => $activity->subclass->icon->subclasse_id,
+                                // 'disk_name' => $activity->subclass->icon->disk_name,
                                 'file_name' => $activity->subclass->icon->file_name,
-                                'file_size' => $activity->subclass->icon->file_size,
-                                'content_type' => $activity->subclass->icon->content_type,
-                                'is_public' => $activity->subclass->icon->is_public,
-                                'sort_order' => $activity->subclass->icon->sort_order,
                                 'img_url' => $imageUrl,
                             ],
                         ],
@@ -141,7 +144,13 @@ class RegionController extends Controller
                 'features' => $geojsonFeatures,
             ];
 
-            return response()->json($geojson, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -187,7 +196,7 @@ class RegionController extends Controller
                     ->find($id);
             });
 
-            $geojson_region = [
+            $geojson = [
                 "type" => "Feature",
                 "geometry" => json_decode($region->geometry),
                 "properties" => [
@@ -198,7 +207,13 @@ class RegionController extends Controller
                 ]
             ];
 
-            return response()->json($geojson_region, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -270,12 +285,18 @@ class RegionController extends Controller
             });
 
             // Cria o objeto GeoJSON FeatureCollection
-            $featureCollection = [
+            $geojson = [
                 "type" => "FeatureCollection",
                 "features" => $streets->toArray(),
             ];
 
-            return response()->json($featureCollection, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [

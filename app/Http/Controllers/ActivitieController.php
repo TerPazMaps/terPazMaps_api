@@ -116,7 +116,13 @@ class ActivitieController extends Controller
                 "features" => $activities
             ];
 
-            return response()->json($geojson, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [

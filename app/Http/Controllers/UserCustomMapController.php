@@ -32,7 +32,9 @@ class UserCustomMapController extends Controller
 
             if ($mapas->isEmpty()) {
                 return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros de mapas personalizados"]
+                    "error" => [
+                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros"
+                    ]
                 ], 404);
             }
 
@@ -51,7 +53,13 @@ class UserCustomMapController extends Controller
                 ];
             });
 
-            return response()->json($mapasTransformados, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $mapasTransformados],
+                ]
+            ], 200);
         } catch (Exception $e) {
 
             return response()->json([
@@ -109,11 +117,13 @@ class UserCustomMapController extends Controller
             // Salvar o modelo no banco de dados
             if ($userCustomMap->save()) {
                 return response()->json([
-                    "success" => ["status" => "201", "title" => "Created", "detail" => "Mapa personalizado salvo com sucesso"]
+                    "status" => "201", "title" => "Created", "detail" => "Salvo com sucesso"
                 ], 201);
             } else {
                 return response()->json([
-                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro no salvamento do mapa personalizado"]
+                    "error" => [
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar"
+                    ]
                 ], 500);
             }
         } catch (Exception $e) {
@@ -133,6 +143,7 @@ class UserCustomMapController extends Controller
     public function show($id)
     {
         try {
+            $user = JWTAuth::parseToken()->authenticate();
             $mapa = UserCustomMap::select(
                 '*',
                 DB::raw('ST_AsGeoJSON(geometry) as geometry'),
@@ -144,6 +155,16 @@ class UserCustomMapController extends Controller
                 return response()->json([
                     "error" => ["status" => "404", "title" => "Not Found", "detail" => "Registo do mapa personalizado não encontrado"]
                 ], 404);
+            }
+
+            if ($user->id != $mapa->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",
+                    ]
+                ], 403);
             }
 
             $geojson_mapa = [
@@ -159,7 +180,13 @@ class UserCustomMapController extends Controller
                 ]
             ];
 
-            return response()->json($geojson_mapa, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson_mapa],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -182,9 +209,27 @@ class UserCustomMapController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUserCustomMapRequest $request, UserCustomMap $user_custom_map)
+    public function update(UpdateUserCustomMapRequest $request, $id)
     {
         try {
+            $user = JWTAuth::parseToken()->authenticate();
+            $mapa = UserCustomMap::find($id);
+            if (!$mapa) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Registo do mapa personalizado não encontrado"]
+                ], 404);
+            }
+
+            if ($user->id != $mapa->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",
+                    ]
+                ], 403);
+            }
+
             $validatedData = $request->validated();
 
             // Formate as coordenadas no formato correto (longitude latitude)
@@ -208,16 +253,18 @@ class UserCustomMapController extends Controller
             $validatedData['center'] = DB::raw("ST_GeomFromText('POINT($longitude $latitude)',0)");
 
             // Atualize os outros campos relevantes do modelo com os dados validados
-            $user_custom_map->fill($validatedData);
+            $mapa->fill($validatedData);
 
             // Salve as alterações no banco de dados
-            if ($user_custom_map->save()) {
+            if ($mapa->save()) {
                 return response()->json([
-                    "success" => ["status" => "200", "title" => "OK", "detail" => "Mapa personalizado do usuário atualizado com sucesso"]
+                    "success" => [
+                        "status" => "200", "title" => "OK", "detail" => "Atualizado com sucesso"
+                    ]
                 ], 200);
             } else {
                 return response()->json([
-                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar o mapa personalizado do usuário"]
+                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar"]
                 ], 500);
             }
         } catch (Exception $e) {
@@ -237,21 +284,32 @@ class UserCustomMapController extends Controller
     public function destroy($id)
     {
         try {
+            $user = JWTAuth::parseToken()->authenticate();
             $mapa = UserCustomMap::find($id);
 
             if (!$mapa) {
                 return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Mapa personalizado não encontrado"]
+                    "error" => ["status" => "404", "title" => "Not Found","detail" => "Registro não encontrado",]
                 ], 404);
             }
-            
+
+            if ($user->id != $mapa->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",]
+                ], 403);
+            }
+
             if ($mapa->delete()) {
                 return response()->json([
-                    "success" => ["status" => "200", "title" => "OK", "detail" => "Mapa personalizado deletado com sucesso"]
+                    "success" => [
+                    "status" => "200", "title" => "OK", "detail" => "Deletado com sucesso"]
                 ], 200);
             } else {
                 return response()->json([
-                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar mapa personalizado"]
+                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar"]
                 ], 500);
             }
         } catch (Exception $e) {

@@ -18,7 +18,13 @@ class StreetConditionController extends Controller
         try {
             $streetConditions = Street_condition::all();
 
-            return response()->json($streetConditions, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $streetConditions],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [

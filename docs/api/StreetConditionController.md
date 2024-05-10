@@ -14,22 +14,31 @@ Este método não aceita nenhum parâmetro.
 
 ## Retorno status:200 - um array de condições de ruas
 ```json
-[
-  {
-    "id": 1,
-    "name": "Pavimentada"
-  },
-  {
-    "id": 2,
-    "name": "Não pavimentada"
-  },
-  {
-    "id": 3,
-    "name": "Em construção"
-  }
-]
+{
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": {
+            "geojson": [
+                {
+                    "id": 1,
+                    "condition": "Rua pavimentada (asfalto)",
+                    "color": "#ffad29",
+                    "created_at": "2024-03-09T23:10:27.000000Z",
+                    "updated_at": "2024-03-28T20:06:50.000000Z"
+                },
+                {
+                    "id": 7,
+                    "condition": "Sem tratamento",
+                    "color": "#fcd1c4",
+                    "created_at": "2024-03-09T23:11:26.000000Z",
+                    "updated_at": "2024-03-28T20:09:39.000000Z"
+                }
+            ]
+        }
+    }
+}
 ```
-- `id`: ID da condição da rua. [ int ]
-- `name`: Nome da condição da rua. [ string ]
+
 
 [Voltar a pagina principal](/README.md)

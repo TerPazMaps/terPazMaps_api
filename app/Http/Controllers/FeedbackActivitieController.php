@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Requests\StoreFeedbackActivitiesRequest;
 use App\Http\Requests\UpdateFeedbackActivitiesRequest;
+use App\Policies\FeedbackActivitiesPolicy;
 
 class FeedbackActivitieController extends Controller
 {
@@ -31,7 +32,7 @@ class FeedbackActivitieController extends Controller
             if ($FeedbackActivitie->isEmpty()) {
                 return response()->json([
                     "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros de mapas personalizados"
+                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros"
                     ]
                 ], 404);
             }
@@ -52,7 +53,13 @@ class FeedbackActivitieController extends Controller
                 ];
             });
 
-            return response()->json($FeedbackActivitieMap, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $FeedbackActivitieMap],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -91,13 +98,13 @@ class FeedbackActivitieController extends Controller
             if ($FeedbackActivitie->save()) {
                 return response()->json([
                     "success" => [
-                        "status" => "201", "title" => "Created", "detail" => "Feedback da atividade salvo com sucesso"
+                        "status" => "201", "title" => "Created", "detail" => "Salvo com sucesso"
                     ]
                 ], 201);
             } else {
                 return response()->json([
                     "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar feedback da atividade"
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar"
                     ]
                 ], 500);
             }
@@ -119,7 +126,6 @@ class FeedbackActivitieController extends Controller
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-
             $FeedbackActivitie = FeedbackActivitie::select(
                 '*',
                 DB::raw('ST_AsGeoJSON(geometry) as geometry'),
@@ -130,12 +136,22 @@ class FeedbackActivitieController extends Controller
             if (!$FeedbackActivitie) {
                 return response()->json([
                     "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros feedback de activities"
+                        "status" => "404", "title" => "Not Found", "detail" => "Registro não encontrado"
                     ]
                 ], 404);
             }
 
-            $FeedbackActivitieMap = [
+            if ($user->id != $FeedbackActivitie->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",
+                    ]
+                ], 403);
+            }
+
+            $feedbackActivitieMap = [
                 "type" => "Feature",
                 "geometry" => json_decode($FeedbackActivitie->geometry),
                 "properties" => [
@@ -149,7 +165,13 @@ class FeedbackActivitieController extends Controller
                 ]
             ];
 
-            return response()->json($FeedbackActivitieMap, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $feedbackActivitieMap],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -176,11 +198,29 @@ class FeedbackActivitieController extends Controller
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
+            $FeedbackActivitie = FeedbackActivitie::find($id);
+
+            if (!$FeedbackActivitie) {
+                return response()->json([
+                    "error" => [
+                        "status" => "404", "title" => "Not Found", "detail" => "Registro não encontrado"
+                    ]
+                ], 404);
+            }
+
+            if ($user->id != $FeedbackActivitie->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",
+                    ]
+                ], 403);
+            }
 
             $validatedData = $request->validated();
             $coordinates = $request->geometry;
 
-            $FeedbackActivitie = FeedbackActivitie::find($id);
 
             $FeedbackActivitie->user_id = $user->id;
             $FeedbackActivitie->name = $request->name;
@@ -195,13 +235,13 @@ class FeedbackActivitieController extends Controller
             if ($FeedbackActivitie->save()) {
                 return response()->json([
                     "success" => [
-                        "status" => "200", "title" => "OK", "detail" => "Atividade atualizada com sucesso"
+                        "status" => "200", "title" => "OK", "detail" => "Atualizado com sucesso"
                     ]
                 ], 200);
             } else {
                 return response()->json([
                     "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar atividade"
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar"
                     ]
                 ], 500);
             }
@@ -222,31 +262,43 @@ class FeedbackActivitieController extends Controller
     public function destroy($id)
     {
         try {
+            $user = JWTAuth::parseToken()->authenticate();
             $FeedbackActivitie = FeedbackActivitie::find($id);
-
+                
             if (!$FeedbackActivitie) {
                 return response()->json([
                     "error" => [
                         "status" => "404",
                         "title" => "Not Found",
-                        "detail" => "Atividade foi apagada ou não existe.",
+                        "detail" => "Registro não encontrado",
                     ]
-                ], 500);
+                ], 404);
+            }
+
+            if ($user->id != $FeedbackActivitie->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",
+                    ]
+                ], 403);
             }
 
             if ($FeedbackActivitie->delete()) {
                 return response()->json([
                     "success" => [
-                        "status" => "200", "title" => "OK", "detail" => "Feedback da atividade deletado com sucesso"
+                        "status" => "200", "title" => "OK", "detail" => "Deletado com sucesso"
                     ]
                 ], 200);
             } else {
                 return response()->json([
                     "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar feedback da atividade"
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar"
                     ]
                 ], 500);
             }
+            
         } catch (Exception $e) {
             return response()->json([
                 "error" => [

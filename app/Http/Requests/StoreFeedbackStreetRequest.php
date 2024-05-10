@@ -24,7 +24,7 @@ class StoreFeedbackStreetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'street_id' => ['required', 'exists:streets,id', 'unique:feedback_streets'],
+            'street_id' => ['required', 'exists:streets,id'],
             'street_condition_id' => ['required', 'exists:street_conditions,id'],
         ];
     }
@@ -38,7 +38,6 @@ class StoreFeedbackStreetRequest extends FormRequest
     {
         return [
             'street_id.required' => 'O campo street_id é obrigatório.',
-            'street_id.unique' => 'O campo street_id deve ser único na tabela feedback_streets.',
             'street_id.exists' => 'O campo street_id deve existir na tabela streets.',
             'street_condition_id.required' => 'O campo street_condition_id é obrigatório.',
             'street_condition_id.exists' => 'O campo street_condition_id deve existir na tabela street_conditions.',

@@ -82,6 +82,15 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   <!-- - `PUT /api/v5/geojson/region/{id}`
   - `DELETE /api/v5/geojson/region/{id}` -->
 
+### Ícones
+- **Descrição**: Recurso para gerenciar ícones.
+- **Endpoints**:
+  <!-- - `POST /api/v5/geojson/region` -->
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/icon](/docs/api/IconController.md)
+  
+  <!-- - `PUT /api/v5/geojson/region/{id}`
+  - `DELETE /api/v5/geojson/region/{id}` -->
+
 ### UserCunstomMaps
 > [!NOTE]
 > JWT: Todos esses endpoints são protegidos por autenticação Json Web Token.

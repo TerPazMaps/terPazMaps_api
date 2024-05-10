@@ -32,7 +32,13 @@ class IconController extends Controller
                     ->get();
             });
 
-            return response()->json($icons, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $icons],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [

@@ -23,51 +23,67 @@ Deve receber uma requisição via GET com os names abaixo
 ## Retorno caso de sucesso
 
 ```json
-[
-    {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ],
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ]
-                ]
+{
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": {
+            "geojson": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [
+                                    -48.334619926032,
+                                    -1.3533274892472
+                                ],[...]
+                                [
+                                    -48.334619926032,
+                                    -1.3533274892472
+                                ]
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "ID": 4,
+                        "user_ID": 0,
+                        "Nome": "São Francisco",
+                        "Centro": {
+                            "type": "Point",
+                            "coordinates": [
+                                -48.338833248539,
+                                -1.3512433726156
+                            ]
+                        },
+                        "created_at": "09/05/2024 20:23:00",
+                        "updated_at": "09/05/2024 20:23:00"
+                    }
+                },[...]
             ]
-        },
-        "properties": {
-            "ID": 10,
-            "user_ID": 0,
-            "Nome": "São Francisco",
-            "Centro": {
-                "type": "Point",
-                "coordinates": [
-                    -48.338833248539,
-                    -1.3512433726156
-                ]
-            },
-            "created_at": "28/04/2024 21:40:46",
-            "updated_at": "30/04/2024 22:56:45"
         }
-    },
+    }
+}
 ```
-## Retorno caso de erro ou usuario sem registros
+## Retorno caso de erro ou usuário sem registros
 
 ```json
 {
-    "message": "Este usuário não possui registros de mapas personalizados"
+    "error": {
+        "status": "401",
+        "title": "Not Found",
+        "detail": "Este usuário não possui registros"
+    }
 }
 ```
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "mensagem de erro especifica"
+    }
 }
 ```
 
@@ -86,60 +102,67 @@ Deve receber uma requisição via POST com os names abaixo
 | geojson       | FeatureCollection tipo polygon [***required,String***]        |
 
 ## exemplo de entrada gsojson
+>[!TIP] 
+> Exemplo de entrada de geojson
+>```json
+>{
+>    "type": "FeatureCollection",
+>    "features": [
+>        {
+>           "type": "Feature",
+>           "geometry": {
+>               "type": "Polygon",
+>               "coordinates": [
+>                   [
+>                       [
+>                           -48.334619926032,
+>                           -1.35332748924725
+>                       ],[...]
+>                   ]
+>               ]
+>           },
+>           "properties": {
+>               "ID": 9,
+>               "Nome": "São Francisco",
+>               "Cidade": "Marituba",
+>               "Centro": {
+>                   "type": "Point",
+>                   "coordinates": [
+>                       -48.336453437805176,
+>                       -1.354496658713901
+>                   ]
+>               }
+>           }
+>        }      
+>    ]
+>}
+>```
 
-```json
-{
-    "type": "FeatureCollection",
-    "features": [
-        {
-    "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-            [
-                [
-                    -48.334619926032,
-                    -1.35332748924725
-                ],
-                [
-                    -48.334619926032,
-                    -1.35332748924725
-                ]...
-            ]
-        ]
-    },
-    "properties": {
-        "ID": 9,
-        "Nome": "São Francisco",
-        "Cidade": "Marituba",
-        "Centro": {
-            "type": "Point",
-            "coordinates": [
-                -48.336453437805176,
-                -1.354496658713901
-            ]
-        }
-    }
-        }      
-    ]
-}
-```
+
 
 ## Retorno caso sucesso
 
 ```json
 {
-    "message": "Salvo com sucesso"
+    "success": {
+        "status": "201",
+        "title": "Created",
+        "detail": "Salvo com sucesso"
+    }
 }
 ```
 ## Retorno caso haja erros de validação
 
 ```json
 {
-    "errors": {
-        "InvalidFeatureCollection": [
-            "O JSON deve ser um FeatureCollection."
-        ]
+    "error": {
+        "status": "422",
+        "title": "Unprocessable Entity",
+        "detail": {
+            "InvalidFeatureCollection": [
+                "O JSON deve ser um FeatureCollection."
+            ]
+        }
     }
 }
 ```
@@ -161,53 +184,62 @@ Deve receber uma requisição via GET com os names abaixo
 ## Retorno caso sucesso
 
 ```json
-[
-    {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ],
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
+{
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": {
+            "geojson": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [
+                                -48.334619926032,
+                                -1.3533274892472
+                            ],[...]
+                        ]
                     ]
-                ]
-            ]
-        },
-        "properties": {
-            "ID": 10,
-            "user_ID": 0,
-            "Nome": "São Francisco",
-            "Centro": {
-                "type": "Point",
-                "coordinates": [
-                    -48.338833248539,
-                    -1.3512433726156
-                ]
-            },
-            "created_at": "28/04/2024 21:40:46",
-            "updated_at": "30/04/2024 22:56:45"
+                },
+                "properties": {
+                    "ID": 3,
+                    "user_ID": 0,
+                    "Nome": "teste francisco",
+                    "Centro": {
+                        "type": "Point",
+                        "coordinates": [
+                            -48.338833248539,
+                            -1.3512433726156
+                        ]
+                    },
+                    "created_at": "2024-05-09T16:25:52.000000Z",
+                    "updated_at": "2024-05-09T18:06:14.000000Z"
+                }
+            }
         }
-    },
-]
+    }
+}
 ```
 
 ## Retorno caso haja erros  
 
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
 }
 ```
 ```json
 {
-    "message": "Mapa não encontrado"
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
+    }
 }
 ```
 
@@ -231,17 +263,52 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 
 ```json
 {
-    "message": "Salvo com sucesso"
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": "Atualizado com sucesso"
+    }
 }
 ```
 ## Retorno caso haja erros de validação
 
 ```json
 {
-    "errors": {
-        "InvalidFeatureCollection": [
-            "O JSON deve ser um FeatureCollection."
-        ]
+    "error": {
+        "status": "422",
+        "title": "Unprocessable Entity",
+        "detail": {
+            "InvalidFeatureCollection": [
+                "O JSON deve ser um FeatureCollection."
+            ]
+        }
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "Erro ao atualizar"
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
     }
 }
 ```
@@ -264,19 +331,41 @@ Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
 
 ```json
 {
-    "message": "Deletado com sucesso"
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": "Deletado com sucesso"
+    }
 }
 ```
 ## Retorno caso de erro
 
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
 }
 ```
 ```json
 {
-    "message": "Mapa não encontrado"
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
+    }
 }
 ```
+```json
+{
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "Erro ao deletar"
+    }
+}
+```
+
+[Voltar a pagina principal](/README.md)

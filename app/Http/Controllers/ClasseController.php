@@ -47,7 +47,13 @@ class ClasseController extends Controller
                     });
             });
 
-            return response()->json($classes, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $classes],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -99,7 +105,13 @@ class ClasseController extends Controller
                 ], 404);
             }
 
-            return response()->json(['Classe' => $classe], 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $classe],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -135,7 +147,13 @@ class ClasseController extends Controller
                 return $classes;
             });
 
-            return response()->json($classes, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $classes],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [

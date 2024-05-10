@@ -75,7 +75,13 @@ class ServicesController extends Controller
                 "features" => $features,
             ];
 
-            return response()->json($featureCollection, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $featureCollection],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -99,7 +105,11 @@ class ServicesController extends Controller
             $formattedDistance = number_format($this->calculateDistance($lat1, $lon1, $lat2, $lon2), 1) . " metros";
 
             return response()->json([
-                'distance' => $formattedDistance,
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["distance" => $formattedDistance],
+                ]
             ], 200);
         } catch (Exception $e) {
             return response()->json([
@@ -219,16 +229,21 @@ class ServicesController extends Controller
 
             if ($features == null) {
                 return response()->json([
-                        "error" => ["status" => "404", "title" => "Not Found", "detail" => "Sem pontos de interesse próximo"]
-                    ], 404);
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Sem pontos de interesse próximo"]
+                ], 404);
             }
             $geojson = [
-                'ex_time' => $executionTime . " MS",
                 'type' => 'FeatureCollection',
                 'features' => $features
             ];
 
-            return response()->json($geojson, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -271,8 +286,17 @@ class ServicesController extends Controller
                     $totalLength += $distance;
                 }
 
+                $totalLength  = number_format($totalLength / 2, 2);
                 return response()->json([
-                    'length_meters' => number_format($totalLength / 2, 2) . ' metros',
+                    "success" => [
+                        "status" => "200",
+                        "title" => "OK",
+                        "detail" => [
+                            "length" => $totalLength,
+                            "unit" => "metros",
+                            "type" => "Polygon",
+                        ],
+                    ]
                 ], 200);
             }
 
@@ -289,9 +313,16 @@ class ServicesController extends Controller
             $formattedLengthMeters = number_format($totalDistance, 2);
 
             return response()->json([
-                'length_meters' => $formattedLengthMeters . ' metros',
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => [
+                        "length" => $formattedLengthMeters,
+                        "unit" => "metros",
+                        "type" => "Linestring",
+                    ],
+                ]
             ], 200);
-            
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -322,7 +353,14 @@ class ServicesController extends Controller
             }
 
             $buffer = $this->buffer($raio, $latitude, $longitude);
-            return response()->json($buffer, 200);
+
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $buffer],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [
@@ -333,7 +371,6 @@ class ServicesController extends Controller
             ], 500);
         }
     }
-
 
     public function buffer($raio, $latitude, $longitude)
     {
@@ -369,7 +406,6 @@ class ServicesController extends Controller
         });
         // Retorna a resposta JSON
         return $buffer;
-        
     }
 
     public static function GeoJsonValidator($data)

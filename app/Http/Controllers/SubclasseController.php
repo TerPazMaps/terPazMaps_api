@@ -48,7 +48,13 @@ class SubclasseController extends Controller
                 return $subclasses;
             });
 
-            return response()->json($subclasses, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $subclasses],
+                ]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => [

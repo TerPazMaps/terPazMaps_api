@@ -238,3 +238,6 @@ O Token enviado na requisição é invalidado com o logout.
 }
 ```
 OBS: Outros erros podem ser retornados de acordo com o que foi enviado, certifique-se de fazer a requisição corretamente.
+
+
+[Voltar a pagina principal](/README.md)
