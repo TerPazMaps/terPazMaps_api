@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Carbon\Carbon;
 use App\Models\UserCustomMap;
 use Illuminate\Routing\Controller;
@@ -18,36 +19,57 @@ class UserCustomMapController extends Controller
     // http://127.0.0.1:8000/api/v5/geojson/user-custom-maps
     public function index()
     {
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
 
-        $mapas = UserCustomMap::select(
-            '*',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-            DB::raw('ST_AsGeoJSON(center) as center')
-        )
-            ->where('user_id', $user->id)
-            ->get();
+            $mapas = UserCustomMap::select(
+                '*',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
+                DB::raw('ST_AsGeoJSON(center) as center')
+            )
+                ->where('user_id', $user->id)
+                ->get();
 
-        if ($mapas->isEmpty()) {
-            return response()->json(['message' => 'Este usuário não possui registros de mapas personalizados'], 404);
-        }
+            if ($mapas->isEmpty()) {
+                return response()->json([
+                    "error" => [
+                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros"
+                    ]
+                ], 404);
+            }
 
-        $mapasTransformados = $mapas->map(function ($mapa) {
-            return [
-                "type" => "Feature",
-                "geometry" => json_decode($mapa->geometry),
-                "properties" => [
-                    "ID" => $mapa->id,
-                    "user_ID" => $mapa->user_id,
-                    "Nome" => $mapa->name,
-                    "Centro" => json_decode($mapa->center),
-                    "created_at" => Carbon::parse($mapa->created_at)->format('d/m/Y H:i:s'),
-                    "updated_at" => Carbon::parse($mapa->updated_at)->format('d/m/Y H:i:s'),
+            $mapasTransformados = $mapas->map(function ($mapa) {
+                return [
+                    "type" => "Feature",
+                    "geometry" => json_decode($mapa->geometry),
+                    "properties" => [
+                        "ID" => $mapa->id,
+                        "user_ID" => $mapa->user_id,
+                        "Nome" => $mapa->name,
+                        "Centro" => json_decode($mapa->center),
+                        "created_at" => Carbon::parse($mapa->created_at)->format('d/m/Y H:i:s'),
+                        "updated_at" => Carbon::parse($mapa->updated_at)->format('d/m/Y H:i:s'),
+                    ]
+                ];
+            });
+
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $mapasTransformados],
                 ]
-            ];
-        });
+            ], 200);
+        } catch (Exception $e) {
 
-        return response()->json($mapasTransformados, 200);
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
 
 
@@ -64,39 +86,54 @@ class UserCustomMapController extends Controller
      */
     public function store(StoreUserCustomMapRequest $request)
     {
-        // Autenticar o usuário
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
 
-        $coordinates = $request->geometry;
+            $coordinates = $request->geometry;
 
-        $userCustomMap = new UserCustomMap();
+            $userCustomMap = new UserCustomMap();
 
-        $userCustomMap->user_id = $user->id;
-        $userCustomMap->name = $request->name;
+            $userCustomMap->user_id = $user->id;
+            $userCustomMap->name = $request->name;
 
-        // Formate as coordenadas no formato correto (longitude latitude)
-        $wktCoordinates = [];
-        foreach ($coordinates[0] as $point) {
-            $wktCoordinates[] = "{$point[0]} {$point[1]}";
-        }
+            // Formate as coordenadas no formato correto (longitude latitude)
+            $wktCoordinates = [];
+            foreach ($coordinates[0] as $point) {
+                $wktCoordinates[] = "{$point[0]} {$point[1]}";
+            }
 
-        $wktPolygon = "POLYGON((" . implode(",", $wktCoordinates) . "))";
+            $wktPolygon = "POLYGON((" . implode(",", $wktCoordinates) . "))";
 
-        // calculo do centro 
-        $sql = "SELECT ST_X(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as x, ST_Y(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as y";
-        $center2 = DB::select($sql);
-        $longitude = $center2[0]->x;
-        $latitude = $center2[0]->y;
+            // calculo do centro 
+            $sql = "SELECT ST_X(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as x, ST_Y(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as y";
+            $center2 = DB::select($sql);
+            $longitude = $center2[0]->x;
+            $latitude = $center2[0]->y;
 
-        $userCustomMap->geometry = DB::raw("ST_GeomFromText('$wktPolygon')");
-        $userCustomMap->center = DB::raw("ST_GeomFromText('POINT($longitude $latitude)',0)");
-        // $userCustomMap->center = DB::raw("ST_GeomFromText('POINT($center[0] $center[1])',0)");
+            $userCustomMap->geometry = DB::raw("ST_GeomFromText('$wktPolygon')");
+            $userCustomMap->center = DB::raw("ST_GeomFromText('POINT($longitude $latitude)',0)");
+            // $userCustomMap->center = DB::raw("ST_GeomFromText('POINT($center[0] $center[1])',0)");
 
-        // Salvar o modelo no banco de dados
-        if ($userCustomMap->save()) {
-            return response()->json(['message' => 'Salvo com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao salvar'], 500);
+            // Salvar o modelo no banco de dados
+            if ($userCustomMap->save()) {
+                return response()->json([
+                    "status" => "201", "title" => "Created", "detail" => "Salvo com sucesso"
+                ], 201);
+            } else {
+                return response()->json([
+                    "error" => [
+                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar"
+                    ]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
 
@@ -105,32 +142,60 @@ class UserCustomMapController extends Controller
      */
     public function show($id)
     {
-        // O Laravel injeta automaticamente o objeto UserCustomMap com base no ID fornecido na rota
-        $mapa = UserCustomMap::select(
-            '*',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-            DB::raw('ST_AsGeoJSON(center) as center')
-        )
-            ->find($id);
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            $mapa = UserCustomMap::select(
+                '*',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
+                DB::raw('ST_AsGeoJSON(center) as center')
+            )
+                ->find($id);
 
-        if (!$mapa) {
-            return response()->json(['message' => 'Mapa não encontrado'], 404);
+            if (!$mapa) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Registo do mapa personalizado não encontrado"]
+                ], 404);
+            }
+
+            if ($user->id != $mapa->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",
+                    ]
+                ], 403);
+            }
+
+            $geojson_mapa = [
+                "type" => "Feature",
+                "geometry" => json_decode($mapa->geometry),
+                "properties" => [
+                    "ID" => $mapa->id,
+                    "user_ID" => $mapa->user_id,
+                    "Nome" => $mapa->name,
+                    "Centro" => json_decode($mapa->center),
+                    "created_at" => $mapa->created_at,
+                    "updated_at" => $mapa->updated_at,
+                ]
+            ];
+
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson_mapa],
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
-
-        $geojson_mapa = [
-            "type" => "Feature",
-            "geometry" => json_decode($mapa->geometry),
-            "properties" => [
-                "ID" => $mapa->id,
-                "user_ID" => $mapa->user_id,
-                "Nome" => $mapa->name,
-                "Centro" => json_decode($mapa->center),
-                "created_at" => $mapa->created_at,
-                "updated_at" => $mapa->updated_at,
-            ]
-        ];
-
-        return response()->json($geojson_mapa, 200);
     }
 
     /**
@@ -144,38 +209,72 @@ class UserCustomMapController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUserCustomMapRequest $request, UserCustomMap $user_custom_map)
+    public function update(UpdateUserCustomMapRequest $request, $id)
     {
-        $validatedData = $request->validated();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            $mapa = UserCustomMap::find($id);
+            if (!$mapa) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Registo do mapa personalizado não encontrado"]
+                ], 404);
+            }
 
-        // Formate as coordenadas no formato correto (longitude latitude)
-        $coordinates = $request->geometry;
-        $wktCoordinates = [];
-        foreach ($coordinates[0] as $point) {
-            $wktCoordinates[] = "{$point[0]} {$point[1]}";
-        }
-        $wktPolygon = "POLYGON((" . implode(",", $wktCoordinates) . "))";
+            if ($user->id != $mapa->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",
+                    ]
+                ], 403);
+            }
 
-        // Atualize a geometria do mapa personalizado do usuário diretamente no modelo
-        $validatedData['geometry'] = DB::raw("ST_GeomFromText('$wktPolygon')");
-        // dd($validatedData['geometry']);
+            $validatedData = $request->validated();
 
-        // calculo do centro 
-        $sql = "SELECT ST_X(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as x, ST_Y(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as y";
-        $center2 = DB::select($sql);
-        $longitude = $center2[0]->x;
-        $latitude = $center2[0]->y;
+            // Formate as coordenadas no formato correto (longitude latitude)
+            $coordinates = $request->geometry;
+            $wktCoordinates = [];
+            foreach ($coordinates[0] as $point) {
+                $wktCoordinates[] = "{$point[0]} {$point[1]}";
+            }
+            $wktPolygon = "POLYGON((" . implode(",", $wktCoordinates) . "))";
 
-        $validatedData['center'] = DB::raw("ST_GeomFromText('POINT($longitude $latitude)',0)");
+            // Atualize a geometria do mapa personalizado do usuário diretamente no modelo
+            $validatedData['geometry'] = DB::raw("ST_GeomFromText('$wktPolygon')");
+            // dd($validatedData['geometry']);
 
-        // Atualize os outros campos relevantes do modelo com os dados validados
-        $user_custom_map->fill($validatedData);
+            // calculo do centro 
+            $sql = "SELECT ST_X(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as x, ST_Y(ST_Centroid(ST_GeomFromText('$wktPolygon'))) as y";
+            $center2 = DB::select($sql);
+            $longitude = $center2[0]->x;
+            $latitude = $center2[0]->y;
 
-        // Salve as alterações no banco de dados
-        if ($user_custom_map->save()) {
-            return response()->json(['message' => 'Mapa personalizado do usuário atualizado com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao atualizar o mapa personalizado do usuário'], 500);
+            $validatedData['center'] = DB::raw("ST_GeomFromText('POINT($longitude $latitude)',0)");
+
+            // Atualize os outros campos relevantes do modelo com os dados validados
+            $mapa->fill($validatedData);
+
+            // Salve as alterações no banco de dados
+            if ($mapa->save()) {
+                return response()->json([
+                    "success" => [
+                        "status" => "200", "title" => "OK", "detail" => "Atualizado com sucesso"
+                    ]
+                ], 200);
+            } else {
+                return response()->json([
+                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar"]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
 
@@ -184,16 +283,43 @@ class UserCustomMapController extends Controller
      */
     public function destroy($id)
     {
-        $mapa = UserCustomMap::find($id);
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            $mapa = UserCustomMap::find($id);
 
-        if (!$mapa) {
-            return response()->json(['message' => 'Mapa não encontrado'], 404);
-        }
+            if (!$mapa) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found","detail" => "Registro não encontrado",]
+                ], 404);
+            }
 
-        if ($mapa->delete()) {
-            return response()->json(['message' => 'Deletado com sucesso'], 200);
-        } else {
-            return response()->json(['message' => 'Erro ao deletar'], 500);
+            if ($user->id != $mapa->user_id) {
+                return response()->json([
+                    "error" => [
+                        "status" => "403",
+                        "title" => "Forbidden",
+                        "detail" => "Usuário não tem permissão para acessar o registro",]
+                ], 403);
+            }
+
+            if ($mapa->delete()) {
+                return response()->json([
+                    "success" => [
+                    "status" => "200", "title" => "OK", "detail" => "Deletado com sucesso"]
+                ], 200);
+            } else {
+                return response()->json([
+                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar"]
+                ], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
         }
     }
 }

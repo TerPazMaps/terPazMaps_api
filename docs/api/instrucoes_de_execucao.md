@@ -51,3 +51,7 @@ selecione a opção laravel-mail(deve ser a 14, então digite no terminal e de e
 - php artisan serve
 
 Após isso basta clicar no link que aparecera no terminal ou acessar em seu navegador a url: http://127.0.0.1:8000
+
+
+
+[Voltar a pagina principal](/README.md)

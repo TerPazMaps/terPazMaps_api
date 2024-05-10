@@ -16,17 +16,28 @@ Deve receber uma requisição via POST com os names abaixo
 ## Retorno caso de sucesso
 ```json
 {
-    "message": "O email foi enviado com sucesso."
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": "O email foi enviado com sucesso."
+    }
 }
 ```
 
 ## Retorno caso haja erros de validação
 ```json
 {
-    "errors": {
-        "email": [
-            "Este e-mail não pertence a um usuário."
-        ]
+    "error": {
+        "status": "400",
+        "title": "Bad Request",
+        "detail": {
+            "email": [
+                "Este e-mail não pertence a um usuário."
+            ]
+        }
     }
 }
 ```
+
+
+[Voltar a pagina principal](/README.md)

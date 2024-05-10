@@ -23,36 +23,44 @@ Deve receber uma requisição via GET com os names abaixo
 ## Retorno caso de sucesso
 
 ```json
-[
-    {
-        "id": 1,
-        "user_id": 0,
-        "street_id": 1,
-        "street_condition_id": 2,
-        "created_at": "02/05/2024 14:39:06",
-        "updated_at": "02/05/2024 14:39:06"
-    },
-    {
-        "id": 4,
-        "user_id": 0,
-        "street_id": 17,
-        "street_condition_id": 2,
-        "created_at": "02/05/2024 15:19:11",
-        "updated_at": "02/05/2024 15:19:11"
+{
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": {
+            "geojson": [
+                {
+                    "id": 11,
+                    "user_id": 0,
+                    "street_id": 19,
+                    "street_condition_id": 2,
+                    "created_at": "09/05/2024 14:35:00",
+                    "updated_at": "09/05/2024 14:35:00"
+                }
+                
+            ]
+        }
     }
-]
+}
 ```
 ## Retorno caso de erro ou usuário sem registros
 
 ```json
 {
-    "message": "Este usuário não possui registros feedback de ruas"
+    "error": {
+        "status": "401",
+        "title": "Not Found",
+        "detail": "Este usuário não possui registros"
+    }
 }
 ```
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "mensagem de erro especifica"
+    }
 }
 ```
 
@@ -69,24 +77,28 @@ Deve receber uma requisição via POST com os names abaixo
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
 | Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
-| street_id       | id da street que deseja dar o feedback [***required,exists:streets,unique:feedback_streets***]        |
+| street_id       | id da street que deseja dar o feedback [***required,exists:streets***]        |
 | street_condition_id       | id da street_condition que atribuir a street [***required,exists:street_conditions***]        |
 
 ## Retorno caso sucesso
 
 ```json
 {
-    "message": "Salvo com sucesso"
+    "success": {
+        "status": "201",
+        "title": "Created",
+        "detail": "Salvo com sucesso"
+    }
 }
 ```
-## Retorno caso haja erros de validação
+## Retorno caso haja erros
 
 ```json
 {
-    "errors": {
-        "street_id": [
-            "O campo street_id deve ser único na tabela feedback_streets."
-        ]
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "Mensagem de erro especifica"
     }
 }
 ```
@@ -108,29 +120,42 @@ Deve receber uma requisição via GET com os names abaixo
 ## Retorno caso sucesso
 
 ```json
-[
-    {
-        "id": 1,
-        "user_id": 0,
-        "street_id": 1,
-        "street_condition_id": 2,
-        "created_at": "02/05/2024 14:39:06",
-        "updated_at": "02/05/2024 14:39:06"
+{
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": {
+            "geojson": {
+                "id": 13,
+                "user_id": 0,
+                "street_id": 19,
+                "street_condition_id": 7,
+                "created_at": "09/05/2024 14:37:58",
+                "updated_at": "09/05/2024 14:47:37"
+            }
+        }
     }
-]
+}
 ```
 
 ## Retorno caso haja erros  
 
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
 }
 ```
 ```json
 {
-    "message": "Este usuário não possui registros feedback de ruas"
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
+    }
 }
 ```
 
@@ -154,7 +179,11 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 
 ```json
 {
-    "message": "Feedback de rua atualizado com sucesso"
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": "Atualizado com sucesso"
+    }
 }
 ```
 ## Retorno caso haja erros de validação
@@ -170,7 +199,29 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 ```
 ```json
 {
-    "message": "Feedback de rua não encontrado"
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "Erro ao atualizar"
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
+    }
 }
 ```
 ## Deletar feedback
@@ -192,24 +243,42 @@ Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
 
 ```json
 {
-    "message": "Deletado com sucesso"
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": "Deletado com sucesso"
+    }
 }
 ```
 ## Retorno caso de erro
 
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
 }
 ```
 ```json
 {
-    "message": "Feedback de rua não encontrado"
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
+    }
 }
 ```
 ```json
 {
-    "message": "Erro ao deletar"
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "Erro ao deletar"
+    }
 }
 ```
+
+
+[Voltar a pagina principal](/README.md)

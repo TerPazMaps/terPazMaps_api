@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Icon;
-use App\Models\Classe;
 use App\Models\Subclasse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -24,30 +24,46 @@ class SubclasseController extends Controller
      */
     public function index(Request $request)
     {
-        $subclassesQuery = Icon::with('subclasse')->has('subclasse');
+        try {
+            $subclassesQuery = Icon::with('subclasse')->has('subclasse');
 
-        $chaveCache = "SubclasseController_index";
-        if ($request->name) {
-            $chaveCache .= "_" . $request->name;
-            $name = $request->name;
+            $chaveCache = "SubclasseController_index";
+            if ($request->name) {
+                $chaveCache .= "_" . $request->name;
+                $name = $request->name;
 
-            // Adicionar a cláusula where para filtrar as subclasses pelo nome
-            $subclassesQuery->whereHas('subclasse', function ($query) use ($name) {
-                $query->where('name', 'like', '%' . $name . '%');
-            })->get();
-        }
+                // Adicionar a cláusula where para filtrar as subclasses pelo nome
+                $subclassesQuery->whereHas('subclasse', function ($query) use ($name) {
+                    $query->where('name', 'like', '%' . $name . '%');
+                })->get();
+            }
 
-        $subclasses = Cache::remember($chaveCache, $this->redis_ttl, function () use ($subclassesQuery) {
-            $subclasses = $subclassesQuery->get();
+            $subclasses = Cache::remember($chaveCache, $this->redis_ttl, function () use ($subclassesQuery) {
+                $subclasses = $subclassesQuery->get();
 
-            $subclasses->transform(function ($item) {
-                $item['image_url'] = config('app.url') . "storage/" . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
-                return $item;
+                $subclasses->transform(function ($item) {
+                    $item['image_url'] = config('app.url') . "storage/" . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
+                    return $item;
+                });
+                return $subclasses;
             });
-            return $subclasses;
-        });
 
-        return response()->json($subclasses, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $subclasses],
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
 
     /**
