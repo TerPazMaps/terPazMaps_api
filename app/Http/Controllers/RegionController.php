@@ -196,7 +196,7 @@ class RegionController extends Controller
                     ->find($id);
             });
 
-            $geojson = [
+            $feature = [
                 "type" => "Feature",
                 "geometry" => json_decode($region->geometry),
                 "properties" => [
@@ -205,6 +205,11 @@ class RegionController extends Controller
                     "Cidade" => $region->city,
                     "Centro" => json_decode($region->center)
                 ]
+            ];
+
+            $geojson = [
+                "type" => "FeatureCollection",
+                "features" => [$feature]
             ];
 
             return response()->json([
