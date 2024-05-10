@@ -1,20 +1,23 @@
-<!-- 
-![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-![POST](https://img.shields.io/badge/HTTP-POST-00CC00)  
-![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)  
+<!--
+![GET](https://img.shields.io/badge/HTTP-GET-0080FF)
+![POST](https://img.shields.io/badge/HTTP-POST-00CC00)
+![PUT](https://img.shields.io/badge/HTTP-PUT-FFFF00)
 ![DELETE](https://img.shields.io/badge/HTTP-DELETE-FF0000)   -->
 
-# Subclasses
+# Icones
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/subclasse` 
+`/api/v5/geojson/icon`
 
 ## Parâmetros
-| Nome          | Descrição                                                                  |
-|---------------|----------------------------------------------------------------------------|
-| name       | Pesquisa de subclasses com esse nome  [ **string** ]         |
 
-## Retorno status:200 - um array de subclasses
+Este método não aceita nenhum parâmetro.
+
+> [!TIP]
+> Exemplo: fff
+
+## Retorno status:200 - um array de ícones com sua subclasse.
+
 ```json
 {
     "success": {
@@ -38,7 +41,7 @@
                         "created_at": "2021-09-23T15:43:05.000000Z",
                         "updated_at": "2021-09-23T15:43:05.000000Z"
                     }
-                }, [...]
+                }
             ]
         }
     }
@@ -46,4 +49,4 @@
 ```
 
 
-[Voltar a pagina principal](/README.md) 
+[Voltar a pagina principal](/README.md)

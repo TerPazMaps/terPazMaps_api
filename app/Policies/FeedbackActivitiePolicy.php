@@ -45,7 +45,10 @@ class FeedbackActivitiesPolicy
      */
     public function delete(User $user, FeedbackActivitie $feedbackActivities): bool
     {
-        //
+        if($user->id == $feedbackActivities->user_id){
+            return true;
+        }
+        return false;
     }
 
     /**

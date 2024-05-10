@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Icon;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
@@ -23,14 +24,30 @@ class IconController extends Controller
 
     public function index()
     {
-        $chaveCache = "IconController_index";
-        $icons = Cache::remember($chaveCache, $this->redis_ttl, function () {
-            return Icon::with('subclasse')
-            ->has('subclasse') // Somente ícones que têm uma atividade relacionada com uma subclass correspondente
-            ->get();
-        });
+        try {
+            $chaveCache = "IconController_index";
+            $icons = Cache::remember($chaveCache, $this->redis_ttl, function () {
+                return Icon::with('subclasse')
+                    ->has('subclasse') // Somente ícones que têm uma atividade relacionada com uma subclass correspondente
+                    ->get();
+            });
 
-        return response()->json($icons, 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $icons],
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
     }
 
 

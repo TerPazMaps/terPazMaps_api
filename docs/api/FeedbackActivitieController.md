@@ -23,51 +23,54 @@ Deve receber uma requisição via GET com os names abaixo
 ## Retorno caso de sucesso
 
 ```json
-[
-    {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ],
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ]
-                ]
+{
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": {
+            "geojson": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            -48.334619926032,
+                            -1.3533274892472
+                        ]
+                    },
+                    "properties": {
+                        "id": 10,
+                        "user_id": 0,
+                        "name": "São",
+                        "region_id": 9,
+                        "subclass_id": 28,
+                        "created_at": "09/05/2024 14:19:21",
+                        "updated_at": "09/05/2024 14:19:21"
+                    }
+                }
             ]
-        },
-        "properties": {
-            "ID": 10,
-            "user_ID": 0,
-            "Nome": "São Francisco",
-            "Centro": {
-                "type": "Point",
-                "coordinates": [
-                    -48.338833248539,
-                    -1.3512433726156
-                ]
-            },
-            "created_at": "28/04/2024 21:40:46",
-            "updated_at": "30/04/2024 22:56:45"
         }
-    },
+    }
+}
 ```
 ## Retorno caso de erro ou usuário sem registros
 
 ```json
 {
-    "message": "Este usuário não possui registros feedbacks de activities"
+    "error": {
+        "status": "401",
+        "title": "Not Found",
+        "detail": "Este usuário não possui registros"
+    }
 }
 ```
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "mensagem de erro especifica"
+    }
 }
 ```
 
@@ -80,27 +83,67 @@ Deve receber uma requisição via GET com os names abaixo
 ## Parâmetros
 Deve receber uma requisição via POST com os names abaixo
 
-
 | Nome          | Descrição/requisitos de validação                                                                  |
 |---------------|----------------------------------------------------------------------------|
 | Authorization    | Token valido(deve ser uma string inciada com a palavra "bearer" depois um espaço e o token) |
 | geojson       | FeatureCollection tipo polygon [***required,String***]        |
 
+>[!TIP] 
+> Exemplo de entrada de geojson
+>
+>```json
+>{
+>    "type": "FeatureCollection",
+>    "features": [
+>        {
+>            "type": "Feature",
+>            "geometry": {
+>                "type": "Point",
+>                "coordinates": [
+>                    -48.334619926032,
+>                    -1.3533274892472
+>                ]
+>            },
+>            "properties": {
+>                "name": "São",
+>                "subclass_id": 28,
+>                "region_id": 9,
+>                "Centro": {
+>                    "type": "Point",
+>                    "coordinates": [
+>                        -48.338833248539,
+>                        -1.3512433726156
+>                    ]
+>                }
+>            }
+>        }        
+>    ]
+>}
+>```
+
 ## Retorno caso sucesso
 
 ```json
 {
-    "message": "Salvo com sucesso"
+    "success": {
+        "status": "201",
+        "title": "Created",
+        "detail": "Salvo com sucesso"
+    }
 }
 ```
 ## Retorno caso haja erros de validação
 
 ```json
 {
-    "errors": {
-        "InvalidGeometry": [
-            "A geometria deve ser um Point."
-        ]
+    "error": {
+        "status": "422",
+        "title": "Unprocessable Entity",
+        "detail": {
+            "InvalidFeatureCollection": [
+                "O JSON deve ser um FeatureCollection."
+            ]
+        }
     }
 }
 ```
@@ -122,53 +165,53 @@ Deve receber uma requisição via GET com os names abaixo
 ## Retorno caso sucesso
 
 ```json
-[
-    {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [
-                        -48.334619926032,
-                        -1.3533274892472
-                    ],
-                    [
+{
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": {
+            "geojson": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
                         -48.334619926032,
                         -1.3533274892472
                     ]
-                ]
-            ]
-        },
-        "properties": {
-            "ID": 10,
-            "user_ID": 0,
-            "Nome": "São Francisco",
-            "Centro": {
-                "type": "Point",
-                "coordinates": [
-                    -48.338833248539,
-                    -1.3512433726156
-                ]
-            },
-            "created_at": "28/04/2024 21:40:46",
-            "updated_at": "30/04/2024 22:56:45"
+                },
+                "properties": {
+                    "id": 5,
+                    "user_id": 0,
+                    "name": "São",
+                    "region_id": 9,
+                    "subclass_id": 28,
+                    "created_at": "08/05/2024 15:47:38",
+                    "updated_at": "08/05/2024 15:47:38"
+                }
+            }
         }
-    },
-]
+    }
+}
 ```
 
 ## Retorno caso haja erros  
 
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
 }
 ```
 ```json
 {
-    "message": "Este usuário não possui registros feedbacks de activities"
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
+    }
 }
 ```
 
@@ -192,17 +235,52 @@ Deve receber uma requisição via PUT ou PATCH com os names abaixo
 
 ```json
 {
-    "message": "Atividade atualizada com sucesso"
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": "Atualizado com sucesso"
+    }
 }
 ```
 ## Retorno caso haja erros de validação
 
 ```json
 {
-    "errors": {
-        "InvalidFeatureCollection": [
-            "O JSON deve ser um FeatureCollection."
-        ]
+    "error": {
+        "status": "422",
+        "title": "Unprocessable Entity",
+        "detail": {
+            "InvalidFeatureCollection": [
+                "O JSON deve ser um FeatureCollection."
+            ]
+        }
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "Erro ao atualizar"
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
+}
+```
+```json
+{
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
     }
 }
 ```
@@ -225,24 +303,42 @@ Deve receber uma requisição com verbo HTTP: DELETE com os names abaixo
 
 ```json
 {
-    "message": "Deletado com sucesso"
+    "success": {
+        "status": "200",
+        "title": "OK",
+        "detail": "Deletado com sucesso"
+    }
 }
 ```
 ## Retorno caso de erro
 
 ```json
 {
-    "error": "Unauthorized",
-    "message": "Token has expired"
+    "error": {
+        "status": "404",
+        "title": "Not Found",
+        "detail": "Registro não encontrado"
+    }
 }
 ```
 ```json
 {
-    "message": "Atividade não encontrada"
+    "error": {
+        "status": "403",
+        "title": "Forbidden",
+        "detail": "Usuário não tem permissão para acessar o registro"
+    }
 }
 ```
 ```json
 {
-    "message": "Erro ao deletar"
+    "error": {
+        "status": "500",
+        "title": "Internal Server Error",
+        "detail": "Erro ao deletar"
+    }
 }
 ```
+
+
+[Voltar a pagina principal](/README.md)

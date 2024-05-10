@@ -51,7 +51,13 @@ class UpdateFeedbackActivitiesRequest extends FormRequest
      */
     protected function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
+        throw new HttpResponseException(response()->json([
+            "error" => [
+                "status" => "422",
+                "title" => "Unprocessable Entity",
+                "detail" => $validator->errors(),
+            ]
+        ], 422));
     }
 
     /**
@@ -83,7 +89,13 @@ class UpdateFeedbackActivitiesRequest extends FormRequest
         if ($validateGeojson !== true) {
             $this->getValidatorInstance();
             $this->validator->errors()->add($validateGeojson['type'], $validateGeojson['message']);
-            throw new HttpResponseException(response()->json(['errors' => $this->validator->errors()], 422));
+            throw new HttpResponseException(response()->json([
+                "error" => [
+                    "status" => "422",
+                    "title" => "Unprocessable Entity",
+                    "detail" => $this->validator->errors(),
+                ]
+            ], 422));
         }
     }
 }

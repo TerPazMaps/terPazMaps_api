@@ -33,8 +33,9 @@ class Handler extends ExceptionHandler
     protected function renderUnauthorizedJsonResponse(UnauthorizedHttpException $exception)
     {
         return response()->json([
-            'error' => 'Unauthorized',
-            'message' => $exception->getMessage()
+            "error" => [
+                "status" => "401", "title" => "Unauthorized", "detail" => $exception->getMessage()
+            ]
         ], 401);
     }
 }

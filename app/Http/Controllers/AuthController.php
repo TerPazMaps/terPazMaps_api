@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 
+use Exception;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\PasswordUpdate;
+use App\Http\Requests\LoginFormRequest;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -20,11 +21,6 @@ class AuthController extends Controller
     public function indexLogin()
     {
         return view('login');
-    }
-
-    public function viewSendPasswordResetNotification()
-    {
-        return view('sendemail');
     }
 
     public function register(Request $request)
@@ -52,18 +48,82 @@ class AuthController extends Controller
         $validator = Validator($request->all(), $regras, $feedback);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return response()->json([
+                "error" => [
+                    "status" => "422", "title" => "Unprocessable Entity", "detail" => $validator->errors()
+                ]
+            ]);
         }
 
-        // Criar o usuário
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
 
-        // Envie uma resposta JSON com os detalhes do usuário registrado
-        return response()->json(['message' => 'Usuário registrado com sucesso', 'user' => $user], 201);
+        return response()->json([
+            "success" => [
+                "status" => "201", "title" => "Created", "detail" => $user
+            ]
+        ], 201);
+    }
+
+    public function login(LoginFormRequest $request)
+    {
+        $request->validated();
+        $credenciais = $request->all();
+
+        $token = Auth('api')->attempt($credenciais);
+
+        if ($token) {
+            return response()->json([
+                "success" => [
+                    "status" => "200", "title" => "OK", "detail" => ['Token' => $token]
+                ]
+            ], 200);
+        } else {
+            return response()->json([
+                "error" => [
+                    "status" => "403", "title" => "Forbidden", "detail" => "Erro de usuário ou senha"
+                ]
+            ], 403);
+        }
+    }
+
+    public function logout()
+    {
+        auth('api')->logout();
+        return response()->json([
+            "success" => [
+                "status" => "200", "title" => "OK", "detail" => "Logout foi realizado com sucesso"
+            ]
+        ], 200);
+    }
+
+    public function refresh()
+    {
+        $token = auth('api')->refresh();
+
+        return response()->json([
+            "success" => [
+                "status" => "200", "title" => "OK", "detail" => ['Token' => $token]
+            ]
+        ], 200);
+    }
+
+    public function me()
+    {
+        return response()->json([
+            "success" => [
+                "status" => "200", "title" => "OK", "detail" => ['User' => Auth()->user()]
+            ]
+        ], 200);
+    }
+
+    //                 Atualização de senha
+    public function viewSendPasswordResetNotification()
+    {
+        return view('sendemail');
     }
 
     public function sendPasswordResetNotification(Request $request)
@@ -80,7 +140,11 @@ class AuthController extends Controller
 
         $validator = Validator($request->all(), $regras, $feedback);
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return response()->json([
+                "error" => [
+                    "status" => "400", "title" => "Bad Request", "detail" => $validator->errors()
+                ]
+            ], 400);
         }
 
         $token = Str::random(60);
@@ -90,9 +154,17 @@ class AuthController extends Controller
 
         try {
             Mail::to($request->email)->send(new PasswordUpdate($user, $token));
-            return response()->json(['message' => 'O email foi enviado com sucesso.'], 200);
+            return response()->json([
+                "success" => [
+                    "status" => "200", "title" => "OK", "detail" => "O email foi enviado com sucesso."
+                ]
+            ], 200);
         } catch (Exception $e) {
-            return response()->json(['error' => 'Não foi possível enviar a mensagem.', 'exception' => $e], 500);
+            return response()->json([
+                "error" => [
+                    "status" => "500", "title" => "Internal Server Error", "detail" => $e
+                ]
+            ], 500);
         }
     }
 
@@ -139,38 +211,5 @@ class AuthController extends Controller
         } catch (Exception $e) {
             return redirect()->back()->with('danger', 'Não foi possível alterar sua senha. O token de solicitação foi expirado ou o usuário não existe.');
         }
-    }
-
-
-    public function login(Request $request)
-    {
-        $credenciais = $request->all();
-
-        $token = Auth('api')->attempt($credenciais);
-
-        if ($token) {
-            return response()->json(['Token' => $token], 200);
-        } else {
-            return response()->json(['erro' => 'Erro de usuário ou senha'], 403);
-        }
-    }
-
-    public function logout()
-    {
-        auth('api')->logout();
-        return response()->json(['msg' => 'Logout foi realizado com sucesso']);
-    }
-
-    public function refresh()
-    {
-
-        $token = auth('api')->refresh();
-
-        return response()->json(['token' => $token]);
-    }
-
-    public function me()
-    {
-        return response()->json(Auth()->user());
     }
 }
