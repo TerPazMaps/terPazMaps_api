@@ -74,6 +74,54 @@ class RegionController extends Controller
         }
     }
 
+    public function index2()
+    {
+        try {
+            $regions = Region::select(
+                'id',
+                'name',
+                'city',
+                DB::raw('ST_AsText(geometry) as geometry'),
+                DB::raw('ST_AsText(center) as center'),
+                'created_at',
+                'updated_at'
+            )->get();
+    
+            $insertSQL = "INSERT INTO regions (id, name, city, geometry, center, created_at, updated_at) VALUES ";
+    
+            foreach ($regions as $region) {
+                $insertSQL .= "(" .
+                    $region->id . ", " .
+                    "'" . pg_escape_string($region->name) . "', " .
+                    "'" . pg_escape_string($region->city) . "', " .
+                    "'" . pg_escape_string($region->geometry) . "', " .
+                    "'" . pg_escape_string($region->center) . "', " .
+                    "'" . $region->created_at . "', " .
+                    "'" . $region->updated_at . "'),";
+            }
+    
+            // Remove a última vírgula
+            $insertSQL = rtrim($insertSQL, ',');
+    
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["insertSQL" => $insertSQL],
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
+    }
+    
+
     public function getIconsByRegion(int $id, Request $request)
     {
         try {
