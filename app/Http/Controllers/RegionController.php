@@ -24,7 +24,7 @@ class RegionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index2()
     {
         try {
             $chaveCache = "RegionController_index";
@@ -74,7 +74,7 @@ class RegionController extends Controller
         }
     }
 
-    public function index2()
+    public function index()
     {
         try {
             $regions = Region::select(
@@ -86,9 +86,9 @@ class RegionController extends Controller
                 'created_at',
                 'updated_at'
             )->get();
-    
+
             $insertSQL = "INSERT INTO regions (id, name, city, geometry, center, created_at, updated_at) VALUES ";
-    
+
             foreach ($regions as $region) {
                 $insertSQL .= "(" .
                     $region->id . ", " .
@@ -99,10 +99,10 @@ class RegionController extends Controller
                     "'" . $region->created_at . "', " .
                     "'" . $region->updated_at . "'),";
             }
-    
+
             // Remove a última vírgula
             $insertSQL = rtrim($insertSQL, ',');
-    
+
             return response()->json([
                 "success" => [
                     "status" => "200",
@@ -120,7 +120,7 @@ class RegionController extends Controller
             ], 500);
         }
     }
-    
+
 
     public function getIconsByRegion(int $id, Request $request)
     {
@@ -285,7 +285,7 @@ class RegionController extends Controller
      * @param \Illuminate\Http\Request $request The request object.
      * @return \Illuminate\Http\JsonResponse The GeoJSON representation of streets within the region.
      */
-    public function getStreetsByRegion(int $id, Request $request)
+    public function getStreetsByRegion2(int $id, Request $request)
     {
         try {
             $query = Street::select(
@@ -360,6 +360,47 @@ class RegionController extends Controller
             ], 500);
         }
     }
+
+    public function getStreetsByRegion(int $id)
+    {
+        try {
+            $query = Street::select(
+                '*',
+                DB::raw('ST_AsText(geometry) as geometry')
+            )
+                ->where('region_id', $id)
+                ->has('streetCondition');
+
+            $streets = $query->get()->map(function ($street) {
+                $properties = json_encode($street->properties);
+                // Replace backslashes with newline characters
+                $properties = str_replace("\\", "\\n", $properties);
+                // Escape special characters for properties field
+                $escapedProperties = pg_escape_string($properties);
+
+                return [
+                    'id' => $street->id,
+                    'properties' => $escapedProperties,
+                ];
+            });
+
+            foreach ($streets as $street) {
+                DB::table('streets')
+                    ->where('id', $street['id'])
+                    ->update(['properties' => $street['properties']]);
+            }
+
+            return response()->json("Properties atualizadas com sucesso para a região {$id}", 200);
+        } catch (Exception $e) {
+            return response()->json("Erro ao atualizar properties: " . $e->getMessage(), 500);
+        }
+    }
+
+
+
+
+
+
 
     /**
      * Show the form for editing the specified resource.
