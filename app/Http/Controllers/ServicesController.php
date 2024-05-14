@@ -93,6 +93,83 @@ class ServicesController extends Controller
         }
     }
 
+    public function getActivitiesbyAreaPG(Request $request)
+    {
+        try {
+            $region_id = $request->input('region_id');
+            // $subclass_id = $request->input('subclass_id');
+            $subclass_id = array_map('intval', explode(',', $request->input('subclass_id')));
+            $latitude = $request->input('latitude');
+            $longitude = $request->input('longitude');
+            $raio = $request->input('raio');
+
+            $startTime = microtime(true);
+
+            $chaveCache = "activitiesbyArea_" . $region_id . "_" . $request->input('subclass_id') . "_" . $raio . "_" . $latitude . "_" . $longitude;
+            $query = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $subclass_id, $latitude, $longitude, $raio) {
+                return DB::table('activities')
+                    ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+                    ->where('region_id', $region_id)
+                    ->where('subclass_id', $subclass_id)
+                    ->whereRaw("ST_DistanceSphere(ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326), geometry) <= $raio")
+                    ->get();
+            });
+            
+            
+            $endTime = microtime(true);
+            $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
+            $activities = $query->map(function ($activitie) {
+                $geometry = json_decode($activitie->geometry);
+                $coordinates = $geometry->coordinates;
+                $type = $geometry->type;
+
+                $properties = [
+                    "id" => $activitie->id,
+                    "region_id" => $activitie->region_id,
+                    "subclass_id" => $activitie->subclass_id,
+                    "name" => $activitie->name,
+                ];
+
+                $feature = [
+                    "type" => "Feature",
+                    "geometry" => [
+                        "type" => $type,
+                        "coordinates" => $coordinates
+                    ],
+                    "properties" => $properties,
+                ];
+                return $feature;
+            });
+
+            $buffer = $this->buffer($raio, $request->input('latitude'), $request->input('longitude'));
+            // Adicionando as features e o buffer em um único array
+            $features = $activities->toArray();
+            $features[] = $buffer;
+
+            $featureCollection = [
+                "type" => "FeatureCollection",
+                "features" => $features,
+            ];
+
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $featureCollection],
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
+    }
+
     // http://127.0.0.1:8000/api/v5/geojson/services/distance?lat=-1.34538115355059&lon=-48.4045690844909&lat2=-1.34519276971018&lon2=-48.4041343555742 
     public function getDistance(Request $request)
     {
@@ -185,6 +262,119 @@ class ServicesController extends Controller
                         ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'), DB::raw("ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) as distance"))
                         ->whereIn('subclass_id', $pontoBuscadoId)
                         ->whereRaw("ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio")
+                        ->get();
+                });
+
+                // Se houver pontos próximos, adiciona a referência e suas escolas ao resultado
+                if ($pontosProximos->count() > 0) {
+                    // Adiciona a referência ao array de features
+                    $features[] = [
+                        'type' => 'Feature',
+                        'geometry' => $geometry,
+                        'properties' => [
+                            'id' => $referencia->id,
+                            'region_id' => $referencia->region_id,
+                            'subclass_id' => $referencia->subclass_id,
+                            'name' => $referencia->name,
+                            'marker-color' => '#FF0000',
+
+                        ]
+                    ];
+
+                    // Adiciona os pontos próximos da referência ao array de features
+                    foreach ($pontosProximos as $ponto) {
+                        $geometryPonto = json_decode($ponto->geometry);
+                        $features[] = [
+                            'type' => 'Feature',
+                            'geometry' => $geometryPonto,
+                            'properties' => [
+                                'id' => $ponto->id,
+                                'region_id' => $ponto->region_id,
+                                'subclass_id' => $ponto->subclass_id,
+                                'name' => $ponto->name,
+                            ]
+                        ];
+                    }
+
+                    // $buffer = $this->buffer($raio, $latitude, $longitude);
+                    // $features[] = $buffer;
+                }
+            }
+
+            $endTime = microtime(true);        // Calcula o tempo total de execução em milissegundos
+            $executionTime = number_format(($endTime - $startTime) * 1000, 4);
+
+            if ($features == null) {
+                return response()->json([
+                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Sem pontos de interesse próximo"]
+                ], 404);
+            }
+            $geojson = [
+                'type' => 'FeatureCollection',
+                'features' => $features
+            ];
+
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => [
+                    "status" => "500",
+                    "title" => "Internal Server Error",
+                    "detail" => $e->getMessage(),
+                ]
+            ], 500);
+        }
+    }
+
+    public function getPointsOfInterestPG(Request $request)
+    {
+        try {
+            $region_id = $request->region_id;
+            $referenciaId = $request->referenciaId;
+            // $pontoBuscadoId = $request->pontoBuscadoId;
+            $pontoBuscadoId = array_map('intval', explode(',', $request->input('pontoBuscadoId')));
+            $raio = $request->raio; // Raio em metros para verificar a proximidade
+
+            // Consulta para obter as coordenadas das referencias
+            $chaveCache = "getEscolas_referencias_" . $region_id . "_" . $referenciaId;
+            $referencias = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $referenciaId) {
+                return DB::table('activities')
+                    ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+                    ->where('region_id', $region_id)
+                    ->where('subclass_id', $referenciaId)
+                    ->get();
+            });
+
+            // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
+            $features = [];
+
+            $startTime = microtime(true);
+
+            // Iterar sobre as referencias
+            foreach ($referencias as $referencia) {
+                $geometry = json_decode($referencia->geometry);
+                $coordinates = $geometry->coordinates;
+                $latitude = $coordinates[1];
+                $longitude = $coordinates[0];
+
+                // Consulta para obter os pontos próximos à referência atual
+                $chaveCache = "getEscolas_pontosProximosClone_" . $longitude . "_" . $latitude . "_" . $raio;
+                $pontosProximos = Cache::remember($chaveCache, $this->redis_ttl, function () use ($pontoBuscadoId, $longitude, $latitude, $raio) {
+                    return DB::table('activities')
+                        ->select(
+                            '*', DB::raw('ST_AsGeoJSON(geometry) as geometry'), 
+                            // DB::raw("ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) as distance")
+                            DB::raw("ST_DistanceSphere(ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326), geometry) as distance")
+                            )
+                        ->whereIn('subclass_id', $pontoBuscadoId)
+                        // ->whereRaw("ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio")
+                        ->whereRaw("ST_DistanceSphere(ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326), geometry) <= $raio")
                         ->get();
                 });
 

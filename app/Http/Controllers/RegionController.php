@@ -24,7 +24,7 @@ class RegionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index2()
+    public function index()
     {
         try {
             $chaveCache = "RegionController_index";
@@ -73,54 +73,6 @@ class RegionController extends Controller
             ], 500);
         }
     }
-
-    public function index()
-    {
-        try {
-            $regions = Region::select(
-                'id',
-                'name',
-                'city',
-                DB::raw('ST_AsText(geometry) as geometry'),
-                DB::raw('ST_AsText(center) as center'),
-                'created_at',
-                'updated_at'
-            )->get();
-
-            $insertSQL = "INSERT INTO regions (id, name, city, geometry, center, created_at, updated_at) VALUES ";
-
-            foreach ($regions as $region) {
-                $insertSQL .= "(" .
-                    $region->id . ", " .
-                    "'" . pg_escape_string($region->name) . "', " .
-                    "'" . pg_escape_string($region->city) . "', " .
-                    "'" . pg_escape_string($region->geometry) . "', " .
-                    "'" . pg_escape_string($region->center) . "', " .
-                    "'" . $region->created_at . "', " .
-                    "'" . $region->updated_at . "'),";
-            }
-
-            // Remove a última vírgula
-            $insertSQL = rtrim($insertSQL, ',');
-
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["insertSQL" => $insertSQL],
-                ]
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
-        }
-    }
-
 
     public function getIconsByRegion(int $id, Request $request)
     {
@@ -285,7 +237,7 @@ class RegionController extends Controller
      * @param \Illuminate\Http\Request $request The request object.
      * @return \Illuminate\Http\JsonResponse The GeoJSON representation of streets within the region.
      */
-    public function getStreetsByRegion2(int $id, Request $request)
+    public function getStreetsByRegion(int $id, Request $request)
     {
         try {
             $query = Street::select(
@@ -361,36 +313,39 @@ class RegionController extends Controller
         }
     }
 
-    public function getStreetsByRegion(int $id)
+    public function getStreetsByRegion2(int $id)
     {
         try {
-            $query = Street::select(
+            $streets = Street::select(
                 '*',
                 DB::raw('ST_AsText(geometry) as geometry')
             )
                 ->where('region_id', $id)
-                ->has('streetCondition');
+                ->has('streetCondition')
+                ->get()
+                ->map(function ($street) {
+                    $decodedProperties = json_decode($street->properties, true);
+                    $decodedProperties = $street->properties;
+                    $geojson_streets = [
+                        "properties" => $decodedProperties
+                    ];
+                    return $geojson_streets;
+                });
 
-            $streets = $query->get()->map(function ($street) {
-                $properties = json_encode($street->properties);
-                // Replace backslashes with newline characters
-                $properties = str_replace("\\", "\\n", $properties);
-                // Escape special characters for properties field
-                $escapedProperties = pg_escape_string($properties);
 
-                return [
-                    'id' => $street->id,
-                    'properties' => $escapedProperties,
-                ];
-            });
+            $geojson = [
+                "type" => "FeatureCollection",
+                "features" => $streets
+            ];
 
-            foreach ($streets as $street) {
-                DB::table('streets')
-                    ->where('id', $street['id'])
-                    ->update(['properties' => $street['properties']]);
-            }
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
 
-            return response()->json("Properties atualizadas com sucesso para a região {$id}", 200);
         } catch (Exception $e) {
             return response()->json("Erro ao atualizar properties: " . $e->getMessage(), 500);
         }
