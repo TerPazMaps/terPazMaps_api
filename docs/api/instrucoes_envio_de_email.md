@@ -1,6 +1,6 @@
 # Configuração do serviço de envio de e-mails  
 
-## Obter acesso para contas gmail 
+## Obter acesso para contas GMAIL. 
 
 - Acesse sua Conta do Google.
 - Selecione Segurança.
