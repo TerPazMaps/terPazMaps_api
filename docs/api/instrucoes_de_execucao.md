@@ -9,68 +9,19 @@ Pré-requisitos, instale em ordem (windows):
 
 Após baixar e instalar as dependências, execute os passos:
 
-1. Configurar e iniciar o servidor apache do xampp.
+1. Iniciar o servidor apache do xampp.
    
-        - Edite o arquivo `php.ini` (localizado em `C:\xampp\php\php.ini`) 
-        - e descomente as seguintes linhas removendo o `;`:**
+2. Iniciar pgAdmin4:
 
-    ```ini
-    extension=pdo_pgsql
-    extension=pgsql
-    extension=zip 
-    ```
-        - caso necessário reinicie o servidor apache do xampp para aplicar as modificações 
+        - Abra o pgAdmin4 no menu iniciar.
+        - Use o super admin padrão `postgres` e a senha que vc definiu na instalação.
+        - certifique se de que a base de dados esteja ativa.
 
-2. Criar e importar base de dados no pgAdmin4:
-
-        - Abra o pgAdmin4
-        - Use o super adimin padrão `postgres` e a senha que vc definiu na instalação
-        - Crie uma base de dados.
-        - Selecione o banco de dados onde você deseja adicionar a extensão PostGIS.
-        - Vá em `Tools` > `Query Tool` ou simplesmente clique no ícone de `Query Tool` na barra de ferramentas.
-        - Execute: 
-    ```sql
-        CREATE EXTENSION postgis;
-    ```
-        ou
-        - Pesquise o nome `Postgis` e adicione ela.
-        - Agora com botão direto em cima da base de dados selecione `restore`
-        - Clicando em `filename` vc pode selecionar o banco para importação.
-
-
-
-4. **Configurar o arquivo `.env` do Laravel:**
-
-        - Crie um arquivo `.env` na pasta rais do projeto e cole tudo de `.env.example`  
-        - A seguir configure as variáveis:
-
-    ```env
-    DB_CONNECTION=pgsql
-    DB_HOST=127.0.0.1
-    DB_PORT=5432
-    DB_DATABASE=nome_do_banco_de_dados
-    DB_USERNAME=seu_usuario  //padrão do PosgreeSQL é "postgres".  
-    DB_PASSWORD=sua_senha   
-
-    REDIS_HOST=127.0.0.1
-    REDIS_PASSWORD=null
-    REDIS_PORT=6379
-    REDIS_CLIENT=predis
-
-    JWT_TTL=120
-    ```
-
-        - verifique se as configurações de email foram definidas corretamente em:
-    [configuração de email](/docs/api/instrucoes_envio_de_email.md)
-
-5. **Comandos no terminal (dentro do diretório do projeto):**
+3. **Comandos no terminal (dentro do diretório do projeto):**
 
    - Composer install
 
    - php artisan key:generate
-
-   - php artisan jwt:secret   
-   ou usar a chave que esta no keeWeb e adicionar assim: `JWT_SECRET=sua_chave`, no final do .env
 
    - php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
 
