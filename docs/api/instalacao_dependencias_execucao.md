@@ -50,8 +50,8 @@
         - apos isso selecione o postGis dentro de `Spatial Extensions`.
         - o stack builder vai baixar e instalar a dependência.
    
-    > [!WARNING]
-    > Casso o stack builder trave, aguarde ate ele iniciar o download   
+> [!WARNING]
+> Casso o stack builder trave, aguarde ate ele iniciar o download.       
         
         - Ele vai porsguir com a instalação, caso mantenha marcado a criação de uma base de dados teste,
         forneça a senha e usuário corretos para que não gere loop nessa instalação.
