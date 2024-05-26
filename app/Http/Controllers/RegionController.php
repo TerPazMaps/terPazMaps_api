@@ -77,7 +77,7 @@ class RegionController extends Controller
     public function getIconsByRegion(int $id, Request $request)
     {
         try {
-            $chaveCache = "RegionController_getIconsByRegion_" . $id;
+            $chaveCache = "RegionController_getIconsByRegion_" . $id; 
             if ($request->class_id) {
                 $chaveCache .= "_" . $request->class_id;
                 $class_ids = array_map('intval', explode(',', $request->class_id));
