@@ -93,7 +93,7 @@ class FeedbackActivitieController extends Controller
             $FeedbackActivitie->name = $request->name;
             $FeedbackActivitie->subclass_id = $request->subclass_id;
             $FeedbackActivitie->region_id = $request->region_id;
-            $FeedbackActivitie->geometry = DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',0)");
+            $FeedbackActivitie->geometry = DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',4326)");
 
             if ($FeedbackActivitie->save()) {
                 return response()->json([
@@ -226,7 +226,7 @@ class FeedbackActivitieController extends Controller
             $FeedbackActivitie->name = $request->name;
             $FeedbackActivitie->subclass_id = $request->subclass_id;
             $FeedbackActivitie->region_id = $request->region_id;
-            $FeedbackActivitie->geometry = DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',0)");
+            $FeedbackActivitie->geometry = DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])', 4326)");
 
             // Atualize os outros campos relevantes do modelo com os dados validados
             $FeedbackActivitie->fill($validatedData);

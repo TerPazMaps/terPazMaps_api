@@ -48,7 +48,7 @@ Deve receber uma requisição via GET com os names abaixo
 ```json
 {
     "error": {
-        "status": "401",
+        "status": "404",
         "title": "Not Found",
         "detail": "Este usuário não possui registros"
     }

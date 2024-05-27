@@ -1,6 +1,6 @@
 # Configuração do serviço de envio de e-mails  
 
-## Obter acesso para contas gmail 
+## Obter acesso para contas GMAIL. 
 
 - Acesse sua Conta do Google.
 - Selecione Segurança.
@@ -20,6 +20,7 @@ MAIL_PORT=587
 MAIL_USERNAME=teste@gmail.com
 MAIL_PASSWORD="aaaa bbbb cccc dddd"
 MAIL_ENCRYPTION=TLS
+MAIL_FROM_ADDRESS="${MAIL_USERNAME}"
 ```
 
 

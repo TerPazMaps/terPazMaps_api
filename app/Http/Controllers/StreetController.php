@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Street;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreStreetRequest;
 use App\Http\Requests\UpdateStreetRequest;
 
@@ -14,7 +15,7 @@ class StreetController extends Controller
      */
     public function index()
     {
-        //
+        // 
     }
 
     /**

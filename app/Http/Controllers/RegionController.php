@@ -77,7 +77,7 @@ class RegionController extends Controller
     public function getIconsByRegion(int $id, Request $request)
     {
         try {
-            $chaveCache = "RegionController_getIconsByRegion_" . $id;
+            $chaveCache = "RegionController_getIconsByRegion_" . $id; 
             if ($request->class_id) {
                 $chaveCache .= "_" . $request->class_id;
                 $class_ids = array_map('intval', explode(',', $request->class_id));
@@ -196,7 +196,7 @@ class RegionController extends Controller
                     ->find($id);
             });
 
-            $geojson = [
+            $feature = [
                 "type" => "Feature",
                 "geometry" => json_decode($region->geometry),
                 "properties" => [
@@ -205,6 +205,11 @@ class RegionController extends Controller
                     "Cidade" => $region->city,
                     "Centro" => json_decode($region->center)
                 ]
+            ];
+
+            $geojson = [
+                "type" => "FeatureCollection",
+                "features" => [$feature]
             ];
 
             return response()->json([
@@ -307,6 +312,50 @@ class RegionController extends Controller
             ], 500);
         }
     }
+
+    public function getStreetsByRegion2(int $id)
+    {
+        try {
+            $streets = Street::select(
+                '*',
+                DB::raw('ST_AsText(geometry) as geometry')
+            )
+                ->where('region_id', $id)
+                ->has('streetCondition')
+                ->get()
+                ->map(function ($street) {
+                    $decodedProperties = json_decode($street->properties, true);
+                    $decodedProperties = $street->properties;
+                    $geojson_streets = [
+                        "properties" => $decodedProperties
+                    ];
+                    return $geojson_streets;
+                });
+
+
+            $geojson = [
+                "type" => "FeatureCollection",
+                "features" => $streets
+            ];
+
+            return response()->json([
+                "success" => [
+                    "status" => "200",
+                    "title" => "OK",
+                    "detail" => ["geojson" => $geojson],
+                ]
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json("Erro ao atualizar properties: " . $e->getMessage(), 500);
+        }
+    }
+
+
+
+
+
+
 
     /**
      * Show the form for editing the specified resource.

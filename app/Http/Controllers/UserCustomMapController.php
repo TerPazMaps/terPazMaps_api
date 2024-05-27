@@ -111,7 +111,7 @@ class UserCustomMapController extends Controller
             $latitude = $center2[0]->y;
 
             $userCustomMap->geometry = DB::raw("ST_GeomFromText('$wktPolygon')");
-            $userCustomMap->center = DB::raw("ST_GeomFromText('POINT($longitude $latitude)',0)");
+            $userCustomMap->center = DB::raw("ST_GeomFromText('POINT($longitude $latitude)',4326)");
             // $userCustomMap->center = DB::raw("ST_GeomFromText('POINT($center[0] $center[1])',0)");
 
             // Salvar o modelo no banco de dados

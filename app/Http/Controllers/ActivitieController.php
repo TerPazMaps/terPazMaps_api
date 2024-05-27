@@ -118,6 +118,7 @@ class ActivitieController extends Controller
 
             return response()->json([
                 "success" => [
+                    "timeF" => $executionTime,
                     "status" => "200",
                     "title" => "OK",
                     "detail" => ["geojson" => $geojson],
