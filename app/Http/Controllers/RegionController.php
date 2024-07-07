@@ -7,6 +7,7 @@ use App\Models\Region;
 use App\Models\Street;
 use App\Models\Activitie;
 use Illuminate\Http\Request;
+use App\Http\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -56,28 +57,16 @@ class RegionController extends Controller
                 "features" => $regions
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
     public function getIconsByRegion(int $id, Request $request)
     {
         try {
-            $chaveCache = "RegionController_getIconsByRegion_" . $id; 
+            $chaveCache = "RegionController_getIconsByRegion_" . $id;
             if ($request->class_id) {
                 $chaveCache .= "_" . $request->class_id;
                 $class_ids = array_map('intval', explode(',', $request->class_id));
@@ -85,7 +74,7 @@ class RegionController extends Controller
             if ($request->subclass_id) {
                 $chaveCache .= "_" . $request->subclass_id;
                 $subclass_id = array_map('intval', explode(',', $request->subclass_id));
-            }
+            }   
 
             $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($request, $id) {
                 return Activitie::with(['subclass.icon'])
@@ -144,21 +133,9 @@ class RegionController extends Controller
                 'features' => $geojsonFeatures,
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -212,21 +189,9 @@ class RegionController extends Controller
                 "features" => [$feature]
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -295,21 +260,9 @@ class RegionController extends Controller
                 "features" => $streets->toArray(),
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -332,30 +285,16 @@ class RegionController extends Controller
                     return $geojson_streets;
                 });
 
-
             $geojson = [
                 "type" => "FeatureCollection",
                 "features" => $streets
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
-
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json("Erro ao atualizar properties: " . $e->getMessage(), 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
-
-
-
-
-
-
 
     /**
      * Show the form for editing the specified resource.

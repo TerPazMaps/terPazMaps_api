@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use Exception;
 use Illuminate\Support\Carbon;
 use App\Models\FeedbackActivitie;
+use App\Http\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Policies\FeedbackActivitiesPolicy;
 use App\Http\Requests\StoreFeedbackActivitiesRequest;
 use App\Http\Requests\UpdateFeedbackActivitiesRequest;
-use App\Policies\FeedbackActivitiesPolicy;
 
 class FeedbackActivitieController extends Controller
 {
@@ -30,11 +31,7 @@ class FeedbackActivitieController extends Controller
                 ->get();
 
             if ($FeedbackActivitie->isEmpty()) {
-                return response()->json([
-                    "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros"
-                    ]
-                ], 404);
+                return ApiServices::statuscode404("Este usuário não possui registros");
             }
 
             $FeedbackActivitieMap = $FeedbackActivitie->map(function ($FeedbackActivitie) {
@@ -53,21 +50,9 @@ class FeedbackActivitieController extends Controller
                 ];
             });
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $FeedbackActivitieMap],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $FeedbackActivitieMap]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -96,26 +81,12 @@ class FeedbackActivitieController extends Controller
             $FeedbackActivitie->geometry = DB::raw("ST_GeomFromText('POINT($coordinates[0] $coordinates[1])',4326)");
 
             if ($FeedbackActivitie->save()) {
-                return response()->json([
-                    "success" => [
-                        "status" => "201", "title" => "Created", "detail" => "Salvo com sucesso"
-                    ]
-                ], 201);
+                return ApiServices::statuscode201("Salvo com sucesso");
             } else {
-                return response()->json([
-                    "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar"
-                    ]
-                ], 500);
+                return ApiServices::statuscode500("Erro ao salvar");
             }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -134,21 +105,11 @@ class FeedbackActivitieController extends Controller
                 ->find($id);
 
             if (!$FeedbackActivitie) {
-                return response()->json([
-                    "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Registro não encontrado"
-                    ]
-                ], 404);
+                return ApiServices::statuscode404("Registro não encontrado");
             }
 
             if ($user->id != $FeedbackActivitie->user_id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403",
-                        "title" => "Forbidden",
-                        "detail" => "Usuário não tem permissão para acessar o registro",
-                    ]
-                ], 403);
+                return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
 
             $feedbackActivitieMap = [
@@ -165,21 +126,9 @@ class FeedbackActivitieController extends Controller
                 ]
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $feedbackActivitieMap],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $feedbackActivitieMap]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -201,21 +150,11 @@ class FeedbackActivitieController extends Controller
             $FeedbackActivitie = FeedbackActivitie::find($id);
 
             if (!$FeedbackActivitie) {
-                return response()->json([
-                    "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Registro não encontrado"
-                    ]
-                ], 404);
+                return ApiServices::statuscode404("Registro não encontrado");
             }
 
             if ($user->id != $FeedbackActivitie->user_id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403",
-                        "title" => "Forbidden",
-                        "detail" => "Usuário não tem permissão para acessar o registro",
-                    ]
-                ], 403);
+                return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
 
             $validatedData = $request->validated();
@@ -233,26 +172,12 @@ class FeedbackActivitieController extends Controller
 
             // Salve as alterações no banco de dados
             if ($FeedbackActivitie->save()) {
-                return response()->json([
-                    "success" => [
-                        "status" => "200", "title" => "OK", "detail" => "Atualizado com sucesso"
-                    ]
-                ], 200);
+                return ApiServices::statuscode201("Atualizado com sucesso");
             } else {
-                return response()->json([
-                    "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar"
-                    ]
-                ], 500);
+                return ApiServices::statuscode500("Erro ao atualizar");
             }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -264,49 +189,22 @@ class FeedbackActivitieController extends Controller
         try {
             $user = JWTAuth::parseToken()->authenticate();
             $FeedbackActivitie = FeedbackActivitie::find($id);
-                
+
             if (!$FeedbackActivitie) {
-                return response()->json([
-                    "error" => [
-                        "status" => "404",
-                        "title" => "Not Found",
-                        "detail" => "Registro não encontrado",
-                    ]
-                ], 404);
-            }
-
-            if ($user->id != $FeedbackActivitie->user_id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403",
-                        "title" => "Forbidden",
-                        "detail" => "Usuário não tem permissão para acessar o registro",
-                    ]
-                ], 403);
-            }
-
-            if ($FeedbackActivitie->delete()) {
-                return response()->json([
-                    "success" => [
-                        "status" => "200", "title" => "OK", "detail" => "Deletado com sucesso"
-                    ]
-                ], 200);
-            } else {
-                return response()->json([
-                    "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar"
-                    ]
-                ], 500);
+                return ApiServices::statuscode404("Registro não encontrado");
             }
             
+            if ($user->id != $FeedbackActivitie->user_id) {
+                return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
+            }
+            
+            if ($FeedbackActivitie->delete()) {
+                return ApiServices::statuscode200("Deletado com sucesso");
+            } else {
+                return ApiServices::statuscode500("Erro ao deletar");
+            }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 }

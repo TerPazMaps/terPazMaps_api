@@ -6,6 +6,7 @@ use Exception;
 use App\Models\Icon;
 use App\Models\Subclasse;
 use Illuminate\Http\Request;
+use App\Http\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreSubclasseRequest;
@@ -48,21 +49,9 @@ class SubclasseController extends Controller
                 return $subclasses;
             });
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $subclasses],
-                ]
-            ], 200);
+            return ApiServices::statusCode200(["geojson" => $subclasses]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 

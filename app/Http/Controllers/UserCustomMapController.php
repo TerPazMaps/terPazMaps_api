@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Exception;
 use Carbon\Carbon;
 use App\Models\UserCustomMap;
+use App\Http\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -31,11 +32,7 @@ class UserCustomMapController extends Controller
                 ->get();
 
             if ($mapas->isEmpty()) {
-                return response()->json([
-                    "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros"
-                    ]
-                ], 404);
+                return ApiServices::statusCode404("Este usuário não possui registros");
             }
 
             $mapasTransformados = $mapas->map(function ($mapa) {
@@ -53,25 +50,11 @@ class UserCustomMapController extends Controller
                 ];
             });
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $mapasTransformados],
-                ]
-            ], 200);
+            return ApiServices::statusCode200(["geojson" => $mapasTransformados]);
         } catch (Exception $e) {
-
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -116,24 +99,12 @@ class UserCustomMapController extends Controller
 
             // Salvar o modelo no banco de dados
             if ($userCustomMap->save()) {
-                return response()->json([
-                    "status" => "201", "title" => "Created", "detail" => "Salvo com sucesso"
-                ], 201);
+                return ApiServices::statusCode201("Salvo com sucesso");
             } else {
-                return response()->json([
-                    "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar"
-                    ]
-                ], 500);
+                return ApiServices::statusCode500("Erro ao salvar");
             }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -152,19 +123,11 @@ class UserCustomMapController extends Controller
                 ->find($id);
 
             if (!$mapa) {
-                return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Registo do mapa personalizado não encontrado"]
-                ], 404);
+                return ApiServices::statusCode404("Registo do mapa personalizado não encontrado");
             }
 
             if ($user->id != $mapa->user_id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403",
-                        "title" => "Forbidden",
-                        "detail" => "Usuário não tem permissão para acessar o registro",
-                    ]
-                ], 403);
+                return ApiServices::statusCode403("Usuário não tem permissão para acessar o registro");
             }
 
             $geojson_mapa = [
@@ -180,21 +143,9 @@ class UserCustomMapController extends Controller
                 ]
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson_mapa],
-                ]
-            ], 200);
+            return ApiServices::statusCode200(["geojson" => $geojson_mapa]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -215,19 +166,11 @@ class UserCustomMapController extends Controller
             $user = JWTAuth::parseToken()->authenticate();
             $mapa = UserCustomMap::find($id);
             if (!$mapa) {
-                return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Registo do mapa personalizado não encontrado"]
-                ], 404);
+                return ApiServices::statusCode404("Registo do mapa personalizado não encontrado");
             }
 
             if ($user->id != $mapa->user_id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403",
-                        "title" => "Forbidden",
-                        "detail" => "Usuário não tem permissão para acessar o registro",
-                    ]
-                ], 403);
+                return ApiServices::statusCode403("Usuário não tem permissão para acessar o registro");
             }
 
             $validatedData = $request->validated();
@@ -257,24 +200,12 @@ class UserCustomMapController extends Controller
 
             // Salve as alterações no banco de dados
             if ($mapa->save()) {
-                return response()->json([
-                    "success" => [
-                        "status" => "200", "title" => "OK", "detail" => "Atualizado com sucesso"
-                    ]
-                ], 200);
+                return ApiServices::statusCode200("Atualizado com sucesso");
             } else {
-                return response()->json([
-                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar"]
-                ], 500);
+                return ApiServices::statusCode500("Erro ao atualizar");
             }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -288,38 +219,20 @@ class UserCustomMapController extends Controller
             $mapa = UserCustomMap::find($id);
 
             if (!$mapa) {
-                return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found","detail" => "Registro não encontrado",]
-                ], 404);
+                return ApiServices::statusCode404("Registro não encontrado");
             }
 
             if ($user->id != $mapa->user_id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403",
-                        "title" => "Forbidden",
-                        "detail" => "Usuário não tem permissão para acessar o registro",]
-                ], 403);
+                return ApiServices::statusCode403("Usuário não tem permissão para acessar o registro");
             }
 
             if ($mapa->delete()) {
-                return response()->json([
-                    "success" => [
-                    "status" => "200", "title" => "OK", "detail" => "Deletado com sucesso"]
-                ], 200);
+                return ApiServices::statusCode200("Deletado com sucesso");
             } else {
-                return response()->json([
-                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar"]
-                ], 500);
+                return ApiServices::statusCode500("Erro ao deletar");
             }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 }

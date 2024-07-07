@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Exception;
 use App\Models\Classe;
+use App\Http\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreClasseRequest;
@@ -47,21 +48,9 @@ class ClasseController extends Controller
                     });
             });
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $classes],
-                ]
-            ], 200);
+            return ApiServices::statusCode200(["geojson" => $classes]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statusCode500($e->getMessage());
         }
     }
 
@@ -98,28 +87,12 @@ class ClasseController extends Controller
             });
 
             if (!$classe) {
-                return response()->json([
-                    "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Classe não encontrada no banco de dados."
-                    ]
-                ], 404);
+                return ApiServices::statuscode404("Classe não encontrada no banco de dados.");
             }
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $classe],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $classe]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -135,7 +108,7 @@ class ClasseController extends Controller
                     ->has('subclasse')
                     ->has('subclasse.icon')
                     ->paginate(15);
-                    
+
                 $baseUrl = config('app.url');
                 foreach ($classes as $cl) {
                     foreach ($cl->subclasse as $subclasse) {
@@ -147,21 +120,9 @@ class ClasseController extends Controller
                 return $classes;
             });
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $classes],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $classes]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 

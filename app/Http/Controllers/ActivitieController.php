@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Activitie;
 use Illuminate\Http\Request;
+use App\Http\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreActivitieRequest;
 use App\Http\Requests\UpdateActivitieRequest;
-use Exception;
 
 class ActivitieController extends Controller
 {
@@ -116,22 +117,9 @@ class ActivitieController extends Controller
                 "features" => $activities
             ];
 
-            return response()->json([
-                "success" => [
-                    "timeF" => $executionTime,
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statusCode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statusCode500($e->getMessage());
         }
     }
 
