@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Exception;
 use App\Models\Street_condition;
-use App\Http\Services\ApiServices;
+use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use App\Http\Requests\StoreStreet_conditionRequest;
 use App\Http\Requests\UpdateStreet_conditionRequest;

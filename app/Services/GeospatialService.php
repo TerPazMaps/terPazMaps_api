@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Http\Services;
+namespace App\Services;
 
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use App\Http\Services\ApiServices;
+use App\Services\ApiServices;
 
 
 class GeospatialService

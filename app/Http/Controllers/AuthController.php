@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use App\Mail\PasswordUpdate;
 use Illuminate\Http\Request;
-use App\Http\Services\ApiServices;
+use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;

@@ -6,7 +6,7 @@ use Exception;
 use App\Models\Icon;
 use App\Models\Subclasse;
 use Illuminate\Http\Request;
-use App\Http\Services\ApiServices;
+use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreSubclasseRequest;
