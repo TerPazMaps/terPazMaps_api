@@ -7,18 +7,20 @@ use App\Models\Activitie;
 use Illuminate\Http\Request;
 use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreActivitieRequest;
 use App\Http\Requests\UpdateActivitieRequest;
+use App\Services\ActivitieService;
 
 class ActivitieController extends Controller
 {
     private $redis_ttl;
+    protected $activitieService;
 
-    public function __construct()
+    public function __construct(ActivitieService $activitieService)
     {
         $this->redis_ttl = 3600;
+        $this->activitieService = $activitieService;
     }
 
     /**
@@ -28,38 +30,27 @@ class ActivitieController extends Controller
     public function index(Request $request)
     {
         try {
-            $activities = Activitie::select(
-                '*',
-                DB::raw('ST_AsGeoJSON(geometry) as geometry')
-            )
-                ->has('subclass.classe')
-                ->has('subclass.icon')
-                ->orderBy('id');
+            $query = $this->activitieService->getAllWithRelationsAndGeometry();
 
             $chaveCache = "ActivitieController_index";
 
             // Construindo a chave do cache com base nos parâmetros da solicitação
             if ($request->regions) {
                 $chaveCache .= "_regions_" . $request->regions;
-                $regions_id = array_map('intval', explode(',', $request->regions));
-                $activities = $activities->whereIn('region_id', $regions_id);
             }
 
             if ($request->subclasses) {
                 $chaveCache .= "_subclasses_" . $request->subclasses;
-                $subclasses_id = array_map('intval', explode(',', $request->subclasses));
-                $activities = $activities->whereIn('subclass_id', $subclasses_id);
             }
 
             if ($request->ids) {
                 $chaveCache .= "_ids_" . $request->ids;
-                $ids = array_map('intval', explode(',', $request->ids));
-                $activities = $activities->whereIn('id', $ids);
             }
 
             $startTime = microtime(true);
-            $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($activities) {
-                return $activities->get();
+            $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($request, $query) {
+                $activities = $this->activitieService->filter($request, $query)->get();
+                return $activities;
             });
 
             $endTime = microtime(true);

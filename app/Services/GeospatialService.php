@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use App\Services\ApiServices;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use App\Services\ApiServices;
-
 
 class GeospatialService
 {
