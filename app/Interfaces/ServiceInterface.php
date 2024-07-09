@@ -5,7 +5,7 @@ namespace App\Interfaces;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 
-interface RepositoryInterface
+interface ServiceInterface
 {
     public static function all():Collection;
     public static function create(array $attributes):Model|null;

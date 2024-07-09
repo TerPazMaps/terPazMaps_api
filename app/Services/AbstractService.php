@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Services;
 
-use App\Interfaces\RepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
+use App\Interfaces\ServiceInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
 
-abstract class AbstractRepository implements RepositoryInterface
+abstract class AbstractService implements ServiceInterface
 {
     protected static $model;
 
