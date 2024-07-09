@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\RedisServices;
 use Exception;
 use App\Models\Activitie;
 use Illuminate\Http\Request;
 use App\Services\ApiServices;
+use App\Services\RedisService;
 use App\Services\ActivitieService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
@@ -15,7 +15,7 @@ use App\Http\Requests\UpdateActivitieRequest;
 
 class ActivitieController extends Controller
 {
-    private $redis_ttl;
+    protected $redis_ttl;
     protected $activitieService;
     protected $redisService;
 
@@ -23,7 +23,7 @@ class ActivitieController extends Controller
     {
         $this->redis_ttl = 3600;
         $this->activitieService = new ActivitieService();
-        $this->activitieService = new RedisServices();
+        $this->redisService = new RedisService();
     }
 
     /**
@@ -34,11 +34,10 @@ class ActivitieController extends Controller
     {
         try {
             $startTime = microtime(true);
+            $namesRequest = ['regions', 'subclasses', 'ids', 'only_references'];
+            $keyCache = $this->redisService->createKeyCacheFromRequest($request, "ActivitieController_index" ,$namesRequest);
             
-            // Construindo a chave do cache com base nos parâmetros da solicitação
-            $chaveCache = $this->activitieService->createKeyCacheFromRrequest($request);
-            
-            $activities = Cache::remember($chaveCache, 2, function () use ($request, $startTime) {
+            $activities = Cache::remember($keyCache, 2, function () use ($request, $startTime) {
                 $query = $this->activitieService->getAllWithRelationsAndGeometry();
                 $activitiesCollection = $this->activitieService->filter($request, $query)->get();
 

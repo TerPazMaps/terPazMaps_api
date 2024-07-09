@@ -2,29 +2,20 @@
 
 namespace App\Services;
 
-class RedisServices
+use Illuminate\Http\Request;
+
+class RedisService
 {
-    public static function createKeyCacheFromRrequest($request): string
-    {
-        $chaveCache = "ActivitieController_index";
-
-        if ($request->regions) {
-            $chaveCache .= "_regions_" . $request->regions;
+    public static function createKeyCacheFromRequest(Request $request, String $keyCache, array $namesRequest): string
+{
+    foreach ($namesRequest as $name) {
+        if ($request->$name) {
+            $keyCache .= "_" . $name . "_" . $request->$name;
         }
-
-        if ($request->subclasses) {
-            $chaveCache .= "_subclasses_" . $request->subclasses;
-        }
-
-        if ($request->ids) {
-            $chaveCache .= "_ids_" . $request->ids;
-        }
-
-        if ($request->only_references) {
-            $chaveCache .= "_only_references_" . $request->only_references;
-        }
-
-        return $chaveCache;
     }
+
+    return $keyCache;
+}
+
 
 }

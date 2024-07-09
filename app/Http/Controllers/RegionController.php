@@ -8,6 +8,7 @@ use App\Models\Street;
 use App\Models\Activitie;
 use Illuminate\Http\Request;
 use App\Services\ApiServices;
+use App\Services\RedisService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -17,10 +18,12 @@ use App\Http\Requests\UpdateRegionRequest;
 class RegionController extends Controller
 {
     private $redis_ttl;
+    protected $redisService;
 
     public function __construct()
     {
         $this->redis_ttl = 3600;
+        $this->redisService = new RedisService();
     }
     /**
      * Display a listing of the resource.
@@ -66,28 +69,26 @@ class RegionController extends Controller
     public function getIconsByRegion(int $id, Request $request)
     {
         try {
-            $chaveCache = "RegionController_getIconsByRegion_" . $id;
+            $prefix = "RegionController_getIconsByRegion_" . $id;
             if ($request->class_id) {
-                $chaveCache .= "_" . $request->class_id;
                 $class_ids = array_map('intval', explode(',', $request->class_id));
             }
             if ($request->subclass_id) {
-                $chaveCache .= "_" . $request->subclass_id;
                 $subclass_id = array_map('intval', explode(',', $request->subclass_id));
             }   
 
-            $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($request, $id) {
+            $keyCache = $this->redisService->createKeyCacheFromRequest($request, $prefix, ['class_id', 'subclass_id']);
+            $activities = Cache::remember($keyCache, $this->redis_ttl, function () use ($request, $id, $class_ids, $subclass_id) {
+                
                 return Activitie::with(['subclass.icon'])
-                    ->whereHas('subclass', function ($query) use ($request) {
+                    ->whereHas('subclass', function ($query) use ($request, $class_ids) {
                         if ($request->class_id) {
-                            $class_ids = array_map('intval', explode(',', $request->class_id));
                             $query->whereIn('class_id', $class_ids);
                         }
                     })
                     ->where('region_id', $id)
-                    ->where(function ($query) use ($request) {
+                    ->where(function ($query) use ($request, $subclass_id) {
                         if ($request->subclass_id) {
-                            $subclass_id = array_map('intval', explode(',', $request->subclass_id));
                             $query->whereIn('subclass_id', $subclass_id);
                         }
                     })
