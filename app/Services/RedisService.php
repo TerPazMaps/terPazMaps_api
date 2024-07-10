@@ -13,7 +13,6 @@ class RedisService
             $keyCache .= "_" . $name . "_" . $request->$name;
         }
     }
-
     return $keyCache;
 }
 

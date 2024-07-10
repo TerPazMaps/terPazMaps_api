@@ -5,18 +5,24 @@ namespace App\Http\Controllers;
 use Exception;
 use App\Models\Classe;
 use App\Services\ApiServices;
+use App\Services\RedisService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreClasseRequest;
 use App\Http\Requests\UpdateClasseRequest;
+use App\Services\ClasseService;
 
 class ClasseController extends Controller
 {
     private $redis_ttl;
+    protected $redisService;
+    protected $classeService;
 
     public function __construct()
     {
         $this->redis_ttl = 3600;
+        $this->redisService = new RedisService();
+        $this->classeService = new ClasseService();
     }
 
     /**
@@ -26,29 +32,11 @@ class ClasseController extends Controller
     public function index()
     {
         try {
-            $chaveCache = "ClasseController_index";
-            $classes = Cache::remember($chaveCache, $this->redis_ttl, function () {
-                return Classe::select(
-                    'id',
-                    'name',
-                    'related_color',
-                    'related_secondary_color'
-                )
-                    ->get()
-                    ->map(function ($classe) {
-                        $classe = [
-                            "Classe" => [
-                                "ID" => $classe->id,
-                                "Nome" => $classe->name,
-                                "related_color" => $classe->related_color,
-                                "related_secondary_color" => $classe->related_secondary_color
-                            ]
-                        ];
-                        return $classe;
-                    });
+            $classes = Cache::remember("ClasseController_index", $this->redis_ttl, function () {
+                return $this->classeService->index();
             });
 
-            return ApiServices::statusCode200(["geojson" => $classes]);
+            return ApiServices::statusCode200($classes);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -76,21 +64,15 @@ class ClasseController extends Controller
     public function show(int $id)
     {
         try {
-            $chaveCache = "ClasseController_show_" . $id;
-            $classe = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
-                return Classe::select(
-                    'id',
-                    'name',
-                    'related_color',
-                    'related_secondary_color'
-                )->find($id);
+            $classe = Cache::remember("ClasseController_show_" . $id, $this->redis_ttl, function () use ($id) {
+                return $this->classeService->show($id);
             });
 
-            if (!$classe) {
+            if (!$classe['geojson']) {
                 return ApiServices::statuscode404("Classe não encontrada no banco de dados.");
             }
 
-            return ApiServices::statuscode200(["geojson" => $classe]);
+            return ApiServices::statuscode200($classe);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }
@@ -102,25 +84,11 @@ class ClasseController extends Controller
     public function getSubclassesByClass(int $id)
     {
         try {
-            $chaveCache = "ClasseController_getSubclassesByClass_" . $id;
-            $classes = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
-                $classes = Classe::where('id', $id)
-                    ->has('subclasse')
-                    ->has('subclasse.icon')
-                    ->paginate(15);
-
-                $baseUrl = config('app.url');
-                foreach ($classes as $cl) {
-                    foreach ($cl->subclasse as $subclasse) {
-                        $icon = $subclasse->icon;
-                        $icon->image_url = $baseUrl . 'storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
-                    }
-                }
-
-                return $classes;
+            $classes = Cache::remember("ClasseController_getSubclassesByClass_" . $id, $this->redis_ttl, function () use ($id) {
+                return $this->classeService->getSubclassesByClass($id);
             });
 
-            return ApiServices::statuscode200(["geojson" => $classes]);
+            return ApiServices::statuscode200($classes);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }

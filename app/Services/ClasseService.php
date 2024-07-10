@@ -2,24 +2,68 @@
 
 namespace App\Services;
 
-use App\Models\Activitie;
+use App\Models\Classe;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Interfaces\ServiceInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
-class ActivitieService extends AbstractService implements ServiceInterface
+
+class ClasseService extends AbstractService implements ServiceInterface
 {
-    protected static $model = Activitie::class;
+    protected static $model = Classe::class;
 
-    public function getAllWithRelationsAndGeometry(): Builder
+    public function index(): array
     {
-        return self::loadModel()::query()->select(
-            '*',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry')
-        )->has('subclass.classe')
-            ->has('subclass.icon')
-            ->orderBy('id');
+        $collection = self::loadModel()::query()->select(
+            'id',
+            'name',
+            'related_color',
+            'related_secondary_color'
+        )
+            ->get()
+            ->map(function ($classe) {
+                $classe = [
+                    "Classe" => [
+                        "ID" => $classe->id,
+                        "Nome" => $classe->name,
+                        "related_color" => $classe->related_color,
+                        "related_secondary_color" => $classe->related_secondary_color
+                    ]
+                ];
+                return $classe;
+            });
+
+        return ["geojson" => $collection];
+    }
+
+    public function show(int $id): array
+    {
+        $collection = self::loadModel()::query()->select(
+            'id',
+            'name',
+            'related_color',
+            'related_secondary_color'
+        )->find($id);
+
+        return ["geojson" => $collection];
+    }
+
+    public function getSubclassesByClass(int $id): array
+    {
+        $classes = self::loadModel()::query()->where('id', $id)
+            ->has('subclasse')
+            ->has('subclasse.icon')
+            ->paginate(15);
+
+        foreach ($classes as $cl) {
+            foreach ($cl->subclasse as $subclasse) {
+                $icon = $subclasse->icon;
+                $icon->image_url = config('app.url') . 'storage/' . substr($icon->disk_name, 0, 3) . '/' . substr($icon->disk_name, 3, 3) . '/' . substr($icon->disk_name, 6, 3) . '/' . $icon->disk_name;
+            }
+        }
+
+        return ["geojson" => $classes];
     }
 
     public function filter(Request $request, Builder $query): Builder
@@ -65,7 +109,7 @@ class ActivitieService extends AbstractService implements ServiceInterface
             $mappedActivities = $activitiesCollection
                 ->map(function ($activity) {
                     // Construa a URL da imagem do ícone
-    
+
                     $geojson_activity = [
                         "type" => "Feature",
                         "geometry" => json_decode($activity->geometry),

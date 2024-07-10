@@ -9,7 +9,6 @@ use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use App\Policies\FeedbackActivitiesPolicy;
 use App\Http\Requests\StoreFeedbackActivitiesRequest;
 use App\Http\Requests\UpdateFeedbackActivitiesRequest;
 
