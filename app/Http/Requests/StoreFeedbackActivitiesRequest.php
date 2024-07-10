@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Controllers\ServicesController;
+use App\Services\GeospatialService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
@@ -79,7 +80,7 @@ class StoreFeedbackActivitiesRequest extends FormRequest
         ]);
 
         // Verificando a validade do GeoJSON
-        $validateGeojson = ServicesController::GeoJsonValidatorActivitie($this->geojson); 
+        $validateGeojson = GeospatialService::GeoJsonValidatorActivitie($this->geojson); 
         if ($validateGeojson !== true) {
             $this->getValidatorInstance();
             $this->validator->errors()->add($validateGeojson['type'], $validateGeojson['message']);

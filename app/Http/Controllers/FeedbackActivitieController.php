@@ -3,17 +3,26 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Services\ApiServices;
+use App\Services\RedisService;
 use Illuminate\Support\Carbon;
 use App\Models\FeedbackActivitie;
-use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Services\FeedbackActivitieService;
 use App\Http\Requests\StoreFeedbackActivitiesRequest;
 use App\Http\Requests\UpdateFeedbackActivitiesRequest;
 
 class FeedbackActivitieController extends Controller
 {
+    protected $feedbackActivitieService;
+
+    public function __construct()
+    {
+        $this->feedbackActivitieService = new FeedbackActivitieService();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -21,35 +30,15 @@ class FeedbackActivitieController extends Controller
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-
-            $FeedbackActivitie = FeedbackActivitie::select(
-                '*',
-                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-            )
-                ->where('user_id', $user->id)
-                ->get();
-
+            $FeedbackActivitie = $this->feedbackActivitieService->index($user->id);
+            
             if ($FeedbackActivitie->isEmpty()) {
                 return ApiServices::statuscode404("Este usuário não possui registros");
             }
 
-            $FeedbackActivitieMap = $FeedbackActivitie->map(function ($FeedbackActivitie) {
-                return [
-                    "type" => "Feature",
-                    "geometry" => json_decode($FeedbackActivitie->geometry),
-                    "properties" => [
-                        "id" => $FeedbackActivitie->id,
-                        "user_id" => $FeedbackActivitie->user_id,
-                        "name" => $FeedbackActivitie->name,
-                        "region_id" => $FeedbackActivitie->region_id,
-                        "subclass_id" => $FeedbackActivitie->subclass_id,
-                        "created_at" => Carbon::parse($FeedbackActivitie->created_at)->format('d/m/Y H:i:s'),
-                        "updated_at" => Carbon::parse($FeedbackActivitie->updated_at)->format('d/m/Y H:i:s'),
-                    ]
-                ];
-            });
+            $FeedbackActivitieMap = $this->feedbackActivitieService->index_map($FeedbackActivitie);
 
-            return ApiServices::statuscode200(["geojson" => $FeedbackActivitieMap]);
+            return ApiServices::statuscode200($FeedbackActivitieMap);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }
@@ -72,7 +61,6 @@ class FeedbackActivitieController extends Controller
             $user = JWTAuth::parseToken()->authenticate();
             $FeedbackActivitie = new FeedbackActivitie();
             $coordinates = $request->geometry;
-
             $FeedbackActivitie->user_id = $user->id;
             $FeedbackActivitie->name = $request->name;
             $FeedbackActivitie->subclass_id = $request->subclass_id;
@@ -96,12 +84,7 @@ class FeedbackActivitieController extends Controller
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            $FeedbackActivitie = FeedbackActivitie::select(
-                '*',
-                DB::raw('ST_AsGeoJSON(geometry) as geometry'),
-            )
-                ->where('user_id', $user->id)
-                ->find($id);
+            $FeedbackActivitie = $this->feedbackActivitieService->show($id);
 
             if (!$FeedbackActivitie) {
                 return ApiServices::statuscode404("Registro não encontrado");
@@ -111,21 +94,9 @@ class FeedbackActivitieController extends Controller
                 return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
 
-            $feedbackActivitieMap = [
-                "type" => "Feature",
-                "geometry" => json_decode($FeedbackActivitie->geometry),
-                "properties" => [
-                    "id" => $FeedbackActivitie->id,
-                    "user_id" => $FeedbackActivitie->user_id,
-                    "name" => $FeedbackActivitie->name,
-                    "region_id" => $FeedbackActivitie->region_id,
-                    "subclass_id" => $FeedbackActivitie->subclass_id,
-                    "created_at" => Carbon::parse($FeedbackActivitie->created_at)->format('d/m/Y H:i:s'),
-                    "updated_at" => Carbon::parse($FeedbackActivitie->updated_at)->format('d/m/Y H:i:s'),
-                ]
-            ];
-
-            return ApiServices::statuscode200(["geojson" => $feedbackActivitieMap]);
+            $feedbackActivitieMap = $this->feedbackActivitieService->show_map($FeedbackActivitie);
+                
+            return ApiServices::statuscode200($feedbackActivitieMap);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }
@@ -159,7 +130,6 @@ class FeedbackActivitieController extends Controller
             $validatedData = $request->validated();
             $coordinates = $request->geometry;
 
-
             $FeedbackActivitie->user_id = $user->id;
             $FeedbackActivitie->name = $request->name;
             $FeedbackActivitie->subclass_id = $request->subclass_id;
@@ -192,11 +162,11 @@ class FeedbackActivitieController extends Controller
             if (!$FeedbackActivitie) {
                 return ApiServices::statuscode404("Registro não encontrado");
             }
-            
+
             if ($user->id != $FeedbackActivitie->user_id) {
                 return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
-            
+
             if ($FeedbackActivitie->delete()) {
                 return ApiServices::statuscode200("Deletado com sucesso");
             } else {
