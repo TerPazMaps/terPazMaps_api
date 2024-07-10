@@ -6,11 +6,11 @@ use Exception;
 use App\Models\Classe;
 use App\Services\ApiServices;
 use App\Services\RedisService;
+use App\Services\ClasseService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreClasseRequest;
 use App\Http\Requests\UpdateClasseRequest;
-use App\Services\ClasseService;
 
 class ClasseController extends Controller
 {

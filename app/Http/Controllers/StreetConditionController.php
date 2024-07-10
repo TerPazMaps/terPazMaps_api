@@ -17,9 +17,9 @@ class StreetConditionController extends Controller
     public function index()
     {
         try {
-            $streetConditions = Street_condition::all();
+            $streetConditions = ["geojson" => Street_condition::all()];
 
-            return ApiServices::statusCode200(["geojson" => $streetConditions]);
+            return ApiServices::statusCode200($streetConditions);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
 

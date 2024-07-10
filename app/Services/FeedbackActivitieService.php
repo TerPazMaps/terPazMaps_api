@@ -43,7 +43,7 @@ class FeedbackActivitieService extends AbstractService implements ServiceInterfa
         });
     }
 
-    public function show($id)
+    public function show($id): FeedbackActivitie|null
     {
         return self::loadModel()::query()->select(
             '*',
