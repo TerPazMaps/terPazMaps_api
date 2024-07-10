@@ -3,16 +3,23 @@
 namespace App\Http\Controllers;
 
 use Exception;
-use App\Models\FeedbackStreet;
-use Illuminate\Support\Carbon;
 use App\Services\ApiServices;
+use App\Models\FeedbackStreet;
 use Illuminate\Routing\Controller;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Services\FeedbackStreetService;
 use App\Http\Requests\StoreFeedbackStreetRequest;
 use App\Http\Requests\UpdateFeedbackStreetRequest;
 
 class FeedbackStreetController extends Controller
 {
+    protected $feedbackStreetService;
+
+    public function __construct()
+    {
+        $this->feedbackStreetService = new FeedbackStreetService();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -20,25 +27,15 @@ class FeedbackStreetController extends Controller
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            $FeedbackStreet = FeedbackStreet::where('user_id', $user->id)
-                ->get();
+            $FeedbackStreet = $this->feedbackStreetService->index($user->id);
 
             if ($FeedbackStreet->isEmpty()) {
                 return ApiServices::statuscode404("Este usuário não possui registros");
             }
 
-            $FeedbackStreetMap = $FeedbackStreet->map(function ($FeedbackStreet) {
-                return [
-                    "id" => $FeedbackStreet->id,
-                    "user_id" => $FeedbackStreet->user_id,
-                    "street_id" => $FeedbackStreet->street_id,
-                    "street_condition_id" => $FeedbackStreet->street_condition_id,
-                    "created_at" => Carbon::parse($FeedbackStreet->created_at)->format('d/m/Y H:i:s'),
-                    "updated_at" => Carbon::parse($FeedbackStreet->updated_at)->format('d/m/Y H:i:s')
-                ];
-            });
+            $FeedbackStreetMap = $this->feedbackStreetService->index_map($FeedbackStreet);
 
-            return ApiServices::statuscode200(["geojson" => $FeedbackStreetMap]);
+            return ApiServices::statuscode200($FeedbackStreetMap);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }
@@ -90,16 +87,9 @@ class FeedbackStreetController extends Controller
                 return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
 
-            $feedbackStreetMaps = [
-                "id" => $feedbackStreet->id,
-                "user_id" => $feedbackStreet->user_id,
-                "street_id" => $feedbackStreet->street_id,
-                "street_condition_id" => $feedbackStreet->street_condition_id,
-                "created_at" => Carbon::parse($feedbackStreet->created_at)->format('d/m/Y H:i:s'),
-                "updated_at" => Carbon::parse($feedbackStreet->updated_at)->format('d/m/Y H:i:s')
-            ];
-
-            return ApiServices::statuscode200(["geojson" => $feedbackStreetMaps]);
+            $feedbackStreetMaps = $this->feedbackStreetService->show_map($feedbackStreet);
+               
+            return ApiServices::statuscode200($feedbackStreetMaps);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }
