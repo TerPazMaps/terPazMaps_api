@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Services\EmailService;
 use Exception;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -18,7 +19,12 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    protected $emailService;
 
+    public function __construct()
+    {
+        $this->emailService = new EmailService();
+    }
     public function indexLogin()
     {
         return view('login');
@@ -101,28 +107,32 @@ class AuthController extends Controller
 
     public function sendPasswordResetNotification(Request $request)
     {
-        $regras = [
-            'email' => ['required', 'email', 'exists:users'],
-        ];
-
-        $feedback = [
-            'email.required' => 'O campo e-mail é obrigatório.',
-            'email.email' => 'O campo email deve ser um endereço de e-mail válido.',
-            'email.exists' => 'Este e-mail não pertence a um usuário.',
-        ];
-
-        $validator = Validator($request->all(), $regras, $feedback);
-        if ($validator->fails()) {
-            return ApiServices::statusCode400($validator->errors());
-        }
-
-        $token = Str::random(60);
-        User::where('email', $request->email)->update(['password_reset' =>  $token]);
-
-        $user = User::where('email', $request->email)->firstOrFail();
-
         try {
-            Mail::to($request->email)->send(new PasswordUpdate($user, $token));
+            $regras = [
+                'email' => ['required', 'email', 'exists:users'],
+            ];
+
+            $feedback = [
+                'email.required' => 'O campo e-mail é obrigatório.',
+                'email.email' => 'O campo email deve ser um endereço de e-mail válido.',
+                'email.exists' => 'Este e-mail não pertence a um usuário.',
+            ];
+
+            $validator = Validator($request->all(), $regras, $feedback);
+            if ($validator->fails()) {
+                return ApiServices::statusCode400($validator->errors());
+            }
+
+            $token = Str::random(60);
+
+            User::where('email', $request->email)->update(['password_reset' => $token]);
+
+            $user = User::where('email', $request->email)->firstOrFail();
+            
+            $sendEmail = $this->emailService->sendEmailPasswordUpadate($request->email, $user, $token);
+            if (!$sendEmail) {
+                return ApiServices::statusCode500("Erro ao enviar email.");
+            }
             return ApiServices::statusCode200("O email foi enviado com sucesso.");
         } catch (Exception $e) {
             return ApiServices::statusCode500($e);
@@ -162,7 +172,7 @@ class AuthController extends Controller
         try {
             $newPassword = User::where('email', $request->email)
                 ->update([
-                    'password' =>  Hash::make($request->password),
+                    'password' => Hash::make($request->password),
                     'password_reset' => null,
                 ]);
 
