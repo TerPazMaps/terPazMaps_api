@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\Request;
 use App\Services\ApiServices;
+use App\Models\Activitie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
@@ -85,7 +86,7 @@ class GeospatialService
         $raio = $request->input('raio');
 
         $startTime = microtime(true);
-        $chaveCache = "activitiesbyArea_" . $region_id . "_" .  $request->input('subclass_id') . "_" . $raio . "_" . $latitude . "_" . $longitude;
+        $chaveCache = "activitiesbyArea_" . $region_id . "_" . $request->input('subclass_id') . "_" . $raio . "_" . $latitude . "_" . $longitude;
         $query = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $subclass_id, $latitude, $longitude, $raio) {
             return DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
@@ -381,7 +382,7 @@ class GeospatialService
                 $totalLength += $distance;
             }
 
-            $totalLength  = number_format($totalLength / 2, 2);
+            $totalLength = number_format($totalLength / 2, 2);
             return ApiServices::statusCode200([
                 "length" => $totalLength,
                 "unit" => "metros",
@@ -407,24 +408,57 @@ class GeospatialService
             "type" => "Linestring"
         ];
     }
-
-    // http://127.0.0.1:8000/api/v5/geojson/services/bufferSum?latitude=-1.34538115355059&longitude=-48.4045690844909&raio=8?latitude=-1.34538115355059&longitude=-48.4045690844909
+    // http://127.0.0.1:8000/api/v5/geojson/services/bufferSum?raio=500&ids=467,688
     public function getBufferSum(Request $request)
-    {
-        $raio = $request->has('raio') ? intval($request->raio) : null;
-        $latitude = $request->latitude;
-        $longitude = $request->longitude;
+{
+    // Verifique e obtenha os parâmetros
+    $raio = $request->has('raio') ? intval($request->raio) : null;
+    $ids = array_map('intval', explode(',', $request->ids));
 
-        if ($raio < 6) {
-            return ApiServices::statuscode422("O raio deve ser maior ou igual a 6 metros.");
-        }
-
-        $buffer = $this->buffer($raio, $latitude, $longitude);
-
-        return ["geojson" => $buffer];
+    // Validação do raio
+    if ($raio < 6) {
+        return ApiServices::statuscode422("O raio deve ser maior ou igual a 6 metros.");
     }
 
-    // http://127.0.0.1:8000/api/v5/geojson/services/buffer?latitude=-1.34538115355059&longitude=-48.4045690844909
+    // Definir SRID
+    $srid_original = 4326; // WGS 84
+
+    // Calcule os buffers das geometrias no sistema de referência correto
+    $buffers =  DB::table('activities')
+        ->select('id',
+        'geometry',
+        DB::raw('ST_AsGeoJSON(ST_Buffer(ST_SetSRID(geometry, ' . $srid_original . '), ' . $raio . ')) AS buffered_geometry')
+    )->where('id', 467)->get();
+
+    // Formate a resposta
+    $geojson = [
+        "type" => "FeatureCollection",
+        "features" => []
+    ];
+
+    foreach ($buffers as $buffer) {
+        $geojson["features"][] = [
+            "type" => "Feature",
+            "properties" => [
+                "id" => $buffer->id
+            ],
+            "geometry" => json_decode($buffer->buffered_geometry)
+        ];
+    }
+
+    // Retorne o GeoJSON resultante
+    return response()->json([
+        "success" => [
+            "status" => "200",
+            "title" => "OK",
+            "detail" => [
+                "geojson" => $geojson
+            ]
+        ]
+    ]);
+}
+    
+    // http://127.0.0.1:8000/api/v5/geojson/services/buffer?latitude=-1.34119991436441&longitude=-48.40409132788111
     public function getBuffer(Request $request)
     {
         $raio = $request->has('raio') ? intval($request->raio) : null;
