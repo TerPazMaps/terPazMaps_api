@@ -408,6 +408,22 @@ class GeospatialService
         ];
     }
 
+    // http://127.0.0.1:8000/api/v5/geojson/services/bufferSum?latitude=-1.34538115355059&longitude=-48.4045690844909&raio=8?latitude=-1.34538115355059&longitude=-48.4045690844909
+    public function getBufferSum(Request $request)
+    {
+        $raio = $request->has('raio') ? intval($request->raio) : null;
+        $latitude = $request->latitude;
+        $longitude = $request->longitude;
+
+        if ($raio < 6) {
+            return ApiServices::statuscode422("O raio deve ser maior ou igual a 6 metros.");
+        }
+
+        $buffer = $this->buffer($raio, $latitude, $longitude);
+
+        return ["geojson" => $buffer];
+    }
+
     // http://127.0.0.1:8000/api/v5/geojson/services/buffer?latitude=-1.34538115355059&longitude=-48.4045690844909
     public function getBuffer(Request $request)
     {

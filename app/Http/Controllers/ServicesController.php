@@ -98,5 +98,16 @@ class ServicesController
         }
     }
 
+    public function getBufferSum(Request $request)
+    {
+        try {
+            $buffer = $this->GeospatialService->getBufferSum($request);
+
+            return ApiServices::statusCode200($buffer);
+        } catch (Exception $e) {
+            return ApiServices::statusCode500($e->getMessage());
+        }
+    }
+
 
 }

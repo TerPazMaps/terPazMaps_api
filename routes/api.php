@@ -64,6 +64,7 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
         Route::get('/services/buffer', [ServicesController::class, 'getBuffer']);
+        Route::get('/services/bufferSum', [ServicesController::class, 'getBufferSum']);
 
         Route::apiResource('street', StreetController::class);
 
