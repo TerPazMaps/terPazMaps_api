@@ -408,56 +408,93 @@ class GeospatialService
             "type" => "Linestring"
         ];
     }
-    // http://127.0.0.1:8000/api/v5/geojson/services/bufferSum?raio=60&ids=829,821,822,823,824,825
+    // http://127.0.0.1:8000/api/v5/geojson/services/bufferSum
     public function getBufferSum(Request $request)
-    {
-        // Verifique e obtenha os parâmetros
-        $raio = $request->has('raio') ? intval($request->raio) : null;
-        $ids = array_map('intval', explode(',', $request->ids));
+{
+    // Verifique e obtenha os parâmetros
+    $raio = $request->has('raio') ? array_map('intval', explode(',', $request->raio)) : null;
+    $ids = $request->has('ids') ? array_map('intval', explode(',', $request->ids)) : null;
 
-        // Validação do raio
-        if ($raio < 6) {
-            return ApiServices::statuscode422("O raio deve ser maior ou igual a 6 metros.");
-        }
+    // Definir SRID
+    $srid_original = 4326; // WGS 84
+    $srid_metros = 3857; // Web Mercator
 
-        // Definir SRID
-        $srid_original = 4326; // WGS 84
-        $srid_metros = 3857; // Web Mercator
+    // Definir cores para os buffers
+    $colors = ['#00ff00', '#4cc0bf', '#fd7521', '#dd3031']; // Verde, Azul Laranja, e Vermelho
 
-        // Calcule os buffers das geometrias no sistema de referência correto
-        $buffers = DB::table('activities')
+    // Considerar apenas os 4 primeiros raios
+    $raio = array_slice($raio, 0, 4);
+
+    // Inicializar o array de buffers
+    $buffers = [];
+    $central_points = [];
+
+    // Obter as geometrias originais
+    $geometries = DB::table('activities')
+        ->select('id', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+        ->whereIn('id', $ids)
+        ->get();
+
+    foreach ($raio as $rIndex => $r) {
+        $unionBuffer = DB::table('activities')
             ->select(
-                DB::raw('ST_AsGeoJSON(ST_Union(ST_Transform(ST_Buffer(ST_Transform(ST_SetSRID(geometry, ' . $srid_original . '), ' . $srid_metros . '), ' . $raio . '), ' . $srid_original . '))) AS buffered_geometry')
+                DB::raw('ST_AsGeoJSON(ST_Union(ST_Transform(ST_Buffer(ST_Transform(ST_SetSRID(geometry, ' . $srid_original . '), ' . $srid_metros . '), ' . $r . '), ' . $srid_original . '))) AS buffered_geometry')
             )
             ->whereIn('id', $ids)
-            ->get();
-            // Formate a resposta
-            $geojson = [
-                "type" => "FeatureCollection",
-                "features" => []
-            ];
-            
-            foreach ($buffers as $buffer) {
-                $geojson["features"][] = [
-                    "type" => "Feature",
-                    "properties" => null,
-                    "geometry" => json_decode($buffer->buffered_geometry)
-                ];
-            }
+            ->first();
 
-        // Retorne o GeoJSON resultante
-        return response()->json([
-            "success" => [
-                "status" => "200",
-                "title" => "OK",
-                "detail" => [
-                    "geojson" => $geojson
-                ]
-            ]
-        ]);
+        if ($unionBuffer) {
+            $buffers[] = [
+                'buffered_geometry' => $unionBuffer->buffered_geometry,
+                'color' => $colors[$rIndex]
+            ];
+        }
     }
 
+    foreach ($geometries as $geometry) {
+        $central_points[] = [
+            'id' => $geometry->id,
+            'geometry' => $geometry->geometry
+        ];
+    }
 
+    // Formate a resposta
+    $geojson = [
+        "type" => "FeatureCollection",
+        "features" => []
+    ];
+
+    foreach ($buffers as $buffer) {
+        // Adicionar o buffer
+        $geojson["features"][] = [
+            "type" => "Feature",
+            "properties" => [
+                "stroke" => $buffer['color'],
+                "stroke-width" => 2,
+                "stroke-opacity" => 1,
+                "fill" => "#555555",
+                "fill-opacity" => 0
+            ],
+            "geometry" => json_decode($buffer['buffered_geometry'])
+        ];
+    }
+
+    foreach ($central_points as $point) {
+        // Adicionar a geometria original
+        $geojson["features"][] = [
+            "type" => "Feature",
+            "properties" => null,
+            "geometry" => json_decode($point['geometry'])
+        ];
+    }
+
+    // Retorne o GeoJSON resultante
+    return ["geojson" => $geojson];
+}
+
+
+
+    
     // http://127.0.0.1:8000/api/v5/geojson/services/buffer?latitude=-1.34119991436441&longitude=-48.40409132788111
     public function getBuffer(Request $request)
     {
