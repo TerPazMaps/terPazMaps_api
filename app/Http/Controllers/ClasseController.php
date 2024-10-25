@@ -32,11 +32,11 @@ class ClasseController extends Controller
     public function index()
     {
         try {
-            $classes = Cache::remember("ClasseController_index", $this->redis_ttl, function () {
+            $classes = Cache::remember("ClasseController_index", $this->redisService->getRedisTtlLow(), function () {
                 return $this->classeService->index();
             });
 
-            return ApiServices::statusCode200($classes);
+            return response()->json($classes);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -84,11 +84,12 @@ class ClasseController extends Controller
     public function getSubclassesByClass(int $id)
     {
         try {
-            $classes = Cache::remember("ClasseController_getSubclassesByClass_" . $id, $this->redis_ttl, function () use ($id) {
+            $classes = Cache::remember("ClasseController_getSubclassesByClass_" . $id, $this->redisService->getRedisTtlLow(), function () use ($id) {
                 return $this->classeService->getSubclassesByClass($id);
             });
-
-            return ApiServices::statuscode200($classes);
+            $classes = $this->classeService->getSubclassesByClass($id);
+            
+            return response()->json($classes);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }

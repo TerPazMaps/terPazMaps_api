@@ -329,6 +329,65 @@ class RegionController extends Controller
         }
     }
 
+    // http://127.0.0.1:8000/api/v5/geojson/regions/1/activities?page=1&subclasses[]=28
+    public function getActivitiesByRegion(int $id, Request $request)
+    {
+        try {
+            // Obtém os IDs de subclasses do parâmetro de query
+            $subclasses = $request->query('subclasses', []);
+            $name = $request->query('name', ''); // Obtém o nome, se presente
+
+            // Busca as atividades pela região e filtra por subclass_id, com paginação
+            $activities = Activitie::where('region_id', $id)
+                ->select('*',DB::raw('ST_AsGeoJson(geometry) as geometry'))
+                ->when(!empty($subclasses), function ($query) use ($subclasses) {
+                    return $query->whereIn('subclass_id', $subclasses);
+                })
+                ->when(!empty($name), function ($query) use ($name) {
+                    // Converte para minúsculas tanto no banco quanto no valor buscado
+                    return $query->where(DB::raw('LOWER(name)'), 'like', '%' . strtolower($name) . '%');
+                })
+                ->with(['subclass', 'region', 'subclass.classe']) // Carrega as relações necessárias
+                ->paginate(12); // Pagina os resultados, retornando 5 por página
+
+            // Mapeia os dados paginados para GeoJSON
+            $activities->getCollection()->transform(function ($activitie) {
+                return [
+                    "id" => $activitie->id,
+                    "region_id" => $activitie->region_id,
+                    "subclass_id" => $activitie->subclass_id,
+                    "name" => $activitie->name,
+                    "active" => $activitie->active,
+                    "geometry" => $activitie->geometry,
+                    "level" => $activitie->level,
+                    "subclass" => [
+                        'id' => $activitie->subclass->id,
+                        "class_id" => $activitie->subclass->class_id,
+                        "name" => $activitie->subclass->name,
+                        "related_color" => $activitie->subclass->related_color,
+                        "class" => [
+                            'id' => $activitie->subclass->classe->id,
+                            'name' => $activitie->subclass->classe->name,
+                            'related_color' => $activitie->subclass->classe->related_color,
+                        ],
+                        "related_icon" => [
+                            'id' => $activitie->subclass->related_icon->id,
+                            'disk_name' => $activitie->subclass->related_icon->disk_name,
+                            'file_name' => $activitie->subclass->related_icon->file_name,
+                            'path' => $activitie->subclass->related_icon->getPath(),
+                        ],
+                    ],
+                    // "Centro" => json_decode($region->center)
+                ];
+            });
+
+            return response()->json($activities);
+        } catch (Exception $e) {
+            return ApiServices::statuscode500($e->getMessage());
+        }
+    }
+
+
     /**
      * Show the form for editing the specified resource.
      */
