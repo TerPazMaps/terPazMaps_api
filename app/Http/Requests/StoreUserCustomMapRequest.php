@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\GeospatialService;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Controllers\ServicesController;
 use Illuminate\Contracts\Validation\Validator;
@@ -84,7 +85,7 @@ class StoreUserCustomMapRequest extends FormRequest
         ]);
 
         // Verificando a validade do GeoJSON
-        $validateGeojson = ServicesController::GeoJsonValidator($this->geojson);
+        $validateGeojson = GeospatialService::GeoJsonValidator($this->geojson);
         if ($validateGeojson !== true) {
             $this->getValidatorInstance();
             $this->validator->errors()->add($validateGeojson['type'], $validateGeojson['message']);

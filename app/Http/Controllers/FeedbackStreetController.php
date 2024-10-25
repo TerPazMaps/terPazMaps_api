@@ -3,15 +3,23 @@
 namespace App\Http\Controllers;
 
 use Exception;
-use Illuminate\Support\Carbon;
+use App\Services\ApiServices;
 use App\Models\FeedbackStreet;
-use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Routing\Controller;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Services\FeedbackStreetService;
 use App\Http\Requests\StoreFeedbackStreetRequest;
 use App\Http\Requests\UpdateFeedbackStreetRequest;
 
 class FeedbackStreetController extends Controller
 {
+    protected $feedbackStreetService;
+
+    public function __construct()
+    {
+        $this->feedbackStreetService = new FeedbackStreetService();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -19,43 +27,17 @@ class FeedbackStreetController extends Controller
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            $FeedbackStreet = FeedbackStreet::where('user_id', $user->id)
-                ->get();
+            $FeedbackStreet = $this->feedbackStreetService->index($user->id);
 
             if ($FeedbackStreet->isEmpty()) {
-                return response()->json([
-                    "error" => [
-                        "status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros"
-                    ]
-                ], 404);
+                return ApiServices::statuscode404("Este usuário não possui registros");
             }
 
-            $FeedbackStreetMap = $FeedbackStreet->map(function ($FeedbackStreet) {
-                return [
-                    "id" => $FeedbackStreet->id,
-                    "user_id" => $FeedbackStreet->user_id,
-                    "street_id" => $FeedbackStreet->street_id,
-                    "street_condition_id" => $FeedbackStreet->street_condition_id,
-                    "created_at" => Carbon::parse($FeedbackStreet->created_at)->format('d/m/Y H:i:s'),
-                    "updated_at" => Carbon::parse($FeedbackStreet->updated_at)->format('d/m/Y H:i:s')
-                ];
-            });
+            $FeedbackStreetMap = $this->feedbackStreetService->index_map($FeedbackStreet);
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $FeedbackStreetMap],
-                ]
-            ], 200);
+            return ApiServices::statuscode200($FeedbackStreetMap);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -79,24 +61,12 @@ class FeedbackStreetController extends Controller
             $feedback->fill($request->validated());
 
             if ($feedback->save()) {
-                return response()->json([
-                    "status" => "201", "title" => "Created", "detail" => "Salvo com sucesso"
-                ], 201);
+                return ApiServices::statuscode201("Salvo com sucesso");
             } else {
-                return response()->json([
-                    "error" => [
-                        "status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao salvar"
-                    ]
-                ], 500);
+                return ApiServices::statuscode500("Erro ao salvar");
             }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -110,45 +80,18 @@ class FeedbackStreetController extends Controller
             $feedbackStreet = FeedbackStreet::find($id);
 
             if (!$feedbackStreet) {
-                return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Este usuário não possui registros feedback de ruas"]
-                ], 404);
+                return ApiServices::statuscode404("Registro não encontrado");
             }
 
             if ($user->id != $feedbackStreet->user_id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403",
-                        "title" => "Forbidden",
-                        "detail" => "Usuário não tem permissão para acessar o registro",
-                    ]
-                ], 403);
+                return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
 
-            $feedbackStreetMaps = [
-                "id" => $feedbackStreet->id,
-                "user_id" => $feedbackStreet->user_id,
-                "street_id" => $feedbackStreet->street_id,
-                "street_condition_id" => $feedbackStreet->street_condition_id,
-                "created_at" => Carbon::parse($feedbackStreet->created_at)->format('d/m/Y H:i:s'),
-                "updated_at" => Carbon::parse($feedbackStreet->updated_at)->format('d/m/Y H:i:s')
-            ];
-
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $feedbackStreetMaps],
-                ]
-            ], 200);
+            $feedbackStreetMaps = $this->feedbackStreetService->show_map($feedbackStreet);
+               
+            return ApiServices::statuscode200($feedbackStreetMaps);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -171,39 +114,22 @@ class FeedbackStreetController extends Controller
             $feedbackStreet = FeedbackStreet::find($id);
 
             if (!$feedbackStreet) {
-                return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found", "detail" => "Feedback de rua não encontrado"]
-                ], 404);
+                return ApiServices::statuscode404("Registro não encontrado");
             }
 
             if ($feedbackStreet->user_id !== $user->id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403", "title" => "Forbidden", 
-                        "detail" => "Usuário não tem permissão para acessar o registro",]
-                ], 403);
+                return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
-
+            
             $validatedData = $request->validated();
-
+            
             if ($feedbackStreet->fill($validatedData)->save()) {
-                return response()->json([
-                    "success" => [
-                    "status" => "200", "title" => "OK", "detail" => "Atualizada com sucesso"]
-                ], 403);
+                return ApiServices::statuscode200("Atualizada com sucesso");
             } else {
-                return response()->json([
-                    "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao atualizar"]
-                ], 500);
+                return ApiServices::statuscode500("Atualizada com sucesso");
             }
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -219,39 +145,20 @@ class FeedbackStreetController extends Controller
             $feedbackStreet = FeedbackStreet::find($id);
 
             if (!$feedbackStreet) {
-                return response()->json([
-                    "error" => ["status" => "404", "title" => "Not Found", 
-                    "detail" => "Registro não encontrado",]
-                ], 404);
+                return ApiServices::statuscode404("Registro não encontrado");
             }
 
             if ($feedbackStreet->user_id !== $user->id) {
-                return response()->json([
-                    "error" => [
-                        "status" => "403", "title" => "Forbidden", 
-                        "detail" => "Usuário não tem permissão para acessar o registro",]
-                ], 403);
+                return ApiServices::statuscode403("Usuário não tem permissão para acessar o registro");
             }
-
-            if ($feedbackStreet->delete()) {
-                return response()->json([
-                    "success" => [
-                    "status" => "200", "title" => "OK", "detail" => "Deletado com sucesso"]
-                ], 200);
-            }
-
-            return response()->json([
-                "error" => ["status" => "500", "title" => "Internal Server Error", "detail" => "Erro ao deletar"]
-            ], 500);
             
+            if ($feedbackStreet->delete()) {
+                return ApiServices::statuscode200("Usuário não tem permissão para acessar o registro");
+            }
+            
+            return ApiServices::statuscode500("Erro ao deletar");
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 }

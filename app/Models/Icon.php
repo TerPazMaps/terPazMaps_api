@@ -13,18 +13,6 @@ class Icon extends Model
         'subclasse_id',
         'disk_name',
         'file_name',
-        'file_size',
-        'content_type',
-        'title',
-        'description',
-        'field',
-        'attachment_type',
-        'is_public',
-        'sort_order',
-    ];
-
-    protected $casts = [
-        'is_public' => 'boolean',
     ];
 
     public function subclasse()
@@ -32,4 +20,11 @@ class Icon extends Model
         return $this->belongsTo(Subclasse::class);
     }
 
+    public function getPath()
+    {
+        return env('app_url') . 'storage/' . substr($this->disk_name, 0, 3)
+         . '/' . substr($this->disk_name, 3, 3)
+         . '/' . substr($this->disk_name, 6, 3) 
+         . '/' . $this->disk_name;
+    }
 }
