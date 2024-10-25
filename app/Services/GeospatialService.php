@@ -337,8 +337,8 @@ class GeospatialService
                     ];
                 }
 
-                // $buffer = $this->buffer($raio, $latitude, $longitude);
-                // $features[] = $buffer;
+                $buffer = $this->buffer($raio, $latitude, $longitude);
+                $features[] = $buffer;
             }
         }
 
@@ -383,11 +383,11 @@ class GeospatialService
             }
 
             $totalLength = number_format($totalLength / 2, 2);
-            return ApiServices::statusCode200([
+            return [
                 "length" => $totalLength,
                 "unit" => "metros",
                 "type" => "Polygon",
-            ]);
+            ];
         }
 
         $totalDistance = 0;
@@ -420,7 +420,8 @@ class GeospatialService
     $srid_metros = 3857; // Web Mercator
 
     // Definir cores para os buffers
-    $colors = ['#00ff00', '#4cc0bf', '#fd7521', '#dd3031']; // Verde, Azul Laranja, e Vermelho
+    //         Verde,         Azul,    Laranja, e Vermelho
+    $colors = ['#00ff00', '#4cc0bf', '#FFFF00', '#ff0000'];
 
     // Considerar apenas os 4 primeiros raios
     $raio = array_slice($raio, 0, 4);
@@ -451,6 +452,7 @@ class GeospatialService
         }
     }
 
+    $geometries = $geometries->reverse();
     foreach ($geometries as $geometry) {
         $central_points[] = [
             'id' => $geometry->id,
@@ -464,6 +466,7 @@ class GeospatialService
         "features" => []
     ];
 
+    $buffers = array_reverse($buffers);
     foreach ($buffers as $buffer) {
         // Adicionar o buffer
         $geojson["features"][] = [
@@ -472,8 +475,8 @@ class GeospatialService
                 "stroke" => $buffer['color'],
                 "stroke-width" => 2,
                 "stroke-opacity" => 1,
-                "fill" => "#555555",
-                "fill-opacity" => 0
+                "fill" => $buffer['color'],
+                "fill-opacity" => 0.2
             ],
             "geometry" => json_decode($buffer['buffered_geometry'])
         ];

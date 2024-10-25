@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreRegionRequest;
 use App\Http\Requests\UpdateRegionRequest;
+use App\Services\GeospatialService;
 
 class RegionController extends Controller
 {
@@ -212,6 +213,12 @@ class RegionController extends Controller
             )
                 ->where('region_id', $id)
                 ->has('streetCondition');
+            $query2 = Street::select(
+                '*',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry')
+            )
+                ->where('region_id', $id)
+                ->has('streetCondition');
 
             // Verifica se o parâmetro 'condition_id' está presente na solicitação
             $chaveCache = "IconController_getStreetsByRegion_" . $id;
@@ -220,9 +227,28 @@ class RegionController extends Controller
                 $chaveCache .= "_" . $request->condition_id;
                 // Aplica o filtro para 'condition_id'
                 $query->whereIn('street_condition_id', $condition_ids);
+                $query2->whereIn('street_condition_id', $condition_ids);
+
+            }
+            
+            $ruas = $query2->select('id as street_id')->get();
+            $streetIds = $ruas->pluck('street_id')->toArray();
+            $geo = New GeospatialService();
+            $totalMetrosRuas = 0;
+            
+            // Iterar sobre cada ID de rua
+            foreach ($streetIds as $street_id) {
+                // Criar um novo objeto Request para cada ID de rua
+                $newRequest = new Request(['street_id' => $street_id]);
+
+                // Chamar a função getLengthStreet com o novo request
+                $response = $geo->getLengthStreet($newRequest);
+                
+                $length = floatval($response['length']);
+                $totalMetrosRuas += $length;    
             }
 
-            $streets = Cache::remember($chaveCache, $this->redis_ttl, function () use ($query) {
+            $streets = Cache::remember($chaveCache, 1, function () use ($query) {                
                 return $query->get()->map(function ($street) {
                     $geometry = json_decode($street->geometry);
                     $coordinates = $geometry->coordinates;
@@ -239,7 +265,12 @@ class RegionController extends Controller
                         "continuous" => $street->continuous,
                         "line_cap" => $street->line_cap,
                         "line_dash_pattern" => $street->line_dash_pattern,
-                    ], $decodedProperties);
+                        // "stroke" => "#EFE944", // pavimentado
+                        "stroke" => $street->color, // agua
+                        // "stroke" => '#ffea00', // entulho
+                        "stroke-width"=> 2,
+                        "stroke-opacity"=> 1
+                    ]);
 
                     // Cria o objeto GeoJSON Feature
                     $feature = [
@@ -258,6 +289,7 @@ class RegionController extends Controller
             // Cria o objeto GeoJSON FeatureCollection
             $geojson = [
                 "type" => "FeatureCollection",
+                "comprimentoTotal" => $totalMetrosRuas,
                 "features" => $streets->toArray(),
             ];
 
