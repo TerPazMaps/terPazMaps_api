@@ -46,12 +46,13 @@ Route::get('/terpazmaps', function () {
 Route::group(['prefix' => 'api/v5'], function () {
     Route::group(['prefix' => '/geojson'], function () {
 
-        Route::apiResource('classe', ClasseController::class);
-        Route::get('/classe/{id}/subclasses', [ClasseController::class, 'getSubclassesByClass']);
+        Route::apiResource('classes', ClasseController::class);
+        Route::get('/classes/{id}/subclasses', [ClasseController::class, 'getSubclassesByClass']);
 
         Route::apiResource('region', RegionController::class);
         Route::get('/region/{id}/streets', [RegionController::class, 'getStreetsByRegion']);
         Route::get('/region/{id}/icons', [RegionController::class, 'getIconsByRegion']);
+        Route::get('/regions/{id}/activities', [RegionController::class, 'getActivitiesByRegion']);
 
         Route::apiResource('street_condition', StreetConditionController::class);
 
@@ -64,6 +65,7 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
         Route::get('/services/buffer', [ServicesController::class, 'getBuffer']);
+        Route::post('/services/bufferSum', [ServicesController::class, 'getBufferSum']);
 
         Route::apiResource('street', StreetController::class);
 

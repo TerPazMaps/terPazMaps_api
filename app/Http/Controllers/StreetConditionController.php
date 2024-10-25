@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Exception;
 use App\Models\Street_condition;
+use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use App\Http\Requests\StoreStreet_conditionRequest;
 use App\Http\Requests\UpdateStreet_conditionRequest;
@@ -16,23 +17,12 @@ class StreetConditionController extends Controller
     public function index()
     {
         try {
-            $streetConditions = Street_condition::all();
+            $streetConditions = ["geojson" => Street_condition::all()];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $streetConditions],
-                ]
-            ], 200);
+            return ApiServices::statusCode200($streetConditions);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
+
         }
     }
 

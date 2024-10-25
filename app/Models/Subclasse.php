@@ -20,8 +20,9 @@ class Subclasse extends Model
         return $this->belongsTo(Classe::class, 'class_id');
     }
 
-    public function icon()
+    public function related_icon()
     {
         return $this->hasOne(Icon::class);
     }
+
 }

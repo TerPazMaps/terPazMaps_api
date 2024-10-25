@@ -25,5 +25,10 @@ class Region extends Model
     {
         return $this->hasMany(Subclasse::class);
     }
+    
+    public function activities()
+    {
+        return $this->hasMany(activitie::class);
+    }
 
 }

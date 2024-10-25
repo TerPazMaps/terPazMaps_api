@@ -7,19 +7,24 @@ use App\Models\Region;
 use App\Models\Street;
 use App\Models\Activitie;
 use Illuminate\Http\Request;
+use App\Services\ApiServices;
+use App\Services\RedisService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreRegionRequest;
 use App\Http\Requests\UpdateRegionRequest;
+use App\Services\GeospatialService;
 
 class RegionController extends Controller
 {
     private $redis_ttl;
+    protected $redisService;
 
     public function __construct()
     {
         $this->redis_ttl = 3600;
+        $this->redisService = new RedisService();
     }
     /**
      * Display a listing of the resource.
@@ -56,49 +61,35 @@ class RegionController extends Controller
                 "features" => $regions
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
     public function getIconsByRegion(int $id, Request $request)
     {
         try {
-            $chaveCache = "RegionController_getIconsByRegion_" . $id; 
+            $prefix = "RegionController_getIconsByRegion_" . $id;
             if ($request->class_id) {
-                $chaveCache .= "_" . $request->class_id;
                 $class_ids = array_map('intval', explode(',', $request->class_id));
             }
             if ($request->subclass_id) {
-                $chaveCache .= "_" . $request->subclass_id;
                 $subclass_id = array_map('intval', explode(',', $request->subclass_id));
-            }
+            }   
 
-            $activities = Cache::remember($chaveCache, $this->redis_ttl, function () use ($request, $id) {
+            $keyCache = $this->redisService->createKeyCacheFromRequest($request, $prefix, ['class_id', 'subclass_id']);
+            $activities = Cache::remember($keyCache, $this->redis_ttl, function () use ($request, $id, $class_ids, $subclass_id) {
+                
                 return Activitie::with(['subclass.icon'])
-                    ->whereHas('subclass', function ($query) use ($request) {
+                    ->whereHas('subclass', function ($query) use ($request, $class_ids) {
                         if ($request->class_id) {
-                            $class_ids = array_map('intval', explode(',', $request->class_id));
                             $query->whereIn('class_id', $class_ids);
                         }
                     })
                     ->where('region_id', $id)
-                    ->where(function ($query) use ($request) {
+                    ->where(function ($query) use ($request, $subclass_id) {
                         if ($request->subclass_id) {
-                            $subclass_id = array_map('intval', explode(',', $request->subclass_id));
                             $query->whereIn('subclass_id', $subclass_id);
                         }
                     })
@@ -144,21 +135,9 @@ class RegionController extends Controller
                 'features' => $geojsonFeatures,
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -212,21 +191,9 @@ class RegionController extends Controller
                 "features" => [$feature]
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -246,6 +213,12 @@ class RegionController extends Controller
             )
                 ->where('region_id', $id)
                 ->has('streetCondition');
+            $query2 = Street::select(
+                '*',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry')
+            )
+                ->where('region_id', $id)
+                ->has('streetCondition');
 
             // Verifica se o parâmetro 'condition_id' está presente na solicitação
             $chaveCache = "IconController_getStreetsByRegion_" . $id;
@@ -254,9 +227,28 @@ class RegionController extends Controller
                 $chaveCache .= "_" . $request->condition_id;
                 // Aplica o filtro para 'condition_id'
                 $query->whereIn('street_condition_id', $condition_ids);
+                $query2->whereIn('street_condition_id', $condition_ids);
+
+            }
+            
+            $ruas = $query2->select('id as street_id')->get();
+            $streetIds = $ruas->pluck('street_id')->toArray();
+            $geo = New GeospatialService();
+            $totalMetrosRuas = 0;
+            
+            // Iterar sobre cada ID de rua
+            foreach ($streetIds as $street_id) {
+                // Criar um novo objeto Request para cada ID de rua
+                $newRequest = new Request(['street_id' => $street_id]);
+
+                // Chamar a função getLengthStreet com o novo request
+                $response = $geo->getLengthStreet($newRequest);
+                
+                $length = floatval($response['length']);
+                $totalMetrosRuas += $length;    
             }
 
-            $streets = Cache::remember($chaveCache, $this->redis_ttl, function () use ($query) {
+            $streets = Cache::remember($chaveCache, 1, function () use ($query) {                
                 return $query->get()->map(function ($street) {
                     $geometry = json_decode($street->geometry);
                     $coordinates = $geometry->coordinates;
@@ -273,7 +265,12 @@ class RegionController extends Controller
                         "continuous" => $street->continuous,
                         "line_cap" => $street->line_cap,
                         "line_dash_pattern" => $street->line_dash_pattern,
-                    ], $decodedProperties);
+                        // "stroke" => "#EFE944", // pavimentado
+                        "stroke" => $street->color, // agua
+                        // "stroke" => '#ffea00', // entulho
+                        "stroke-width"=> 2,
+                        "stroke-opacity"=> 1
+                    ]);
 
                     // Cria o objeto GeoJSON Feature
                     $feature = [
@@ -292,24 +289,13 @@ class RegionController extends Controller
             // Cria o objeto GeoJSON FeatureCollection
             $geojson = [
                 "type" => "FeatureCollection",
+                "comprimentoTotal" => $totalMetrosRuas,
                 "features" => $streets->toArray(),
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
@@ -332,29 +318,74 @@ class RegionController extends Controller
                     return $geojson_streets;
                 });
 
-
             $geojson = [
                 "type" => "FeatureCollection",
                 "features" => $streets
             ];
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $geojson],
-                ]
-            ], 200);
-
+            return ApiServices::statuscode200(["geojson" => $geojson]);
         } catch (Exception $e) {
-            return response()->json("Erro ao atualizar properties: " . $e->getMessage(), 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
+    // http://127.0.0.1:8000/api/v5/geojson/regions/1/activities?page=1&subclasses[]=28
+    public function getActivitiesByRegion(int $id, Request $request)
+    {
+        try {
+            // Obtém os IDs de subclasses do parâmetro de query
+            $subclasses = $request->query('subclasses', []);
+            $name = $request->query('name', ''); // Obtém o nome, se presente
 
+            // Busca as atividades pela região e filtra por subclass_id, com paginação
+            $activities = Activitie::where('region_id', $id)
+                ->select('*',DB::raw('ST_AsGeoJson(geometry) as geometry'))
+                ->when(!empty($subclasses), function ($query) use ($subclasses) {
+                    return $query->whereIn('subclass_id', $subclasses);
+                })
+                ->when(!empty($name), function ($query) use ($name) {
+                    // Converte para minúsculas tanto no banco quanto no valor buscado
+                    return $query->where(DB::raw('LOWER(name)'), 'like', '%' . strtolower($name) . '%');
+                })
+                ->with(['subclass', 'region', 'subclass.classe']) // Carrega as relações necessárias
+                ->paginate(12); // Pagina os resultados, retornando 5 por página
 
+            // Mapeia os dados paginados para GeoJSON
+            $activities->getCollection()->transform(function ($activitie) {
+                return [
+                    "id" => $activitie->id,
+                    "region_id" => $activitie->region_id,
+                    "subclass_id" => $activitie->subclass_id,
+                    "name" => $activitie->name,
+                    "active" => $activitie->active,
+                    "geometry" => $activitie->geometry,
+                    "level" => $activitie->level,
+                    "subclass" => [
+                        'id' => $activitie->subclass->id,
+                        "class_id" => $activitie->subclass->class_id,
+                        "name" => $activitie->subclass->name,
+                        "related_color" => $activitie->subclass->related_color,
+                        "class" => [
+                            'id' => $activitie->subclass->classe->id,
+                            'name' => $activitie->subclass->classe->name,
+                            'related_color' => $activitie->subclass->classe->related_color,
+                        ],
+                        "related_icon" => [
+                            'id' => $activitie->subclass->related_icon->id,
+                            'disk_name' => $activitie->subclass->related_icon->disk_name,
+                            'file_name' => $activitie->subclass->related_icon->file_name,
+                            'path' => $activitie->subclass->related_icon->getPath(),
+                        ],
+                    ],
+                    // "Centro" => json_decode($region->center)
+                ];
+            });
 
-
+            return response()->json($activities);
+        } catch (Exception $e) {
+            return ApiServices::statuscode500($e->getMessage());
+        }
+    }
 
 
     /**

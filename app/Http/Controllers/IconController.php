@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Exception;
 use App\Models\Icon;
+use App\Services\IconService;
+use App\Services\ApiServices;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreIconRequest;
@@ -13,40 +15,29 @@ class IconController extends Controller
 {
 
     private $redis_ttl;
+    protected $IconService;
 
     public function __construct()
     {
         $this->redis_ttl = 3600;
+        $this->IconService = new IconService();
     }
+
     /**
      * Display a listing of the resource.
      */
 
     public function index()
     {
-        try {
+        try {   
             $chaveCache = "IconController_index";
             $icons = Cache::remember($chaveCache, $this->redis_ttl, function () {
-                return Icon::with('subclasse')
-                    ->has('subclasse') // Somente ícones que têm uma atividade relacionada com uma subclass correspondente
-                    ->get();
+                return $this->IconService->index();
             });
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $icons],
-                ]
-            ], 200);
+            return ApiServices::statuscode200(["geojson" => $icons]);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 

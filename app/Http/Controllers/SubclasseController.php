@@ -6,6 +6,9 @@ use Exception;
 use App\Models\Icon;
 use App\Models\Subclasse;
 use Illuminate\Http\Request;
+use App\Services\ApiServices;
+use App\Services\RedisService;
+use App\Services\SubclasseService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreSubclasseRequest;
@@ -14,10 +17,14 @@ use App\Http\Requests\UpdateSubclasseRequest;
 class SubclasseController extends Controller
 {
     private $redis_ttl;
+    protected $redisService;
+    protected $subclasseService;
 
     public function __construct()
     {
         $this->redis_ttl = 3600;
+        $this->redisService = new RedisService();
+        $this->subclasseService = new SubclasseService();
     }
     /**
      * Display a listing of the resource.
@@ -25,44 +32,23 @@ class SubclasseController extends Controller
     public function index(Request $request)
     {
         try {
-            $subclassesQuery = Icon::with('subclasse')->has('subclasse');
+            $keyCache = $this->redisService->createKeyCacheFromRequest($request, "SubclasseController_index", ["name"]);
+            $subclassesQuery = $this->subclasseService->index($request);
 
-            $chaveCache = "SubclasseController_index";
-            if ($request->name) {
-                $chaveCache .= "_" . $request->name;
-                $name = $request->name;
-
-                // Adicionar a cláusula where para filtrar as subclasses pelo nome
-                $subclassesQuery->whereHas('subclasse', function ($query) use ($name) {
-                    $query->where('name', 'like', '%' . $name . '%');
-                })->get();
-            }
-
-            $subclasses = Cache::remember($chaveCache, $this->redis_ttl, function () use ($subclassesQuery) {
-                $subclasses = $subclassesQuery->get();
-
-                $subclasses->transform(function ($item) {
-                    $item['image_url'] = config('app.url') . "storage/" . substr($item->disk_name, 0, 3) . '/' . substr($item->disk_name, 3, 3) . '/' . substr($item->disk_name, 6, 3) . '/' . $item->disk_name;
-                    return $item;
-                });
-                return $subclasses;
+            $subclasses = Cache::remember($keyCache, $this->redis_ttl, function () use ($subclassesQuery) {
+                return $this->subclasseService->transform($subclassesQuery);
             });
 
-            return response()->json([
-                "success" => [
-                    "status" => "200",
-                    "title" => "OK",
-                    "detail" => ["geojson" => $subclasses],
-                ]
-            ], 200);
+            if ($subclasses['geojson']->isEmpty()) {
+                if ($request->name) {
+                    return ApiServices::statuscode404("Nenhuma subclasse com o nome: ".$request->name);
+                }
+                return ApiServices::statuscode404("Sem registros de subclasse ");
+            }
+
+            return ApiServices::statusCode200($subclasses);
         } catch (Exception $e) {
-            return response()->json([
-                "error" => [
-                    "status" => "500",
-                    "title" => "Internal Server Error",
-                    "detail" => $e->getMessage(),
-                ]
-            ], 500);
+            return ApiServices::statuscode500($e->getMessage());
         }
     }
 
