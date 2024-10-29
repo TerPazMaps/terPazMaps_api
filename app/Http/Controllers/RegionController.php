@@ -164,7 +164,7 @@ class RegionController extends Controller
     {
         try {
             $chaveCache = "IconController_show_" . $id;
-            $region = Cache::remember($chaveCache, $this->redis_ttl, function () use ($id) {
+            $region = Cache::remember($chaveCache, $this->redisService->getRedisTtlLow(), function () use ($id) {
                 return Region::select(
                     'id',
                     'name',
@@ -179,10 +179,13 @@ class RegionController extends Controller
                 "type" => "Feature",
                 "geometry" => json_decode($region->geometry),
                 "properties" => [
-                    "ID" => $region->id,
-                    "Nome" => $region->name,
-                    "Cidade" => $region->city,
-                    "Centro" => json_decode($region->center)
+                    "stroke"=> "#ff0000",
+                    "stroke-opacity"=> 1,
+                    "fill-opacity"=> 0,
+                    // "ID" => $region->id,
+                    // "Nome" => $region->name,
+                    // "Cidade" => $region->city,
+                    // "Centro" => json_decode($region->center)
                 ]
             ];
 
@@ -191,7 +194,7 @@ class RegionController extends Controller
                 "features" => [$feature]
             ];
 
-            return ApiServices::statuscode200(["geojson" => $geojson]);
+            return response()->json($geojson);
         } catch (Exception $e) {
             return ApiServices::statuscode500($e->getMessage());
         }
