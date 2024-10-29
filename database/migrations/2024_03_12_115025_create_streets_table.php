@@ -8,6 +8,8 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
     public function up()
     {
@@ -15,18 +17,18 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('region_id');
             $table->unsignedBigInteger('street_condition_id')->nullable();
-            $table->geometry('geometry');
+            $table->geometry('geometry', '4326'); // Definindo SRID 4326
             $table->longText('properties')->nullable();
-            $table->string('color');
-            $table->float('width', 10, 2);
-            $table->tinyInteger('continuous')->default(1);
+            $table->string('color'); // Se quiser definir um tamanho, use $table->string('color', 191);
+            $table->decimal('width', 10, 2); // Alterado para decimal para refletir o SQL original
+            $table->boolean('continuous')->default(true); // Alterado para boolean
             $table->string('line_cap')->nullable();
             $table->string('line_dash_pattern')->nullable();
             $table->timestamps();
 
             // Chaves estrangeiras
-            $table->foreign('region_id')->references('id')->on('regions');
-            $table->foreign('street_condition_id')->references('id')->on('street_conditions');
+            $table->foreign('region_id')->references('id')->on('regions')->onDelete('cascade');
+            $table->foreign('street_condition_id')->references('id')->on('street_conditions')->onDelete('set null');
         });
     }
 

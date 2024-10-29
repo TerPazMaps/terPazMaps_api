@@ -8,6 +8,8 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
     public function up(): void
     {
@@ -16,18 +18,21 @@ return new class extends Migration
             $table->unsignedBigInteger('region_id');
             $table->unsignedBigInteger('subclass_id');
             $table->string('name', 191)->nullable();
-            $table->point('geometry')->nullable();
+            $table->geometry('geometry')->nullable(); // Coluna para geometria, se necessária
             $table->tinyInteger('active')->default(1);
             $table->unsignedBigInteger('level')->default(1);
             $table->timestamps();
 
-            $table->foreign('region_id')->references('id')->on('regions');
-            $table->foreign('subclass_id')->references('id')->on('subclasses');
+            // Chaves estrangeiras
+            $table->foreign('region_id')->references('id')->on('regions')->onDelete('cascade'); // Adicionando onDelete se necessário
+            $table->foreign('subclass_id')->references('id')->on('subclasses')->onDelete('cascade'); // Adicionando onDelete se necessário
         });
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
     public function down(): void
     {

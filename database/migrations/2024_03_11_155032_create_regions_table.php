@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name', 191);
             $table->string('city', 191);
-            $table->polygon('geometry')->nullable();
-            $table->point('center')->nullable();
+            $table->geometry('geometry')->nullable();  // Tipo geometry do PostGIS
+            $table->point('center', 4326)->nullable();  // Tipo point do PostGIS com SRID 4326
             $table->timestamps();
         });
     }

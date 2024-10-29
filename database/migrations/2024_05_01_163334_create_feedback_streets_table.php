@@ -14,14 +14,14 @@ return new class extends Migration
         Schema::create('feedback_streets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('street_id')->unique();
+            $table->unsignedBigInteger('street_id');  // Removido o unique
             $table->unsignedBigInteger('street_condition_id');
             $table->timestamps();
 
-            // Chaves estrangeiras
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('street_id')->references('id')->on('streets');
-            $table->foreign('street_condition_id')->references('id')->on('street_conditions');
+            // Chaves estrangeiras com ON DELETE CASCADE
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('street_id')->references('id')->on('streets')->onDelete('cascade');
+            $table->foreign('street_condition_id')->references('id')->on('street_conditions')->onDelete('cascade');
         });
     }
 

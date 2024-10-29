@@ -8,6 +8,8 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
     public function up(): void
     {
@@ -15,16 +17,19 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('name', 191);
-            $table->polygon('geometry')->nullable();
-            $table->point('center')->nullable();
-            $table->timestamps();
+            $table->geometry('geometry')->nullable(); // Coluna para geometria, se necessária
+            $table->geometry('center')->nullable();    // Coluna para o centro, se necessária
+            $table->timestamps(); // Cria as colunas created_at e updated_at automaticamente
 
-            $table->foreign('user_id')->references('id')->on('users');
+            // Chave estrangeira
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade'); // Adicionando onDelete se necessário
         });
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
     public function down(): void
     {

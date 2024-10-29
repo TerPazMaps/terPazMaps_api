@@ -17,12 +17,13 @@ return new class extends Migration
             $table->unsignedBigInteger('region_id');
             $table->unsignedBigInteger('subclass_id');
             $table->string('name', 191)->nullable();
-            $table->point('geometry')->nullable();
+            $table->geometry('geometry')->nullable();  // Alterado para geometry do PostGIS
             $table->timestamps();
             
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('region_id')->references('id')->on('regions');
-            $table->foreign('subclass_id')->references('id')->on('subclasses');
+            // Definindo as chaves estrangeiras com ON DELETE CASCADE para remover feedbacks relacionados
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('region_id')->references('id')->on('regions')->onDelete('cascade');
+            $table->foreign('subclass_id')->references('id')->on('subclasses')->onDelete('cascade');
         });
     }
 

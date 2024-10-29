@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('subclasse_id')->nullable();
             $table->string('disk_name', 191);
             $table->string('file_name', 191);
-            $table->bigInteger('file_size');
+            $table->bigInteger('file_size');  // Certifique-se de incluir este campo
             $table->string('content_type', 191);
             $table->string('title', 191)->nullable();
             $table->text('description')->nullable();
@@ -26,8 +26,8 @@ return new class extends Migration
             $table->integer('sort_order')->nullable();
             $table->timestamps();
 
-              // Chaves estrangeiras
-              $table->foreign('subclasse_id')->references('id')->on('subclasses');
+            // Chaves estrangeiras com ON DELETE CASCADE
+            $table->foreign('subclasse_id')->references('id')->on('subclasses')->onDelete('cascade');
         });
     }
 
@@ -39,4 +39,3 @@ return new class extends Migration
         Schema::dropIfExists('icons');
     }
 };
-
