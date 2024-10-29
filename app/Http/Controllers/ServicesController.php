@@ -92,7 +92,7 @@ class ServicesController
         try {
             $buffer = $this->GeospatialService->getBuffer($request);
 
-            return ApiServices::statusCode200($buffer);
+            return response()->json($buffer);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -103,7 +103,7 @@ class ServicesController
         try {
             $buffer = $this->GeospatialService->getBufferSum($request);
 
-            return ApiServices::statusCode200($buffer);
+            return response()->json($buffer);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
