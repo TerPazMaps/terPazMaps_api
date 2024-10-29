@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ClassesSeeder::class);
         $this->call(RegionSeeder::class);
         $this->call(StreetConditionSeeder::class);
-        $this->call(SubclasseSeeder::class);
+        // $this->call(SubclasseSeeder::class);
         // $this->call(ActivitieSeeder::class);
         // $this->call(StreetSeeder::class);
         // $this->call(IconSeeder::class);
