@@ -15,8 +15,9 @@ return new class extends Migration
     {
         Schema::create('street_conditions', function (Blueprint $table) {
             $table->id();
-            $table->string('condition');
-            $table->timestamps();
+            $table->string('condition', 255); // Definindo tamanho
+            $table->string('color', 7); // Adicionando a coluna color
+            $table->timestamps(0); // Cria created_at e updated_at sem precisão
         });
     }
 
