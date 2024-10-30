@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Subclasse;
 use Illuminate\Database\Seeder;
 use Database\Seeders\ClassesSeeder; // Importa o ClassesSeeder
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,14 +20,12 @@ class DatabaseSeeder extends Seeder
         $this->call(ClassesSeeder::class);
         $this->call(RegionSeeder::class);
         $this->call(StreetConditionSeeder::class);
-        // $this->call(SubclasseSeeder::class);
-        // $this->call(ActivitieSeeder::class);
-        // $this->call(StreetSeeder::class);
-        // $this->call(IconSeeder::class);
-        // $this->call(IconSeeder::class);
-        
-        // Você pode adicionar outros seeders aqui no futuro, se necessário
-        // Exemplo: $this->call(OtherSeeder::class);
+        $this->call(SubclasseSeeder::class);
+        $this->call(ActivitieSeeder::class);
+        $this->call(ActivitieSeeder2::class);
+        $this->call(StreetSeeder::class);
+        $this->call(StreetSeeder2::class);
+        $this->call(IconSeeder::class);
         
         // \App\Models\User::factory(10)->create();
         // \App\Models\User::factory()->create([
