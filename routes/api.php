@@ -60,12 +60,18 @@ Route::group(['prefix' => 'api/v5'], function () {
 
         Route::apiResource('activitie', ActivitieController::class);
 
-        Route::get('/services/activities-nearby', [ServicesController::class, 'getActivitiesbyAreaPG']);
-        Route::get('/services/points-of-interest', [ServicesController::class, 'getPointsOfInterestPG']);
+        // 15
+        Route::get('/services/activities-nearbyPG', [ServicesController::class, 'getActivitiesbyAreaPG']);
+        Route::get('/services/activities-nearbyMS', [ServicesController::class, 'getActivitiesbyAreaMS']);
+        // 11
+        Route::get('/services/bufferSumPG/{region}/{subclass}', [ServicesController::class, 'getBufferSumPG']);
+        Route::get('/services/bufferSumMS/{region}/{subclass}', [ServicesController::class, 'getBufferSumMS']);
+
+        Route::get('/services/points-of-interestPG', [ServicesController::class, 'getPointsOfInterestPG']);
+        Route::get('/services/points-of-interestMS', [ServicesController::class, 'getPointsOfInterestMS']);
         Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
         Route::get('/services/buffer', [ServicesController::class, 'getBuffer']);
-        Route::get('/services/bufferSum/{region}/{subclass}', [ServicesController::class, 'getBufferSum']);
 
         Route::apiResource('street', StreetController::class);
 

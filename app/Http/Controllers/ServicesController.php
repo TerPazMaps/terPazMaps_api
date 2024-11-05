@@ -16,11 +16,11 @@ class ServicesController
         $this->GeospatialService = $geospatial;
     }
 
-    public function getActivitiesbyArea(Request $request)
+    public function getActivitiesbyAreaMS(Request $request)
     {
         try {
-            $geojson = $this->GeospatialService->getActivitiesbyArea($request);
-            return ApiServices::statusCode200($geojson);
+            $geojson = $this->GeospatialService->getActivitiesbyAreaMS($request);
+            return response()->json($geojson);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -30,7 +30,7 @@ class ServicesController
     {
         try {
             $geojson = $this->GeospatialService->getActivitiesbyAreaPG($request);
-            return ApiServices::statusCode200($geojson);
+            return response()->json($geojson);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -46,16 +46,16 @@ class ServicesController
         }
     }
 
-    public function getPointsOfInterest(Request $request)
+    public function getPointsOfInterestMS(Request $request)
     {
         try {
-            $geojson = $this->GeospatialService->getPointsOfInterest($request);
+            $geojson = $this->GeospatialService->getPointsOfInterestMS($request);
 
             if ($geojson['features'] == []) {
                 return ApiServices::statusCode404("Sem pontos de interesse próximo");
             }
+            return response()->json($geojson);
 
-            return ApiServices::statusCode200($geojson);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -70,7 +70,7 @@ class ServicesController
                 return ApiServices::statusCode404("Sem pontos de interesse próximo");
             }
 
-            return ApiServices::statusCode200($geojson);
+            return response()->json($geojson);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -98,10 +98,21 @@ class ServicesController
         }
     }
 
-    public function getBufferSum(Request $request)
+    public function getBufferSumPG(Request $request)
     {
         try {
-            $buffer = $this->GeospatialService->getBufferSum($request);
+            $buffer = $this->GeospatialService->getBufferSumPG($request);
+
+            return response()->json($buffer);
+        } catch (Exception $e) {
+            return ApiServices::statusCode500($e->getMessage());
+        }
+    }
+ 
+    public function getBufferSumMS(Request $request)
+    {
+        try {
+            $buffer = $this->GeospatialService->getBufferSumMS($request);
 
             return response()->json($buffer);
         } catch (Exception $e) {
