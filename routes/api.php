@@ -60,15 +60,30 @@ Route::group(['prefix' => 'api/v5'], function () {
 
         Route::apiResource('activitie', ActivitieController::class);
 
-        // 15
-        Route::get('/services/activities-nearbyPG', [ServicesController::class, 'getActivitiesbyAreaPG']);
-        Route::get('/services/activities-nearbyMS', [ServicesController::class, 'getActivitiesbyAreaMS']);
-        // 11
-        Route::get('/services/bufferSumPG/{region}/{subclass}', [ServicesController::class, 'getBufferSumPG']);
-        Route::get('/services/bufferSumMS/{region}/{subclass}', [ServicesController::class, 'getBufferSumMS']);
-
-        Route::get('/services/points-of-interestPG', [ServicesController::class, 'getPointsOfInterestPG']);
-        Route::get('/services/points-of-interestMS', [ServicesController::class, 'getPointsOfInterestMS']);
+        // 11 - consultar arae de influencia de atividades novas no mapa
+        // PostgreSQL: ST_DistanceSphere()
+        // MySQL:      ST_Distance_Sphere()
+        Route::get('/services/activities-nearbyPG',          [ServicesController::class, 'getActivitiesbyAreaPG']);
+        Route::get('/services/activities-nearbyMS',          [ServicesController::class, 'getActivitiesbyAreaMS']);
+        
+        // 12 - consultar escolas com hospitais proximos
+        // PostgreSQL: ST_DistanceSphere()
+        // MySQL:      ST_Distance_Sphere()
+        Route::get('/services/points-of-interestPG',         [ServicesController::class, 'getPointsOfInterestPG']);
+        Route::get('/services/points-of-interestMS',         [ServicesController::class, 'getPointsOfInterestMS']);
+        
+        // 14 - Consultar atividades em áreas de difícil acesso
+        // PostgreSQL: ST_DWithin()
+        // MySQL:      ST_Distance()
+        Route::get('/services/difficult-access-activitiesPG',[ServicesController::class, 'getDifficultAccessActivitiesPG']);
+        Route::get('/services/difficult-access-activitiesMS',[ServicesController::class, 'getDifficultAccessActivitiesMS']);
+        
+        // 15 - consultar atividades que estejam dentro de um raio X
+        // PostgreSQL: ST_Union(ST_Buffer())
+        // MySQL:      ST_Buffer() e ST_Union()
+        Route::get('/services/bufferSumPG',                  [ServicesController::class, 'getBufferSumPG']);
+        Route::get('/services/bufferSumMS',                  [ServicesController::class, 'getBufferSumMS']);
+       
         Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
         Route::get('/services/distance', [ServicesController::class, 'getDistance']);
         Route::get('/services/buffer', [ServicesController::class, 'getBuffer']);

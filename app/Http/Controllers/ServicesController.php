@@ -16,31 +16,23 @@ class ServicesController
         $this->GeospatialService = $geospatial;
     }
 
-    public function getActivitiesbyAreaMS(Request $request)
+    public function getBufferSumPG(Request $request)
     {
         try {
-            $geojson = $this->GeospatialService->getActivitiesbyAreaMS($request);
-            return response()->json($geojson);
+            $buffer = $this->GeospatialService->getBufferSumPG($request);
+
+            return response()->json($buffer);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
     }
-
-    public function getActivitiesbyAreaPG(Request $request)
+ 
+    public function getBufferSumMS(Request $request)
     {
         try {
-            $geojson = $this->GeospatialService->getActivitiesbyAreaPG($request);
-            return response()->json($geojson);
-        } catch (Exception $e) {
-            return ApiServices::statusCode500($e->getMessage());
-        }
-    }
+            $buffer = $this->GeospatialService->getBufferSumMS($request);
 
-    public function getDistance(Request $request)
-    {
-        try {
-            $formattedDistance =  $this->GeospatialService->getDistance($request);
-            return ApiServices::statusCode200($formattedDistance);
+            return response()->json($buffer);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
@@ -75,6 +67,56 @@ class ServicesController
             return ApiServices::statusCode500($e->getMessage());
         }
     }
+    
+    public function getDifficultAccessActivitiesPG(Request $request)
+    {
+        try {
+            $geojson = $this->GeospatialService->getDifficultAccessActivitiesPG($request);
+
+            if ($geojson['features'] == []) {
+                return ApiServices::statusCode404("Sem pontos de interesse próximo");
+            }
+
+            return response()->json($geojson);
+        } catch (Exception $e) {
+            return ApiServices::statusCode500($e->getMessage());
+        }
+    }
+    
+    public function getDifficultAccessActivitiesMS(Request $request)
+    {
+        try {
+            $geojson = $this->GeospatialService->getDifficultAccessActivitiesMS($request);
+
+            if ($geojson['features'] == []) {
+                return ApiServices::statusCode404("Sem pontos de interesse próximo");
+            }
+
+            return response()->json($geojson);
+        } catch (Exception $e) {
+            return ApiServices::statusCode500($e->getMessage());
+        }
+    }
+
+    public function getActivitiesbyAreaMS(Request $request)
+    {
+        try {
+            $geojson = $this->GeospatialService->getActivitiesbyAreaMS($request);
+            return response()->json($geojson);
+        } catch (Exception $e) {
+            return ApiServices::statusCode500($e->getMessage());
+        }
+    }
+
+    public function getActivitiesbyAreaPG(Request $request)
+    {
+        try {
+            $geojson = $this->GeospatialService->getActivitiesbyAreaPG($request);
+            return response()->json($geojson);
+        } catch (Exception $e) {
+            return ApiServices::statusCode500($e->getMessage());
+        }
+    }
 
     public function getLengthStreet(Request $request)
     {
@@ -98,27 +140,14 @@ class ServicesController
         }
     }
 
-    public function getBufferSumPG(Request $request)
+    public function getDistance(Request $request)
     {
         try {
-            $buffer = $this->GeospatialService->getBufferSumPG($request);
-
-            return response()->json($buffer);
+            $formattedDistance =  $this->GeospatialService->getDistance($request);
+            return ApiServices::statusCode200($formattedDistance);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
     }
- 
-    public function getBufferSumMS(Request $request)
-    {
-        try {
-            $buffer = $this->GeospatialService->getBufferSumMS($request);
-
-            return response()->json($buffer);
-        } catch (Exception $e) {
-            return ApiServices::statusCode500($e->getMessage());
-        }
-    }
-
 
 }
