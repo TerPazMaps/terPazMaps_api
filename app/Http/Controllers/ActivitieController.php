@@ -15,13 +15,11 @@ use App\Http\Requests\UpdateActivitieRequest;
 
 class ActivitieController extends Controller
 {
-    protected $redis_ttl;
     protected $activitieService;
     protected $redisService;
 
     public function __construct()
     {
-        $this->redis_ttl = 3600;
         $this->activitieService = new ActivitieService();
         $this->redisService = new RedisService();
     }
@@ -37,7 +35,7 @@ class ActivitieController extends Controller
             $namesRequest = ['regions', 'subclasses', 'ids', 'only_references'];
             $keyCache = $this->redisService->createKeyCacheFromRequest($request, "ActivitieController_index" ,$namesRequest);
             
-            $activities = Cache::remember($keyCache, 2, function () use ($request, $startTime) {
+            $activities = Cache::remember($keyCache, $this->redisService->getRedisTtl(), function () use ($request, $startTime) {
                 $query = $this->activitieService->getAllWithRelationsAndGeometry();
                 $activitiesCollection = $this->activitieService->filter($request, $query)->get();
 

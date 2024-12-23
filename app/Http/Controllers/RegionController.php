@@ -23,7 +23,6 @@ class RegionController extends Controller
 
     public function __construct()
     {
-        $this->redis_ttl = 3600;
         $this->redisService = new RedisService();
     }
     /**
@@ -33,7 +32,7 @@ class RegionController extends Controller
     {
         try {
             $chaveCache = "RegionController_index";
-            $regions = Cache::remember($chaveCache, $this->redis_ttl, function () {
+            $regions = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () {
                 return Region::select(
                     'id',
                     'name',
@@ -79,7 +78,7 @@ class RegionController extends Controller
             }   
 
             $keyCache = $this->redisService->createKeyCacheFromRequest($request, $prefix, ['class_id', 'subclass_id']);
-            $activities = Cache::remember($keyCache, $this->redis_ttl, function () use ($request, $id, $class_ids, $subclass_id) {
+            $activities = Cache::remember($keyCache, $this->redisService->getRedisTtl(), function () use ($request, $id, $class_ids, $subclass_id) {
                 
                 return Activitie::with(['subclass.icon'])
                     ->whereHas('subclass', function ($query) use ($request, $class_ids) {
@@ -251,7 +250,7 @@ class RegionController extends Controller
                 $totalMetrosRuas += $length;    
             }
 
-            $streets = Cache::remember($chaveCache, 1, function () use ($query) {                
+            $streets = Cache::remember($chaveCache, $this->redisService->getRedisTtlLow(), function () use ($query) {                
                 return $query->get()->map(function ($street) {
                     $geometry = json_decode($street->geometry);
                     $coordinates = $geometry->coordinates;

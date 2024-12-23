@@ -22,7 +22,6 @@ class SubclasseController extends Controller
 
     public function __construct()
     {
-        $this->redis_ttl = 3600;
         $this->redisService = new RedisService();
         $this->subclasseService = new SubclasseService();
     }
@@ -35,7 +34,7 @@ class SubclasseController extends Controller
             $keyCache = $this->redisService->createKeyCacheFromRequest($request, "SubclasseController_index", ["name"]);
             $subclassesQuery = $this->subclasseService->index($request);
 
-            $subclasses = Cache::remember($keyCache, $this->redis_ttl, function () use ($subclassesQuery) {
+            $subclasses = Cache::remember($keyCache, $this->redisService->getRedisTtl(), function () use ($subclassesQuery) {
                 return $this->subclasseService->transform($subclassesQuery);
             });
 
