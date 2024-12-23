@@ -20,8 +20,8 @@ class GeospatialService
     }
 
     // funcionalidade Pergunta 11 postgreeSQL
-    // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearby?region_id=7&subclass_id=28&raio=1500&latitude=-1.465815&longitude=-48.459401
-    public function getActivitiesbyAreaPG(Request $request)
+    // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearbyPG?region_id=7&subclass_id=28&raio=1500&latitude=-1.465815&longitude=-48.459401
+    public function getActivitiesNearbyPG(Request $request)
     {
         $region_id = $request->input('region_id');
         $subclass_id = array_map('intval', explode(',', $request->input('subclass_id')));
@@ -33,12 +33,11 @@ class GeospatialService
         // $chaveCache = "activitiesbyArea_" . $region_id . "_" . $request->input('subclass_id') . "_" . $raio . "_" . $latitude . "_" . $longitude;
         $query = DB::table('activities')
         ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-        // ->where('region_id', $region_id)
+        ->where('region_id', $region_id)
         // ->whereIn('subclass_id', $subclass_id)
         ->whereRaw("ST_DistanceSphere(ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326), geometry) <= $raio")
+        ->limit(3000)
         ->get();
-
-        // dd($query);
 
         $endTime = microtime(true);
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
@@ -66,10 +65,10 @@ class GeospatialService
             return $feature;
         });
 
-        $buffer = $this->buffer($raio, $request->input('latitude'), $request->input('longitude'));
-        // Adicionando as features e o buffer em um único array
+       
+        // Obter as outras features e adicionar o buffer como uma feature
         $features = $activities->toArray();
-        $features[] = $buffer;
+        $features[] = $this->bufferPG($raio,$latitude, $longitude); // Adiciona o buffer corretamente
 
         $featureCollection = [
             "type" => "FeatureCollection",
@@ -80,63 +79,65 @@ class GeospatialService
     }
     // funcionalidade Pergunta 11 MySQL
     // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearby?region_id=7&subclass_id=28&raio=1500&latitude=-1.465815&longitude=-48.459401
-    public function getActivitiesbyAreaMS(Request $request)
+    public function getActivitiesNearbyMS(Request $request)
     {
         $region_id = $request->input('region_id');
-        // $subclass_id = $request->input('subclass_id');
         $subclass_id = array_map('intval', explode(',', $request->input('subclass_id')));
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
-        $raio = $request->input('raio');
-
+        $raio = $request->input('raio'); // Raio em metros
+    
         $startTime = microtime(true);
-        
+    
         $chaveCache = "activitiesbyArea_" . $region_id . "_" . $request->input('subclass_id') . "_" . $raio . "_" . $latitude . "_" . $longitude;
-        $query = DB::table('activities')->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-        // ->where('region_id', $region_id)
-        // ->whereIn('subclass_id', $subclass_id)
-        ->whereRaw("ST_Distance_Sphere(ST_GeomFromText('POINT($latitude $longitude)', 4326), geometry) <= $raio")
-        ->get();
-        
-        // dd($query);
+    
+        // Consulta para obter atividades na região e dentro do raio especificado
+        $query = DB::table('activities')
+            ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+            ->where('region_id', $region_id)
+            ->whereRaw("ST_Distance_Sphere(ST_GeomFromText('POINT($latitude $longitude)', 4326), geometry) <= ?", [$raio])
+            ->limit(3000)
+            ->get();
+    
         $endTime = microtime(true);
         $executionTime = number_format(($endTime - $startTime) * 1000, 4);
-
+    
+        // Mapeia as atividades para GeoJSON
         $activities = $query->map(function ($activitie) {
             $geometry = json_decode($activitie->geometry);
             $coordinates = $geometry->coordinates;
             $type = $geometry->type;
-
+    
             $properties = [
                 "id" => $activitie->id,
                 "region_id" => $activitie->region_id,
                 "subclass_id" => $activitie->subclass_id,
                 "name" => $activitie->name,
             ];
-
+    
             $feature = [
                 "type" => "Feature",
                 "geometry" => [
                     "type" => $type,
-                    "coordinates" => $coordinates
+                    "coordinates" => $coordinates,
                 ],
                 "properties" => $properties,
             ];
             return $feature;
         });
-
-        $buffer = $this->buffer($raio, $request->input('latitude'), $request->input('longitude'));
-        // Adicionando as features e o buffer em um único array
-        $features = $activities->toArray();
-        $features[] = $buffer;
-
+    
+        // Adicionando as activities e o buffer em um único array de features
+        $features = $activities->toArray(); // Converte as atividades para array
+        $features[] = $this->bufferMS($raio, $latitude, $longitude);; // Adiciona o buffer como última feature
+    
         $featureCollection = [
             "type" => "FeatureCollection",
             "features" => $features,
         ];
-
+    
         return $featureCollection;
     }
+    
 
     // funcionalidade Pergunta 12 postgreeSQL
     // http://127.0.0.1:8000/api/v5/geojson/services/points-of-interestPG?region_id=1&referenciaId=7&pontoBuscadoId=28&raio=100
@@ -154,7 +155,7 @@ class GeospatialService
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('region_id', $region_id)
                 ->where('subclass_id', $referenciaId)
-                ->get();
+        ->get();
 
         // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
         $features = [];
@@ -180,8 +181,8 @@ class GeospatialService
                     // ->whereIn('subclass_id', $pontoBuscadoId)
                     // ->whereRaw("ST_Distance_Sphere(ST_GeomFromText('POINT($longitude $latitude)', 4326), geometry) <= $raio")
                     ->whereRaw("ST_DistanceSphere(ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326), geometry) <= $raio")
+                    ->limit(1000/count($referencias))
                     ->get();
-
             // Se houver pontos próximos, adiciona a referência e suas escolas ao resultado
             if ($pontosProximos->count() > 0) {
                 // Adiciona a referência ao array de features
@@ -213,8 +214,7 @@ class GeospatialService
                     ];
                 }
 
-                $buffer = $this->buffer($raio, $latitude, $longitude);
-                $features[] = $buffer;
+                $features[] = $this->bufferPG($raio,$latitude, $longitude);
             }
         }
 
@@ -239,14 +239,12 @@ class GeospatialService
 
         // Consulta para obter as coordenadas das referencias
         $chaveCache = "getEscolas_referencias_" . $region_id . "_" . $referenciaId;
-        $referencias = Cache::remember($chaveCache, $this->redis_ttl, function () use ($region_id, $referenciaId) {
-            return DB::table('activities')
+        $referencias = DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('region_id', $region_id)
                 ->where('subclass_id', $referenciaId)
                 ->get();
-        });
-
+                ;
         // Array para armazenar as referencias e pontosBuscados no formato GeoJSON
         $features = [];
 
@@ -262,9 +260,12 @@ class GeospatialService
             // Consulta para obter os pontos próximos à referência atual
             $chaveCache = "getEscolas_pontosProximosClone_" . $latitude . "_" . $longitude . "_" . $raio;
             $pontosProximos = DB::table('activities')
-                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'), DB::raw("ST_Distance_Sphere(ST_GeomFromText('POINT($latitude $longitude)', 4326), geometry) as distance"))
+                ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'), 
+                DB::raw("ST_Distance_Sphere(ST_GeomFromText('POINT($latitude $longitude)', 4326), geometry) as distance")
+                )
                 // ->whereIn('subclass_id', $pontoBuscadoId)
                 ->whereRaw("ST_Distance_Sphere(ST_GeomFromText('POINT($latitude $longitude)', 4326), geometry) <= $raio")
+                ->limit(1000/count($referencias))
                 ->get();
 
             // dd($pontosProximos, $latitude.' '. $longitude);
@@ -300,8 +301,7 @@ class GeospatialService
                     ];
                 }
 
-                $buffer = $this->buffer($raio, $latitude, $longitude);
-                $features[] = $buffer;
+                $features[] = $this->bufferMS($raio, $latitude, $longitude);  
             }
         }
 
@@ -335,18 +335,16 @@ class GeospatialService
                 DB::raw('ST_AsGeoJSON(activities.geometry) as activity_geometry')
             )
             ->join('activities', function ($join) use ($distance) {
-                $join->on(DB::raw('ST_DWithin(
-                    ST_Transform(streets.geometry, 3857), 
-                    ST_Transform(activities.geometry, 3857), 
-                    ' . $distance . '
-                )'), DB::raw('TRUE'));
+                $join->on(DB::raw('ST_DWithin(ST_Transform(streets.geometry, 3857), ST_Transform(activities.geometry, 3857), '.$distance.')'), DB::raw('TRUE'));
             })
-            ->where('streets.region_id', $region_id)
+            // ->where('streets.region_id', $region_id)
             ->whereIn('streets.street_condition_id', [3, 5])
-            ->when($subclass, function ($query, $subclass) {
-                return $query->whereIn('activities.subclass_id', $subclass);
-            })
+            ->whereIn('activities.subclass_id', [9,28,7,19,13,6,1,3,14,31,49,60,125])
+            // ->when($subclass, function ($query, $subclass) {
+            //     return $query->whereIn('activities.subclass_id', $subclass);
+            // })
             ->distinct()
+            ->limit(500)
             ->get();
     
         // Mapear as atividades e ruas para o formato GeoJSON
@@ -371,19 +369,19 @@ class GeospatialService
             ];
     
             // Feature para a rua
-            $streetFeature = [
-                "type" => "Feature",
-                "geometry" => [
-                    "type" => $streetGeometry->type,
-                    "coordinates" => $streetGeometry->coordinates
-                ],
-                "properties" => [
-                    "id" => $record->street_id,
-                    "type" => "street"
-                ],
-            ];
+            // $streetFeature = [
+            //     "type" => "Feature",
+            //     "geometry" => [
+            //         "type" => $streetGeometry->type,
+            //         "coordinates" => $streetGeometry->coordinates
+            //     ],
+            //     "properties" => [
+            //         "id" => $record->street_id,
+            //         "type" => "street"
+            //     ],
+            // ];
     
-            return [$activityFeature, $streetFeature];
+            return [$activityFeature];
         })->flatten(1)->unique('properties.id')->values()->toArray();
     
         // Criação do FeatureCollection GeoJSON
@@ -409,22 +407,27 @@ class GeospatialService
                 'activities.name',
                 'activities.region_id',
                 'activities.subclass_id',
-                DB::raw('ST_AsGeoJSON(streets.geometry) as street_geometry'),
+                // DB::raw('ST_AsGeoJSON(streets.geometry) as street_geometry'),
                 DB::raw('ST_AsGeoJSON(activities.geometry) as activity_geometry')
             )
-            ->join('activities', function ($join) use ($distance) {
-                $join->on(DB::raw('ST_Distance(ST_SRID(streets.geometry, 4326), ST_SRID(activities.geometry, 4326))'), '<', DB::raw($distance));
-            })
-            ->where('streets.region_id', $region_id)
-            ->whereIn('activities.subclass_id', $subclass)
+            ->join('activities', 'streets.region_id', '=', 'activities.region_id') // Ajuste conforme as chaves necessárias
+            // ->where('streets.region_id', $region_id)
+            // ->whereIn('streets.region_id', [1,2,4,5])
+            // ->whereIn('activities.subclass_id', $subclass)
+            ->whereIn('activities.subclass_id', [9,28,7,19,13,6,1,3,14,31,49,60,125])
+            ->whereRaw('ST_Distance(ST_Transform(streets.geometry, 3857), ST_Transform(activities.geometry, 3857)) < ?', [$distance])
             ->whereIn('streets.street_condition_id', [3, 5])
             ->distinct()
+            ->limit(750)
             ->get();
+
+
+            // dd($atividades);
 
         // Mapear as atividades e ruas para o formato GeoJSON
         $features = collect($atividades)->map(function ($record) {
             $activityGeometry = json_decode($record->activity_geometry);
-            $streetGeometry = json_decode($record->street_geometry);
+            // $streetGeometry = json_decode($record->street_geometry);
 
             // Feature para a atividade
             $activityFeature = [
@@ -443,19 +446,19 @@ class GeospatialService
             ];
 
             // Feature para a rua
-            $streetFeature = [
-                "type" => "Feature",
-                "geometry" => [
-                    "type" => $streetGeometry->type,
-                    "coordinates" => $streetGeometry->coordinates
-                ],
-                "properties" => [
-                    "id" => $record->street_id,
-                    "type" => "street"
-                ],
-            ];
+            // $streetFeature = [
+            //     "type" => "Feature",
+            //     "geometry" => [
+            //         "type" => $streetGeometry->type,
+            //         "coordinates" => $streetGeometry->coordinates
+            //     ],
+            //     "properties" => [
+            //         "id" => $record->street_id,
+            //         "type" => "street"
+            //     ],
+            // ];
 
-            return [$activityFeature, $streetFeature];
+            return [$activityFeature,];
         })->flatten(1)->unique('properties.id')->values()->toArray();
 
         // Criação do FeatureCollection GeoJSON
@@ -505,22 +508,24 @@ class GeospatialService
         $geometries = Activitie::select('name', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             // ->has('subclass')
             // ->has('subclass.related_icon')
-            ->where('region_id', $region_id)
-            ->where('subclass_id', $subclass)
-            // ->whereBetween('subclass_id', [90, 178])
+            // ->where('region_id', $region_id)
+            // ->where('subclass_id', $subclass)
+            ->limit(20)
             ->get();
 
         // Para cada raio, calculamos os buffers para as atividades no banco e os novos pontos
         foreach ($raio as $rIndex => $r) {
-            // Obter buffer das atividades existentes no banco
-            $unionBuffer = DB::table('activities')
-                ->select(
-                    DB::raw('ST_AsGeoJSON(ST_Union(ST_Transform(ST_Buffer(ST_Transform(ST_SetSRID(geometry, ' . $srid_original . '), ' . $srid_metros . '), ' . $r . '), ' . $srid_original . '))) AS buffered_geometry')
-                )
-                ->where('region_id', $region_id)
-                ->where('subclass_id', $subclass)
-                // ->whereBetween('subclass_id', [90, 178])
-                ->first();
+            foreach($geometries as $pontos) {
+                $lat = json_decode($pontos->geometry)->coordinates[1];
+                $lng = json_decode($pontos->geometry)->coordinates[0];
+                $points[] = "ST_SetSRID(ST_Point($lng, $lat), $srid_original)";
+            }
+            $pointsSQL = implode(',', $points);
+            $unionBuffer = DB::select(
+                "SELECT ST_AsGeoJSON(ST_Union(ST_Transform(ST_Buffer(ST_Transform(geom, $srid_metros), $r), $srid_original))) AS buffered_geometry
+                FROM (SELECT unnest(ARRAY[$pointsSQL]) AS geom) AS temp"
+            );
+            // dd($unionBuffer[0]->buffered_geometry);
 
             // Inicialize um array para armazenar todas as geometrias de novos pontos
             $points = [];
@@ -559,10 +564,7 @@ class GeospatialService
                 if ($unionBuffer && !empty($unionBufferNewPoints)) {
                     // Unir geometrias do banco de dados e os novos pontos
                     $finalUnionBuffer = DB::select(
-                        "SELECT ST_AsGeoJSON(ST_Union(ARRAY[
-                            ST_GeomFromGeoJSON('$unionBuffer->buffered_geometry'), 
-                            ST_GeomFromGeoJSON('{$unionBufferNewPoints[0]->buffered_geometry}')
-                        ])) AS buffered_geometry"
+                        "SELECT ST_AsGeoJSON(ST_Union(ARRAY[ST_GeomFromGeoJSON('{$unionBuffer[0]->buffered_geometry}'),ST_GeomFromGeoJSON('{$unionBufferNewPoints[0]->buffered_geometry}')])) AS buffered_geometry"
                     );
 
                     // Adicionar a geometria unificada ao array de buffers
@@ -573,14 +575,14 @@ class GeospatialService
                 } elseif ($unionBuffer) {
                     // Apenas buffer das atividades do banco de dados
                     $buffers[] = [
-                        'buffered_geometry' => $unionBuffer->buffered_geometry,
+                        'buffered_geometry' => $unionBuffer[0]->buffered_geometry,
                         'color' => $colors[$rIndex],
                     ];
                 }
             } else {
                 // Apenas buffer das atividades do banco de dados
                 $buffers[] = [
-                    'buffered_geometry' => $unionBuffer->buffered_geometry,
+                    'buffered_geometry' => $unionBuffer[0]->buffered_geometry,
                     'color' => $colors[$rIndex],
                 ];
             }
@@ -669,21 +671,21 @@ class GeospatialService
         // Inicializar buffers e pontos centrais
         $buffers = [];
         $central_points = [];
-
+        $limite = 3000;
         // Obter as geometrias das atividades existentes
         $geometries = Activitie::select('name', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
             // ->has('subclass')
             // ->has('subclass.related_icon')
-            ->where('region_id', $region_id)
-            ->where('subclass_id', $subclass)
-            // ->whereBetween('subclass_id', [90, 178])
+            // ->where('region_id', $region_id)
+            // ->where('subclass_id', $subclass)
+            ->limit($limite)
             ->get();
 
         foreach ($raios as $rIndex => $raio) {
             $bufferedGeometries = Activitie::select(DB::raw('ST_AsGeoJSON(ST_Buffer(geometry, ' . $raio . ')) AS buffered_geometry'))
-                ->where('region_id', $region_id)
-                ->where('subclass_id', $subclass)
-                // ->whereBetween('subclass_id', [90, 178])
+                // ->where('region_id', $region_id)
+                // ->where('subclass_id', $subclass)
+                ->limit($limite)
                 ->get();
             $unionGeometry = null;
 
@@ -893,12 +895,10 @@ class GeospatialService
     {
         $street_id = $request->street_id;
         $chaveCache = "getLengthStreet_" . $street_id;
-        $street = Cache::remember($chaveCache, $this->redis_ttl, function () use ($street_id) {
-            return DB::table('streets')
+        $street =  DB::table('streets')
                 ->select(DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 ->where('id', $street_id)
                 ->first();
-        });
 
         $linestring = json_decode($street->geometry);
 
@@ -946,55 +946,96 @@ class GeospatialService
     }
 
     // http://127.0.0.1:8000/api/v5/geojson/services/buffer?latitude=-1.34119991436441&longitude=-48.40409132788111
-    public function getBuffer(Request $request)
+    // public function getBuffer(Request $request)
+    // {
+    //     $raio = $request->has('raio') ? intval($request->raio) : null;
+    //     $latitude = $request->latitude;
+    //     $longitude = $request->longitude;
+
+    //     if ($raio < 6) {
+    //         return ApiServices::statuscode422("O raio deve ser maior ou igual a 6 metros.");
+    //     }
+
+    //     $buffer = $this->buffer($raio, $latitude, $longitude);
+
+    //     return $buffer;
+    // }
+
+    // public function buffer($raio, $latitude, $longitude)
+    // {
+    //     $chaveCache = "buffer_" . $raio . $latitude . $longitude;
+    //     $buffer = Cache::remember($chaveCache, $this->redis_ttl, function () use ($raio, $longitude, $latitude) {
+
+    //         // Calcula o raio em graus decimais
+    //         $raio_graus = round($raio / (111320 * cos(deg2rad($latitude))), 4);
+    //         $num_segmentos = 125;
+
+    //         // Calcula os pontos do círculo
+    //         $pontos = [];
+    //         for ($i = 0; $i <= $num_segmentos; $i++) {
+    //             $angulo = 2 * pi() * $i / $num_segmentos;
+    //             $ponto_longitude = $longitude + $raio_graus * cos($angulo);
+    //             $ponto_latitude = $latitude + $raio_graus * sin($angulo);
+    //             $pontos[] = [$ponto_longitude, $ponto_latitude];
+    //         }
+
+    //         // Ajusta a resposta JSON
+    //         $response = [
+    //             'type' => 'Feature',
+    //             'geometry' => [
+    //                 'type' => 'Polygon',
+    //                 'coordinates' => [$pontos]
+    //             ],
+    //             'properties' => [
+    //                 'raio' => $raio
+    //             ]
+    //         ];
+
+    //         return $response;
+    //     });
+    //     // Retorna a resposta JSON
+    //     return $buffer;
+    // }
+
+    public function bufferPG($raio, $latitude, $longitude)
     {
-        $raio = $request->has('raio') ? intval($request->raio) : null;
-        $latitude = $request->latitude;
-        $longitude = $request->longitude;
+        $bufferPG = DB::selectOne("
+            SELECT ST_AsGeoJSON(
+                ST_Transform(
+                    ST_Buffer(
+                        ST_Transform(
+                            ST_SetSRID(ST_Point(?, ?), 4326), 3857
+                        ), ?
+                    ), 4326
+                )
+            ) AS geojson
+        ", [$longitude, $latitude, $raio]);
+        
+        // Decodificar o GeoJSON do buffer para array PHP
+        $bufferGeojson = json_decode($bufferPG->geojson, true);
 
-        if ($raio < 6) {
-            return ApiServices::statuscode422("O raio deve ser maior ou igual a 6 metros.");
-        }
-
-        $buffer = $this->buffer($raio, $latitude, $longitude);
-
-        return $buffer;
+        // Envolver o buffer como uma Feature para adicionar ao FeatureCollection
+        $bufferFeature = [
+            "type" => "Feature",
+            "geometry" => $bufferGeojson,
+            "properties" => null,
+        ];
+        return $bufferFeature;
     }
-
-    public function buffer($raio, $latitude, $longitude)
+    public function bufferMS($raio, $latitude, $longitude)
     {
-        $chaveCache = "buffer_" . $raio . $latitude . $longitude;
-        $buffer = Cache::remember($chaveCache, $this->redis_ttl, function () use ($raio, $longitude, $latitude) {
+       // Criar o buffer no MySQL
+       $buffer = DB::selectOne("
+            SELECT ST_AsGeoJSON(ST_Buffer(ST_GeomFromText('POINT($latitude $longitude)', 4326), ?)) as buffer
+        ", [$raio]);
 
-            // Calcula o raio em graus decimais
-            $raio_graus = round($raio / (111320 * cos(deg2rad($latitude))), 4);
-            $num_segmentos = 125;
-
-            // Calcula os pontos do círculo
-            $pontos = [];
-            for ($i = 0; $i <= $num_segmentos; $i++) {
-                $angulo = 2 * pi() * $i / $num_segmentos;
-                $ponto_longitude = $longitude + $raio_graus * cos($angulo);
-                $ponto_latitude = $latitude + $raio_graus * sin($angulo);
-                $pontos[] = [$ponto_longitude, $ponto_latitude];
-            }
-
-            // Ajusta a resposta JSON
-            $response = [
-                'type' => 'Feature',
-                'geometry' => [
-                    'type' => 'Polygon',
-                    'coordinates' => [$pontos]
-                ],
-                'properties' => [
-                    'raio' => $raio
-                ]
-            ];
-
-            return $response;
-        });
-        // Retorna a resposta JSON
-        return $buffer;
+        $bufferGeojson = json_decode($buffer->buffer, true);
+        $bufferFeature = [
+            "type" => "Feature",
+            "geometry" => $bufferGeojson,
+            "properties" => null,
+        ];
+        return $bufferFeature;
     }
 
     public static function GeoJsonValidator($data)

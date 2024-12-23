@@ -63,8 +63,8 @@ Route::group(['prefix' => 'api/v5'], function () {
         // 11 - consultar arae de influencia de atividades novas no mapa
         // PostgreSQL: ST_DistanceSphere()
         // MySQL:      ST_Distance_Sphere()
-        Route::get('/services/activities-nearbyPG',          [ServicesController::class, 'getActivitiesbyAreaPG']);
-        Route::get('/services/activities-nearbyMS',          [ServicesController::class, 'getActivitiesbyAreaMS']);
+        Route::get('/services/activities-nearbyPG',          [ServicesController::class, 'getActivitiesNearbyPG']);
+        Route::get('/services/activities-nearbyMS',          [ServicesController::class, 'getActivitiesNearbyMS']);
         
         // 12 - consultar escolas com hospitais proximos
         // PostgreSQL: ST_DistanceSphere()

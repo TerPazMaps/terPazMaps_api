@@ -98,20 +98,20 @@ class ServicesController
         }
     }
 
-    public function getActivitiesbyAreaMS(Request $request)
+    public function getActivitiesNearbyMS(Request $request)
     {
         try {
-            $geojson = $this->GeospatialService->getActivitiesbyAreaMS($request);
+            $geojson = $this->GeospatialService->getActivitiesNearbyMS($request);
             return response()->json($geojson);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
         }
     }
 
-    public function getActivitiesbyAreaPG(Request $request)
+    public function getActivitiesNearbyPG(Request $request)
     {
         try {
-            $geojson = $this->GeospatialService->getActivitiesbyAreaPG($request);
+            $geojson = $this->GeospatialService->getActivitiesNearbyPG($request);
             return response()->json($geojson);
         } catch (Exception $e) {
             return ApiServices::statusCode500($e->getMessage());
