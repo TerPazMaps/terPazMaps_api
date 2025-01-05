@@ -7,7 +7,7 @@
 # Classes
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/classe`
+`/api/v5/geojson/classes`
 
 ## Parâmetros
 
@@ -52,7 +52,7 @@ Este método não aceita nenhum parâmetro.
 # Classe por identificador
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/classe/{id}`
+`/api/v5/geojson/classes/{id}`
 
 ## Parâmetros
 
@@ -86,7 +86,7 @@ Este método não aceita nenhum parâmetro.
 # Subclasses por Classe (+icon)
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/classe/{id}/subclasses`
+`/api/v5/geojson/classes/{id}/subclasses`
 
 ## Parâmetros
 

@@ -7,7 +7,7 @@
 # Regiões
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/region`
+`/api/v5/geojson/regions`
 
 ## Parâmetros
 
@@ -62,7 +62,7 @@ Este método não aceita nenhum parâmetro.
 # Região por identificador
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/region/{id}`
+`/api/v5/geojson/regions/{id}`
 
 ## Parâmetros
 
@@ -116,7 +116,7 @@ Este método não aceita nenhum parâmetro.
 # Ruas por Região
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/region/{id}/streets`
+`/api/v5/geojson/regions/{id}/streets`
 
 ## Parâmetros
 
@@ -125,7 +125,7 @@ Este método não aceita nenhum parâmetro.
 | id\*         | int, obrigatório. O ID da região.                                                                                                                     |
 | condition_id | array de inteiros. Opcional. Os IDs de condição para filtrar as ruas. Apenas as ruas correspondentes aos IDs de condição fornecidos serão retornadas. |
 
-Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
+Exemplo: `/api/v5/geojson/regions/1/streets?condition_id=2,3`
 
 ## Retorno status:200 - ruas de região específica seja polygon, linestring, multilinestring
 
@@ -179,7 +179,7 @@ Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
 # Ícones por Região
 
 [![GET](https://img.shields.io/badge/HTTP-GET-0080FF)](/api/v5/geojson/Region/{id}/icons)  
-`/api/v5/geojson/region/{id}/icons`
+`/api/v5/geojson/regions/{id}/icons`
 
 ## Parâmetros
 
@@ -188,7 +188,7 @@ Exemplo: `/api/v5/geojson/region/1/streets?condition_id=2,3`
 | id\*     | int, obrigatório. O ID da região.                                                                                                  |
 | class_id | array, opcional. IDs de classe separados por vírgula. Apenas as atividades correspondentes às classes fornecidas serão retornadas. |
 
-Exemplo: `/api/v5/geojson/region/1/icons?class_id=2,3`
+Exemplo: `/api/v5/geojson/regions/1/icons?class_id=2,3`
 
 ## Retorno status:200 - ícones de região específica
 

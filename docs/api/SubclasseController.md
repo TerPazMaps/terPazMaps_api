@@ -12,7 +12,7 @@
 ## Parâmetros
 | Nome          | Descrição                                                                  |
 |---------------|----------------------------------------------------------------------------|
-| name       | Pesquisa de subclasses com esse nome  [ **string** ]         |
+| name          | Pesquisa de subclasses com esse nome  [ **string** ]                       |
 
 ## Retorno status:200 - um array de subclasses
 ```json

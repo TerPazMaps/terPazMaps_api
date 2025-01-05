@@ -6,6 +6,7 @@ use Exception;
 use App\Models\Icon;
 use App\Services\IconService;
 use App\Services\ApiServices;
+use App\Services\RedisService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\StoreIconRequest;
@@ -13,14 +14,13 @@ use App\Http\Requests\UpdateIconRequest;
 
 class IconController extends Controller
 {
-
-    private $redis_ttl;
     protected $IconService;
+    protected $redisService;
 
     public function __construct()
     {
-        $this->redis_ttl = 3600;
         $this->IconService = new IconService();
+        $this->redisService = new RedisService();
     }
 
     /**
@@ -31,7 +31,7 @@ class IconController extends Controller
     {
         try {   
             $chaveCache = "IconController_index";
-            $icons = Cache::remember($chaveCache, $this->redis_ttl, function () {
+            $icons = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () {
                 return $this->IconService->index();
             });
 

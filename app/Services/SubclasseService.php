@@ -22,7 +22,7 @@ class SubclasseService extends AbstractService implements ServiceInterface
             $subclassesQuery = $this->filterName($subclassesQuery, $request->name);
         }
 
-        return $subclassesQuery;
+        return $subclassesQuery->get();
     }
 
     public function transform($subclassesQuery): array

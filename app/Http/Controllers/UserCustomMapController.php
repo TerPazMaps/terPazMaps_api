@@ -22,7 +22,6 @@ class UserCustomMapController extends Controller
 
     public function __construct()
     {
-        $this->redis_ttl = 3600;
         $this->redisService = new RedisService();
         $this->userCustomMapService = new UserCustomMapService();
     }

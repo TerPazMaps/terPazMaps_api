@@ -23,7 +23,6 @@ class RegionController extends Controller
 
     public function __construct()
     {
-        $this->redis_ttl = 3600;
         $this->redisService = new RedisService();
     }
     /**
@@ -33,7 +32,7 @@ class RegionController extends Controller
     {
         try {
             $chaveCache = "RegionController_index";
-            $regions = Cache::remember($chaveCache, $this->redis_ttl, function () {
+            $regions = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () {
                 return Region::select(
                     'id',
                     'name',
@@ -70,18 +69,19 @@ class RegionController extends Controller
     public function getIconsByRegion(int $id, Request $request)
     {
         try {
-            $prefix = "RegionController_getIconsByRegion_" . $id;
+
+            $prefix = "RegionController_getIconsByRegion";
             if ($request->class_id) {
                 $class_ids = array_map('intval', explode(',', $request->class_id));
             }
             if ($request->subclass_id) {
                 $subclass_id = array_map('intval', explode(',', $request->subclass_id));
             }   
-
-            $keyCache = $this->redisService->createKeyCacheFromRequest($request, $prefix, ['class_id', 'subclass_id']);
-            $activities = Cache::remember($keyCache, $this->redis_ttl, function () use ($request, $id, $class_ids, $subclass_id) {
+            // dd($request->all());
+            $keyCache = $this->redisService->createKeyCacheFromRequest( $prefix, [$id], $request, ['class_id', 'subclass_id']);
+            $activities = Cache::remember($keyCache, $this->redisService->getRedisTtl(), function () use ($request, $id, $class_ids, $subclass_id) {
                 
-                return Activitie::with(['subclass.icon'])
+                return Activitie::with(['subclass.related_icon'])
                     ->whereHas('subclass', function ($query) use ($request, $class_ids) {
                         if ($request->class_id) {
                             $query->whereIn('class_id', $class_ids);
@@ -98,12 +98,8 @@ class RegionController extends Controller
             });
 
             $geojsonFeatures = [];
-
             foreach ($activities as $activity) {
                 $geometry = json_decode($activity->geometry);
-
-                // Construa a URL da imagem do ícone
-                $imageUrl = env('APP_URL') . 'storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name;
 
                 $feature = [
                     'type' => 'Feature',
@@ -117,11 +113,11 @@ class RegionController extends Controller
                             'class_id' => $activity->subclass->class_id,
                             'name' => $activity->subclass->name,
                             'icon' => [
-                                'id' => $activity->subclass->icon->id,
-                                'subclasse_id' => $activity->subclass->icon->subclasse_id,
+                                'id' => $activity->subclass->related_icon->id,
+                                'subclasse_id' => $activity->subclass->related_icon->subclasse_id,
                                 // 'disk_name' => $activity->subclass->icon->disk_name,
-                                'file_name' => $activity->subclass->icon->file_name,
-                                'img_url' => $imageUrl,
+                                'file_name' => $activity->subclass->related_icon->file_name,
+                                'img_url' => $activity->subclass->related_icon->getPath(),
                             ],
                         ],
                     ],
@@ -251,7 +247,7 @@ class RegionController extends Controller
                 $totalMetrosRuas += $length;    
             }
 
-            $streets = Cache::remember($chaveCache, 1, function () use ($query) {                
+            $streets = Cache::remember($chaveCache, $this->redisService->getRedisTtlLow(), function () use ($query) {                
                 return $query->get()->map(function ($street) {
                     $geometry = json_decode($street->geometry);
                     $coordinates = $geometry->coordinates;
