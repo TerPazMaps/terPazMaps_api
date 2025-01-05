@@ -18,7 +18,7 @@ class ActivitieService extends AbstractService implements ServiceInterface
             '*',
             DB::raw('ST_AsGeoJSON(geometry) as geometry')
         )->has('subclass.classe')
-            ->has('subclass.icon')
+            ->has('subclass.related_icon')
             ->orderBy('id');
     }
 
@@ -77,7 +77,7 @@ class ActivitieService extends AbstractService implements ServiceInterface
                             "Bairro_id" => $activity->region->id,
                             "Bairro" => $activity->region->name,
                             "Nível" => $activity->level,
-                            "img_url" => 'http://127.0.0.1:8000/storage/' . substr($activity->subclass->icon->disk_name, 0, 3) . '/' . substr($activity->subclass->icon->disk_name, 3, 3) . '/' . substr($activity->subclass->icon->disk_name, 6, 3) . '/' . $activity->subclass->icon->disk_name
+                            "img_url" => $activity->subclass->related_icon->getPath(),
                         ]
                     ];
 

@@ -31,7 +31,7 @@ class SubclasseController extends Controller
     public function index(Request $request)
     {
         try {
-            $keyCache = $this->redisService->createKeyCacheFromRequest($request, "SubclasseController_index", ["name"]);
+            $keyCache = $this->redisService->createKeyCacheFromRequest( "SubclasseController_index",[4], $request, ["name"]);
             $subclassesQuery = $this->subclasseService->index($request);
 
             $subclasses = Cache::remember($keyCache, $this->redisService->getRedisTtl(), function () use ($subclassesQuery) {

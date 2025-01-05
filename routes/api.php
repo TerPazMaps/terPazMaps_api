@@ -46,18 +46,23 @@ Route::get('/terpazmaps', function () {
 Route::group(['prefix' => 'api/v5'], function () {
     Route::group(['prefix' => '/geojson'], function () {
 
+        // CLASSES
         Route::apiResource('classes', ClasseController::class);
         Route::get('/classes/{id}/subclasses', [ClasseController::class, 'getSubclassesByClass']);
 
+        // REGIONS
         Route::apiResource('regions', RegionController::class);
-        Route::get('/regions/{id}/streets', [RegionController::class, 'getStreetsByRegion']);
-        Route::get('/regions/{id}/icons', [RegionController::class, 'getIconsByRegion']);
+        Route::get('/regions/{id}/streets',    [RegionController::class, 'getStreetsByRegion']);
+        Route::get('/regions/{id}/icons',      [RegionController::class, 'getIconsByRegion']);
         Route::get('/regions/{id}/activities', [RegionController::class, 'getActivitiesByRegion']);
 
+        // STREET CONDITIONS
         Route::apiResource('street_condition', StreetConditionController::class);
 
+        // SUBCLASSES
         Route::apiResource('subclasse', SubclasseController::class);
 
+        // ACTIVITES
         Route::apiResource('activitie', ActivitieController::class);
 
         // 11 - consultar arae de influencia de atividades novas no mapa
@@ -85,25 +90,29 @@ Route::group(['prefix' => 'api/v5'], function () {
         Route::get('/services/bufferSumMS',                  [ServicesController::class, 'getBufferSumMS']);
        
         Route::get('/services/length-street', [ServicesController::class, 'getlengthStreet']);
-        Route::get('/services/distance', [ServicesController::class, 'getDistance']);
-        Route::get('/services/buffer', [ServicesController::class, 'getBuffer']);
+        Route::get('/services/distance',      [ServicesController::class, 'getDistance']);
+        Route::get('/services/buffer',        [ServicesController::class, 'getBuffer']);
 
+        // STREETS
         Route::apiResource('street', StreetController::class);
 
+        // ICONS
         Route::apiResource('icon', IconController::class);
-        
+
+        // USER CUSTOM MASPS
         Route::apiResource('user-custom-maps', UserCustomMapController::class)->middleware('jwt.auth');
         Route::apiResource('user-feedback-activitie', FeedbackActivitieController::class)->middleware('jwt.auth');
-        Route::apiResource('user-feedback-street', FeedbackStreetController::class)->middleware('jwt.auth');
+        Route::apiResource('user-feedback-street',    FeedbackStreetController::class)->middleware('jwt.auth');
     });
 
-    Route::post('login', [AuthController::class, 'login'])->name('login');
+    // ROTAS DE AUTENTICAÇÃO
+    Route::post('login',    [AuthController::class, 'login'])->name('login');
     Route::post('register', [AuthController::class, 'register'])->name('register');
-    Route::post('logout', [AuthController::class, 'logout'])->middleware('jwt.auth');
-    Route::post('refresh', [AuthController::class, 'refresh'])->middleware('jwt.auth');
-    Route::post('me', [AuthController::class, 'me'])->middleware('jwt.auth');
+    Route::post('logout',   [AuthController::class, 'logout'])->middleware('jwt.auth');
+    Route::post('refresh',  [AuthController::class, 'refresh'])->middleware('jwt.auth');
+    Route::post('me',       [AuthController::class, 'me'])->middleware('jwt.auth');
 
-    Route::get('send-password-reset-notification', [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
+    Route::get('send-password-reset-notification',  [AuthController::class, 'viewSendPasswordResetNotification'])->name('send-password-reset-notification');
     Route::post('send-password-reset-notification', [AuthController::class, 'sendPasswordResetNotification'])->name('send-password-reset-notification');
 
 });

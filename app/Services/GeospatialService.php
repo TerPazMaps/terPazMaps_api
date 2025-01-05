@@ -22,7 +22,7 @@ class GeospatialService
     }
 
     // funcionalidade Pergunta 11 postgreeSQL
-    // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearbyPG?region_id=7&subclass_id=28&raio=1500&latitude=-1.465815&longitude=-48.459401
+    // http://127.0.0.1:8000/api/v5/geojson/services/activities-nearbyPG?region_id=7&subclass_id=17,30,44,59,75,99,135,145,156,170&raio=1802&latitude=-1.4653&longitude=-48.4616
     public function getActivitiesNearbyPG(Request $request)
     {
         $region_id = $request->input('region_id');
@@ -31,8 +31,9 @@ class GeospatialService
         $longitude = $request->input('longitude');
         $raio = $request->input('raio');
 
+        $chaveCache = $this->redisService->createKeyCacheFromRequest( "getActivitiesNearbyPG",[$region_id, $latitude, $longitude, $raio], $request,['subclass_id']);
+       
         $startTime = microtime(true);
-        $chaveCache = "getActivitiesNearbyPG_" . $region_id . "_" . $request->input('subclass_id') . "_" . $raio . "_" . $latitude . "_" . $longitude;
         $query = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($region_id, $subclass_id, $longitude, $latitude, $raio) {
             return DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
@@ -93,8 +94,8 @@ class GeospatialService
     
         $startTime = microtime(true);
     
-        $chaveCache = "getActivitiesNearbyMS_" . $region_id . "_" . $request->input('subclass_id') . "_" . $raio . "_" . $latitude . "_" . $longitude;
-    
+        $chaveCache = $this->redisService->createKeyCacheFromRequest( "getActivitiesNearbyMS_",[$region_id, $latitude, $longitude, $raio], $request,['subclass_id']);
+
         // Consulta para obter atividades na região e dentro do raio especificado
         $query = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($region_id, $subclass_id, $longitude, $latitude, $raio) {
             return DB::table('activities')
@@ -152,9 +153,8 @@ class GeospatialService
         $referenciaId = $request->referenciaId;
         $pontoBuscadoId = array_map('intval', explode(',', $request->input('pontoBuscadoId')));
         $raio = $request->raio; // Raio em metros para verificar a proximidade
-
+        $chaveCache = $this->redisService->createKeyCacheFromRequest( "getEscolas_referencias",[$region_id, $referenciaId], $request,['pontoBuscadoId', 'raio']);
         // Consulta para obter as coordenadas das referencias
-        $chaveCache = "getEscolas_referencias_" . $region_id . "_" . $referenciaId;
         $referencias = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($region_id, $referenciaId) {
             return DB::table('activities')
                 ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
@@ -176,7 +176,7 @@ class GeospatialService
             $longitude = $coordinates[0];
 
             // Consulta para obter os pontos próximos à referência atual
-            $chaveCache = "getEscolas_pontosProximosClone_" . $longitude . "_" . $latitude . "_" . $raio;
+            $chaveCache = $this->redisService->createKeyCacheFromRequest("getEscolas_pontosProximosClone",[$latitude, $longitude, $raio], $request, []);
             $pontosProximos = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($referencias, $longitude, $latitude, $raio, $pontoBuscadoId) {
                 return DB::table('activities')
                     ->select(
@@ -242,7 +242,7 @@ class GeospatialService
         $raio = $request->raio; // Raio em metros para verificar a proximidade
 
         // Consulta para obter as coordenadas das referencias
-        $chaveCache = "getEscolas_referencias_" . $region_id . "_" . $referenciaId;
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("getEscolas_referencias",[$region_id, $referenciaId], $request, []);
         $referencias = Cache::remember($chaveCache, $this->redisService->getRedisTtl(),function() use ($region_id, $referenciaId){
             return DB::table('activities')
             ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
@@ -264,7 +264,7 @@ class GeospatialService
             $longitude = $coordinates[0];
 
             // Consulta para obter os pontos próximos à referência atual
-            $chaveCache = "getEscolas_pontosProximosClone_" . $latitude . "_" . $longitude . "_" . $raio;
+            $chaveCache = $this->redisService->createKeyCacheFromRequest("getEscolas_pontosProximosClone",[$latitude, $longitude, $raio], $request, []);
             $pontosProximos = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function() use ($pontoBuscadoId, $longitude, $latitude, $raio){
                 return DB::table('activities')
                     ->select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry'), 
@@ -328,10 +328,12 @@ class GeospatialService
     {
         $region_id = $request->region_id;
         $subclass = $request->has('subclass') ? $request->input('subclass') : null;
-    
+        $condition = $request->has('condition') ? $request->input('condition') : [1,2,3,4,5,6,7];
+        $request['condition']=[1,2,3,4,5,6,7];
         $distance = 10; // distância em metros da atividade em relação a rua.
-        $chaveCache = "getDifficultAccessActivitiesPG_" . $region_id . "_" . implode(',', $request->input('subclass', []));
-        $atividades = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($region_id, $distance, $subclass) {
+        
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("getDifficultAccessActivitiesPG",[$region_id], $request,['subclass', 'condition']);
+        $atividades = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($region_id, $distance, $subclass, $condition) {
             return DB::table('streets')
                 ->select(
                     'streets.id as street_id',
@@ -346,6 +348,7 @@ class GeospatialService
                     $join->on(DB::raw('ST_DWithin(ST_Transform(streets.geometry, 3857), ST_Transform(activities.geometry, 3857), '.$distance.')'), DB::raw('TRUE'));
                 })
                 ->where('streets.region_id', $region_id)
+                ->whereIn('streets.street_condition_id', $condition)
                 ->when($subclass, function ($query, $subclass) {
                     return $query->whereIn('activities.subclass_id', $subclass);
                 })
@@ -402,11 +405,13 @@ class GeospatialService
     // http://127.0.0.1:8000/api/v5/geojson/services/difficult-access-activitiesMS?region_id=1&subclass[]=28
     public function getDifficultAccessActivitiesMS(Request $request)
     {
+        $distance = 10; // distância em metros
         $region_id = $request->region_id;
         $subclass = $request->has('subclass') ? $request->input('subclass') : null;
-        $condition = $request->has('condition') ? $request->input('condition') : null;
-        $distance = 10; // distância em metros
-        $chaveCache = "getDifficultAccessActivitiesMS_". $region_id . "_" . implode(',', $request->input('subclass', []))."_". implode(',', $request->input('subclass', []));
+        $condition = $request->has('condition') ? $request->input('condition') : [1,2,3,4,5,6,7];
+        $request['condition']= $condition;
+
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("getDifficultAccessActivitiesMS" ,[$region_id],$request,['subclass', 'condition']);
         $atividades = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function() use ($region_id, $subclass, $condition, $distance){ 
             return DB::table('streets')
                 ->select(
@@ -510,7 +515,7 @@ class GeospatialService
         $central_points = [];
 
         // Obter as geometrias das atividades existentes
-        $chaveCache = "getBufferSumPG_" . $region_id . "_" . $subclass . "_" . implode(',', $request->input('newActivities', []));
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("getBufferSumPG" ,[$region_id, $subclass],$request,['newActivities']);
         $geometries = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($region_id, $subclass) {
             return Activitie::select('name', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 // ->has('subclass')
@@ -654,8 +659,9 @@ class GeospatialService
     // http://127.0.0.1:8000/api/v5/geojson/services/bufferSumMS/1/29?region_id=1&subclass=29&raio=100,200,300,400&newActivities[]=-1.3230,%20-48.4019
     public function getBufferSumMS(Request $request)
     {
-        $raio = $request->has('raio') ? array_map('intval', explode(',', $request->raio)) : null;
         $newActivities = $request->has('newActivities') ? $request->input('newActivities') : null;
+        // $raio =          $request->has('raio')          ? array_map('intval', explode(',', $request->raio)) : null;
+        $raios =          $request->has('raio')          ? $request->input('raio') : null;
         // Inicialize um array para armazenar as coordenadas divididas
         $newActivitiesProcessed = [];
 
@@ -672,13 +678,12 @@ class GeospatialService
 
         // Cores para os buffers
         $colors = ['#00ff00', '#4cc0bf', '#FFFF00', '#ff0000'];
-        $raios = array_slice($raio, 0, 4); // Limitando os raios a 4
 
         // Inicializar buffers e pontos centrais
         $buffers = [];
         $central_points = [];
         // Obter as geometrias das atividades existentes
-        $chaveCache = "getBufferSumMS_".$region_id."_".$subclass."_". implode(',', $request->input('newActivities', []))."_".$request->raio;
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("getBufferSumMS" ,[$region_id, $subclass],$request,['newActivities', 'raio']);
         $geometries = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function() use ($region_id, $subclass){
             return Activitie::select('name', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
                 // ->has('subclass')
@@ -899,7 +904,7 @@ class GeospatialService
     public function getLengthStreet(Request $request)
     {
         $street_id = $request->street_id;
-        $chaveCache = "getLengthStreet_" . $street_id;
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("getLengthStreet" ,[$street_id],$request,[]);
         $street = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($street_id) {
             return DB::table('streets')
                 ->select(DB::raw('ST_AsGeoJSON(geometry) as geometry'))
@@ -955,8 +960,7 @@ class GeospatialService
 
     public function bufferPG($raio, $latitude, $longitude)
     {
-        
-        $chaveCache = "bufferPG_" .$raio."_".$latitude."_".$longitude;
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("bufferPG" ,[$raio, $latitude, $longitude], null,[]);
         $bufferPG = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($longitude, $latitude, $raio) {
             return DB::selectOne("
                 SELECT ST_AsGeoJSON(
@@ -985,7 +989,7 @@ class GeospatialService
     public function bufferMS($raio, $latitude, $longitude)
     {
        // Criar o buffer no MySQL
-       $chaveCache = "bufferMS_" .$raio."_".$latitude."_".$longitude;
+       $chaveCache = $this->redisService->createKeyCacheFromRequest("bufferMS" ,[$raio, $latitude, $longitude], null,[]);
        $buffer = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($longitude, $latitude, $raio) {
             return DB::selectOne("SELECT ST_AsGeoJSON(ST_Buffer(ST_GeomFromText('POINT($latitude $longitude)', 4326), ?)) as buffer", [$raio]);
        });
@@ -1146,7 +1150,7 @@ class GeospatialService
 
     public function buffer($raio, $latitude, $longitude)
     {
-        $chaveCache = "buffer_" . $raio . $latitude . $longitude;
+        $chaveCache = $this->redisService->createKeyCacheFromRequest("bufferMS" ,[$raio, $latitude, $longitude], null,[]);
         $buffer = Cache::remember($chaveCache, $this->redisService->getRedisTtl(), function () use ($raio, $longitude, $latitude) {
 
             // Calcula o raio em graus decimais

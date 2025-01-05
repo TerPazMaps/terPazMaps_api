@@ -33,7 +33,7 @@ class ActivitieController extends Controller
         try {
             $startTime = microtime(true);
             $namesRequest = ['regions', 'subclasses', 'ids', 'only_references'];
-            $keyCache = $this->redisService->createKeyCacheFromRequest($request, "ActivitieController_index" ,$namesRequest);
+            $keyCache = $this->redisService->createKeyCacheFromRequest( "ActivitieController_index" ,[null], $request, $namesRequest);
             
             $activities = Cache::remember($keyCache, $this->redisService->getRedisTtl(), function () use ($request, $startTime) {
                 $query = $this->activitieService->getAllWithRelationsAndGeometry();
