@@ -16,34 +16,57 @@ Este método não aceita nenhum parâmetro.
 > [!TIP]
 > Exemplo: fff
 
-## Retorno status:200 - um array de classes
+## Retorno status:200 - um array paginado de classes
 
 ```json
 {
-    "success": {
-        "status": "200",
-        "title": "OK",
-        "detail": {
-            "geojson": [
-                {
-                    "Classe": {
-                        "ID": 1,
-                        "Nome": "Comércio",
-                        "related_color": "#ed675f",
-                        "related_secondary_color": null
-                    }
-                },
-                {
-                    "Classe": {
-                        "ID": 14,
-                        "Nome": "Agricultura",
-                        "related_color": "#5fd35f",
-                        "related_secondary_color": null
-                    }
-                }
-            ]
+    "current_page": 1,
+    "data": [
+        {
+            "id": 1,
+            "name": "Comércio",
+            "related_color": "#ed675f",
+            "related_secondary_color": null
+        },
+        {
+            "id": 2,
+            "name": "Serviço",
+            "related_color": "#f5ac6c",
+            "related_secondary_color": null
+        },
+    ],
+    "first_page_url": "http://127.0.0.1:8000/api/v5/geojson/classes?page=1",
+    "from": 1,
+    "last_page": 2,
+    "last_page_url": "http://127.0.0.1:8000/api/v5/geojson/classes?page=2",
+    "links": [
+        {
+            "url": null,
+            "label": "&laquo; Previous",
+            "active": false
+        },
+        {
+            "url": "http://127.0.0.1:8000/api/v5/geojson/classes?page=1",
+            "label": "1",
+            "active": true
+        },
+        {
+            "url": "http://127.0.0.1:8000/api/v5/geojson/classes?page=2",
+            "label": "2",
+            "active": false
+        },
+        {
+            "url": "http://127.0.0.1:8000/api/v5/geojson/classes?page=2",
+            "label": "Next &raquo;",
+            "active": false
         }
-    }
+    ],
+    "next_page_url": "http://127.0.0.1:8000/api/v5/geojson/classes?page=2",
+    "path": "http://127.0.0.1:8000/api/v5/geojson/classes",
+    "per_page": 12,
+    "prev_page_url": null,
+    "to": 12,
+    "total": 14
 }
 ```
 
@@ -71,9 +94,9 @@ Este método não aceita nenhum parâmetro.
         "title": "OK",
         "detail": {
             "geojson": {
-                "id": 1,
-                "name": "Comércio",
-                "related_color": "#ed675f",
+                "id": 9,
+                "name": "Imobiliário",
+                "related_color": "#a3a3a3",
                 "related_secondary_color": null
             }
         }

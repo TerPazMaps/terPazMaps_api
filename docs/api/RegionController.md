@@ -76,36 +76,28 @@ Este método não aceita nenhum parâmetro.
 
 ```json
 {
-    "success": {
-        "status": "200",
-        "title": "OK",
-        "detail": {
-            "geojson": {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [
-                                -48.334619926032,
-                                -1.35332748924725
-                            ],[...]
-                        ]
-                    ]
-                },
-                "properties": {
-                    "ID": 9,
-                    "Nome": "São Francisco",
-                    "Cidade": "Marituba",
-                    "Centro": {
-                        "type": "Point",
-                        "coordinates": [
-                            -48.336453437805176,
-                            -1.354496658713901
-                        ]
-                    }
-                }
-            }
+    "type": "Feature",
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    -48.334619926032,
+                    -1.35332748924725
+                ],[...]
+            ]
+        ]
+    },
+    "properties": {
+        "ID": 9,
+        "Nome": "São Francisco",
+        "Cidade": "Marituba",
+        "Centro": {
+            "type": "Point",
+            "coordinates": [
+                -48.336453437805176,
+                -1.354496658713901
+            ]
         }
     }
 }
