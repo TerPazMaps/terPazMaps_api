@@ -5,12 +5,12 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
 ## Recursos Principais
 
 ### Classe
-- **Descrição**: Recurso para gerenciar informações sobre classes de objetos geográficos.
+ep- **Descrição**: Recurso para gerenciar informações sobre classes de objetos geográficos.
 - **Endpoints**:
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/classe/](/docs/api/ClasseController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/classes](/docs/api/ClasseController.md)
   <!-- - `POST /api/v5/geojson/classe` -->
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/classe/{id}](/docs/api/ClasseController.md)
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/classe/{id}/subclasses](/docs/api/ClasseController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/classes/{id}](/docs/api/ClasseController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/classes/{id}/subclasses](/docs/api/ClasseController.md)
  
   <!-- - `PUT /api/v5/geojson/classe/{id}`
   - `DELETE /api/v5/geojson/classe/{id}` -->
@@ -19,10 +19,10 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
 - **Descrição**: Recurso para gerenciar informações sobre regiões geográficas.
 - **Endpoints**:
   <!-- - `POST /api/v5/geojson/region` -->
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/](/docs/api/RegionController.md)
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}](/docs/api/RegionController.md)
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}/streets](/docs/api/RegionController.md)
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/region/{id}/icons](/docs/api/RegionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/regions](/docs/api/RegionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/regions/{id}](/docs/api/RegionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/regions/{id}/streets](/docs/api/RegionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/regions/{id}/icons](/docs/api/RegionController.md)
  
   <!-- - `PUT /api/v5/geojson/region/{id}`
   - `DELETE /api/v5/geojson/region/{id}` -->
@@ -37,7 +37,7 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `GET /api/v5/geojson/street_condition/{id}`
   - `PUT /api/v5/geojson/street_condition/{id}`
   - `DELETE /api/v5/geojson/street_condition/{id}` -->
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/street_condition/](/docs/api/StreetConditionController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/street_condition](/docs/api/StreetConditionController.md)
 
 ### Subclasse
 - **Descrição**: Recurso para gerenciar informações sobre subclasses de objetos geográficos.
@@ -47,7 +47,7 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `GET /api/v5/geojson/subclasse/{id}`
   - `PUT /api/v5/geojson/subclasse/{id}`
   - `DELETE /api/v5/geojson/subclasse/{id}` -->
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/subclasse/](/docs/api/SubclasseController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/subclasse](/docs/api/SubclasseController.md)
 
 ### Activitie
 - **Descrição**: Recurso para gerenciar informações sobre atividades geográficas.
@@ -58,7 +58,7 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
   - `GET /api/v5/geojson/activitie/{id}`
   - `PUT /api/v5/geojson/activitie/{id}`
   - `DELETE /api/v5/geojson/activitie/{id}` -->
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/activitie/](/docs/api/ActivitieController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/activitie](/docs/api/ActivitieController.md)
 
 ### Street
 - **Descrição**: Recurso para gerenciar informações sobre ruas geográficas.
@@ -73,10 +73,12 @@ Bem-vindo à API de Dados Geoespaciais para nosso aplicativo de mapas sociais! E
 - **Descrição**: Recurso para gerenciar serviços, como calculo de distância entre pontos ou pontos por área.
 - **Endpoints**:
   <!-- - `POST /api/v5/geojson/region` -->
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/activities-nearby](/docs/api/ServicesController.md)
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/distance](/docs/api/ServicesController.md)
-  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/points-of-interest](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/activities-nearbyPG](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/points-of-interestPG](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/difficult-access-activitiesPG](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/bufferSumPG](/docs/api/ServicesController.md)
   - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/length-street](/docs/api/ServicesController.md)
+  - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/distance](/docs/api/ServicesController.md)
   - ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)[ /api/v5/geojson/services/buffer](/docs/api/ServicesController.md)
  
   <!-- - `PUT /api/v5/geojson/region/{id}`

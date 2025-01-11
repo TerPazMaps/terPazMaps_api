@@ -7,7 +7,7 @@
 # Condições das Ruas
 
 ![GET](https://img.shields.io/badge/HTTP-GET-0080FF)  
-`/api/v5/geojson/street_condition/` 
+`/api/v5/geojson/street_condition` 
 
 ## Parâmetros
 Este método não aceita nenhum parâmetro.

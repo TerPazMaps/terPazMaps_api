@@ -21,7 +21,9 @@
 
 
 > [!TIP]
->  Exemplo: /api/v5/geojson/activitie?regions=1&subclasses=1&ids=850&only_references=1
+>  Exemplo:  
+> /api/v5/geojson/activitie?regions=1&subclasses=1&ids=850&only_references=1  
+>           /api/v5/geojson/activitie?regions=5&ids=4515,4601,4779,4921,5239,5255,5335,5341,5478,5899,5967&only_references=0
 
 ## Retorno status:200 - lista de atividades
 
