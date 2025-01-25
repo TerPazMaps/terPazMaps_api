@@ -40,7 +40,6 @@ class GeospatialService
             ->where('region_id', $region_id)
             ->whereIn('subclass_id', $subclass_id)
             ->whereRaw("ST_DistanceSphere(ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326), geometry) <= $raio")
-            ->limit(3000)
             ->get();
         });
 
@@ -341,7 +340,7 @@ class GeospatialService
                     'activities.name',
                     'activities.region_id',
                     'activities.subclass_id',
-                    DB::raw('ST_AsGeoJSON(streets.geometry) as street_geometry'),
+                    // DB::raw('ST_AsGeoJSON(streets.geometry) as street_geometry'),
                     DB::raw('ST_AsGeoJSON(activities.geometry) as activity_geometry')
                 )
                 ->join('activities', function ($join) use ($distance) {
@@ -359,7 +358,7 @@ class GeospatialService
         // Mapear as atividades e ruas para o formato GeoJSON
         $features = $atividades->map(function ($record) {
             $activityGeometry = json_decode($record->activity_geometry);
-            $streetGeometry = json_decode($record->street_geometry);
+            // $streetGeometry = json_decode($record->street_geometry);
     
             // Feature para a atividade
             $activityFeature = [
